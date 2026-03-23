@@ -46,3 +46,4 @@ _tmp_*
 # Misc
 .tmp/
 temp/
+.vercel

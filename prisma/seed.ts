@@ -79,12 +79,12 @@ async function main() {
         await prisma.job.create({
           data: {
             id: job.id,
-            title: job.title,
-            employerName: job.employerName,
-            locationLabel: job.locationLabel,
-            summary: job.summary,
+            title: job.title.da,
+            employerName: job.employerName.da,
+            locationLabel: job.locationLabel.da,
+            summary: job.summary.da,
             applyUrl: job.applyUrl,
-            language: job.language,
+            language: "da",
             municipalityId: municipalityRecord.id,
             industryId: industryRecord.id,
             isMock: true,

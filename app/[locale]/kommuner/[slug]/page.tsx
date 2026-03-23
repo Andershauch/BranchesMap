@@ -10,6 +10,7 @@ import {
   formatEstimatedRolesLabel,
   formatSampleJobsLabel,
   getIndustryLabel,
+  getLocalizedText,
 } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
@@ -48,6 +49,7 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
     notFound();
   }
 
+  const activeLocale = locale as AppLocale;
   const topIndustryNames = municipality.topIndustries.map((industry) =>
     getIndustryLabel(dictionary, industry.code, industry.name),
   );
@@ -72,7 +74,7 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
               </h1>
               <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-700">
                 {buildMunicipalityTeaser(
-                  locale as AppLocale,
+                  activeLocale,
                   dictionary,
                   municipality.name,
                   topIndustryNames,
@@ -108,7 +110,7 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                     {getIndustryLabel(dictionary, industry.code, industry.name)}
                   </h2>
                   <p className="text-sm text-slate-600">
-                    {formatEstimatedRolesLabel(locale as AppLocale, dictionary, industry.jobCount)}
+                    {formatEstimatedRolesLabel(activeLocale, dictionary, industry.jobCount)}
                   </p>
                 </div>
               </div>
@@ -135,7 +137,7 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                       {getIndustryLabel(dictionary, industry.code, industry.name)}
                     </h2>
                     <p className="text-sm text-slate-600">
-                      {formatSampleJobsLabel(locale as AppLocale, dictionary, jobs.length)}
+                      {formatSampleJobsLabel(activeLocale, dictionary, jobs.length)}
                     </p>
                   </div>
                 </div>
@@ -150,19 +152,21 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                     key={job.id}
                     className="rounded-[1.25rem] border border-slate-900/10 bg-slate-50 p-4"
                   >
-                    <h3 className="text-base font-semibold text-slate-900">{job.title}</h3>
+                    <h3 className="text-base font-semibold text-slate-900">
+                      {getLocalizedText(job.title, activeLocale)}
+                    </h3>
                     <p className="mt-2 text-sm font-medium text-slate-700">
-                      {job.employerName}
+                      {getLocalizedText(job.employerName, activeLocale)}
                     </p>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {job.summary}
+                      {getLocalizedText(job.summary, activeLocale)}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-600">
                       <span className="rounded-full border border-slate-300 px-3 py-1">
-                        {job.locationLabel}
+                        {getLocalizedText(job.locationLabel, activeLocale)}
                       </span>
                       <span className="rounded-full border border-slate-300 px-3 py-1">
-                        {job.language.toUpperCase()}
+                        {activeLocale.toUpperCase()}
                       </span>
                     </div>
                   </article>

@@ -1,5 +1,10 @@
 import { sjaellandMunicipalityProperties } from "@/lib/geo/sjaelland";
 
+export type LocalizedText = {
+  da: string;
+  en: string;
+};
+
 export type IndustrySummary = {
   code: string;
   slug: string;
@@ -11,12 +16,11 @@ export type IndustrySummary = {
 
 export type JobSummary = {
   id: string;
-  title: string;
-  employerName: string;
-  locationLabel: string;
-  summary: string;
+  title: LocalizedText;
+  employerName: LocalizedText;
+  locationLabel: LocalizedText;
+  summary: LocalizedText;
   applyUrl: string;
-  language: "da";
 };
 
 export type MunicipalityRecord = {
@@ -34,68 +38,104 @@ export type MunicipalityRecord = {
 type IndustryDefinition = {
   code: string;
   slug: string;
-  name: string;
+  nameDa: string;
+  nameEn: string;
   icon: string;
   accentColor: string;
-  sampleRoles: readonly string[];
+  sampleRoles: readonly LocalizedText[];
 };
 
 const industryCatalog: IndustryDefinition[] = [
   {
     code: "health",
     slug: "sundhed",
-    name: "Sundhed",
+    nameDa: "Sundhed",
+    nameEn: "Health",
     icon: "🩺",
     accentColor: "#0f766e",
-    sampleRoles: ["Sygeplejerske", "Sundhedskoordinator", "Fysioterapeut"],
+    sampleRoles: [
+      { da: "Sygeplejerske", en: "Nurse" },
+      { da: "Sundhedskoordinator", en: "Health Coordinator" },
+      { da: "Fysioterapeut", en: "Physiotherapist" },
+    ],
   },
   {
     code: "tech",
     slug: "teknologi",
-    name: "Teknologi",
+    nameDa: "Teknologi",
+    nameEn: "Technology",
     icon: "💻",
     accentColor: "#2563eb",
-    sampleRoles: ["Frontend-udvikler", "Dataanalytiker", "Produktleder"],
+    sampleRoles: [
+      { da: "Frontend-udvikler", en: "Frontend Developer" },
+      { da: "Dataanalytiker", en: "Data Analyst" },
+      { da: "Produktleder", en: "Product Manager" },
+    ],
   },
   {
     code: "build",
     slug: "byggeri",
-    name: "Byggeri",
+    nameDa: "Byggeri",
+    nameEn: "Construction",
     icon: "🏗️",
     accentColor: "#d97706",
-    sampleRoles: ["Byggeleder", "Projektkoordinator", "Teknisk designer"],
+    sampleRoles: [
+      { da: "Byggeleder", en: "Construction Manager" },
+      { da: "Projektkoordinator", en: "Project Coordinator" },
+      { da: "Teknisk designer", en: "Technical Designer" },
+    ],
   },
   {
     code: "logistics",
     slug: "logistik",
-    name: "Logistik",
+    nameDa: "Logistik",
+    nameEn: "Logistics",
     icon: "🚚",
     accentColor: "#7c3aed",
-    sampleRoles: ["Driftsplanlægger", "Ruteplanlægger", "Chaufførdisponent"],
+    sampleRoles: [
+      { da: "Driftsplanlægger", en: "Operations Planner" },
+      { da: "Ruteplanlægger", en: "Route Planner" },
+      { da: "Chaufførdisponent", en: "Transport Dispatcher" },
+    ],
   },
   {
     code: "education",
     slug: "uddannelse",
-    name: "Uddannelse",
+    nameDa: "Uddannelse",
+    nameEn: "Education",
     icon: "🎓",
     accentColor: "#16a34a",
-    sampleRoles: ["Lærer", "Pædagogisk koordinator", "Studievejleder"],
+    sampleRoles: [
+      { da: "Lærer", en: "Teacher" },
+      { da: "Pædagogisk koordinator", en: "Pedagogical Coordinator" },
+      { da: "Studievejleder", en: "Student Advisor" },
+    ],
   },
   {
     code: "tourism",
     slug: "turisme",
-    name: "Turisme",
+    nameDa: "Turisme",
+    nameEn: "Tourism",
     icon: "🌊",
     accentColor: "#ea580c",
-    sampleRoles: ["Destinationskoordinator", "Eventmedarbejder", "Gæsteserviceansvarlig"],
+    sampleRoles: [
+      { da: "Destinationskoordinator", en: "Destination Coordinator" },
+      { da: "Eventmedarbejder", en: "Event Assistant" },
+      { da: "Gæsteserviceansvarlig", en: "Guest Services Lead" },
+    ],
   },
   {
     code: "food",
     slug: "fodevarer",
-    name: "Fødevarer",
+    nameDa: "Fødevarer",
+    nameEn: "Food",
     icon: "🍎",
     accentColor: "#b45309",
-    sampleRoles: ["Produktionsleder", "Kvalitetsmedarbejder", "Butikschef"],
+    sampleRoles: [
+      { da: "Produktionsleder", en: "Production Manager" },
+      { da: "Kvalitetsmedarbejder", en: "Quality Specialist" },
+      { da: "Butikschef", en: "Store Manager" },
+    ],
   },
 ];
 
@@ -123,7 +163,7 @@ const buildMunicipality = (
     return {
       code: industry.code,
       slug: industry.slug,
-      name: industry.name,
+      name: industry.nameDa,
       icon: industry.icon,
       accentColor: industry.accentColor,
       jobCount: 28 + (municipalityIndex % 5) * 4 - rank * 3,
@@ -136,11 +176,19 @@ const buildMunicipality = (
     const jobs = definition.sampleRoles.map((title, jobIndex) => ({
       id: `${seed.slug}-${industry.slug}-${jobIndex + 1}`,
       title,
-      employerName: `${seed.name} ${industry.name} Hub`,
-      locationLabel: `${seed.name} Kommune`,
-      summary: `Mock-opslag til POC for ${seed.name} inden for ${industry.name.toLowerCase()}.`,
+      employerName: {
+        da: `${seed.name} ${definition.nameDa} Hub`,
+        en: `${seed.name} ${definition.nameEn} Hub`,
+      },
+      locationLabel: {
+        da: `${seed.name} Kommune`,
+        en: `${seed.name} Municipality`,
+      },
+      summary: {
+        da: `Mock-opslag til POC for ${seed.name} inden for ${definition.nameDa.toLowerCase()}.`,
+        en: `Mock posting for the POC in ${seed.name} within ${definition.nameEn.toLowerCase()}.`,
+      },
       applyUrl: `https://example.com/jobs/${seed.slug}/${industry.slug}/${jobIndex + 1}`,
-      language: "da" as const,
     }));
 
     return {
@@ -165,7 +213,7 @@ export const pocMunicipalities = municipalitySeeds.map(buildMunicipality);
 export const pocIndustryCatalog = industryCatalog.map((industry) => ({
   code: industry.code,
   slug: industry.slug,
-  name: industry.name,
+  name: industry.nameDa,
   icon: industry.icon,
   accentColor: industry.accentColor,
 }));

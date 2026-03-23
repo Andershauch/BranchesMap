@@ -1,3 +1,4 @@
+import type { LocalizedText } from "@/lib/mock/poc-data";
 import { intlLocaleMap, type AppLocale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
@@ -11,6 +12,10 @@ export function getIndustryLabel(
   fallback: string,
 ) {
   return dictionary.industries[code as keyof Dictionary["industries"]] ?? fallback;
+}
+
+export function getLocalizedText(text: LocalizedText, locale: AppLocale) {
+  return text[locale] ?? text.da;
 }
 
 export function buildMunicipalityTeaser(
