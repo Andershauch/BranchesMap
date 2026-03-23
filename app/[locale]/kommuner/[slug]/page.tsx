@@ -5,9 +5,18 @@ import {
   getMunicipalityBySlug,
   getMunicipalitySummaries,
 } from "@/lib/data/municipalities";
+import {
+  buildMunicipalityTeaser,
+  formatEstimatedRolesLabel,
+  formatSampleJobsLabel,
+  getIndustryLabel,
+} from "@/lib/i18n/format";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 
 type MunicipalityPageProps = {
   params: Promise<{
+    locale: string;
     slug: string;
   }>;
 };
@@ -15,48 +24,67 @@ type MunicipalityPageProps = {
 export async function generateStaticParams() {
   const municipalities = await getMunicipalitySummaries();
 
-  return municipalities.map((municipality) => ({
-    slug: municipality.slug,
-  }));
+  return locales.flatMap((locale) =>
+    municipalities.map((municipality) => ({
+      locale,
+      slug: municipality.slug,
+    })),
+  );
 }
 
 export default async function MunicipalityPage({ params }: MunicipalityPageProps) {
-  const { slug } = await params;
-  const municipality = await getMunicipalityBySlug(slug);
+  const { locale, slug } = await params;
+
+  if (!isValidLocale(locale)) {
+    notFound();
+  }
+
+  const [municipality, dictionary] = await Promise.all([
+    getMunicipalityBySlug(slug),
+    getDictionary(locale),
+  ]);
 
   if (!municipality) {
     notFound();
   }
+
+  const topIndustryNames = municipality.topIndustries.map((industry) =>
+    getIndustryLabel(dictionary, industry.code, industry.name),
+  );
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-6 py-12 text-slate-900">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
         <section className="rounded-[2rem] border border-slate-900/10 bg-white/90 p-8 shadow-[0_20px_80px_rgba(15,23,42,0.08)]">
           <Link
-            href="/"
+            href={`/${locale}`}
             className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
           >
-            Tilbage til kortet
+            {dictionary.municipality.backToMap}
           </Link>
           <div className="mt-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal-700">
-                Kommuneprofil
+                {dictionary.municipality.kicker}
               </p>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">
                 {municipality.name}
               </h1>
               <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-700">
-                {municipality.teaser}
+                {buildMunicipalityTeaser(
+                  locale as AppLocale,
+                  dictionary,
+                  municipality.name,
+                  topIndustryNames,
+                )}
               </p>
             </div>
             <div className="rounded-[1.5rem] bg-slate-950 px-5 py-4 text-slate-100">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                POC-status
+                {dictionary.municipality.pocStatusTitle}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Branchefordeling og jobs er mock-data, men strukturen følger den
-                model, vi senere kan seede til Prisma.
+                {dictionary.municipality.pocStatusBody}
               </p>
             </div>
           </div>
@@ -76,9 +104,11 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                   {industry.icon}
                 </span>
                 <div>
-                  <h2 className="text-lg font-semibold">{industry.name}</h2>
+                  <h2 className="text-lg font-semibold">
+                    {getIndustryLabel(dictionary, industry.code, industry.name)}
+                  </h2>
                   <p className="text-sm text-slate-600">
-                    {industry.jobCount} estimerede stillinger i POC-versionen
+                    {formatEstimatedRolesLabel(locale as AppLocale, dictionary, industry.jobCount)}
                   </p>
                 </div>
               </div>
@@ -101,14 +131,16 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                     {industry.icon}
                   </span>
                   <div>
-                    <h2 className="text-xl font-semibold">{industry.name}</h2>
+                    <h2 className="text-xl font-semibold">
+                      {getIndustryLabel(dictionary, industry.code, industry.name)}
+                    </h2>
                     <p className="text-sm text-slate-600">
-                      {jobs.length} eksempeljobs i denne branche
+                      {formatSampleJobsLabel(locale as AppLocale, dictionary, jobs.length)}
                     </p>
                   </div>
                 </div>
                 <span className="rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-700">
-                  Kommunekode: {municipality.code}
+                  {dictionary.municipality.municipalityCode}: {municipality.code}
                 </span>
               </div>
 

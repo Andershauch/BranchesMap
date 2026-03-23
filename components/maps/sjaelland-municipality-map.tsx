@@ -1,7 +1,8 @@
 import { geoMercator, geoPath } from "d3-geo";
 
-import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
+import { type AppLocale } from "@/lib/i18n/config";
+import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
 
 const width = 900;
 const height = 980;
@@ -39,8 +40,12 @@ const path = geoPath(projection);
 
 export function SjaellandMunicipalityMap({
   municipalities,
+  locale,
+  ariaLabel,
 }: {
   municipalities: MunicipalitySummary[];
+  locale: AppLocale;
+  ariaLabel: string;
 }) {
   const municipalityMap = new Map(
     municipalities.map((municipality) => [municipality.code, municipality]),
@@ -74,7 +79,7 @@ export function SjaellandMunicipalityMap({
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="absolute inset-0 h-full w-full"
-        aria-label="Kort over Sjællands kommuner"
+        aria-label={ariaLabel}
         role="img"
       >
         <rect width={width} height={height} fill="transparent" />
@@ -97,7 +102,7 @@ export function SjaellandMunicipalityMap({
           );
         })}
         {features.map(({ pathData, municipality }) => (
-          <a key={municipality.slug} href={`/kommuner/${municipality.slug}`}>
+          <a key={municipality.slug} href={`/${locale}/kommuner/${municipality.slug}`}>
             <title>{municipality.name}</title>
             <path
               d={pathData}
@@ -114,7 +119,7 @@ export function SjaellandMunicipalityMap({
       {features.map(({ municipality, label }) => (
         <a
           key={`${municipality.slug}-badge`}
-          href={`/kommuner/${municipality.slug}`}
+          href={`/${locale}/kommuner/${municipality.slug}`}
           className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/92 px-2 py-1 text-[10px] font-medium text-slate-800 shadow-[0_8px_22px_rgba(15,23,42,0.15)] ring-1 ring-slate-900/10 transition hover:-translate-y-[52%] sm:px-3 sm:py-1.5 sm:text-xs"
           style={{
             left: `${(label.x / width) * 100}%`,
