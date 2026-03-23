@@ -40,3 +40,5 @@ prisma/*.db-journal
 # Misc
 .tmp/
 temp/
+
+/lib/generated/prisma

@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Municipality {
+  id              String                     @id @default(cuid())
+  code            String                     @unique
+  name            String
+  slug            String                     @unique
+  mapX            Float?
+  mapY            Float?
+  teaser          String?
+  isActive        Boolean                    @default(true)
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+  industryStats   MunicipalityIndustryStat[]
+  jobs            Job[]
+  savedSearches   SavedSearch[]
+
+  @@index([slug])
+  @@index([name])
+}
+
+model Industry {
+  id                String                     @id @default(cuid())
+  code              String                     @unique
+  slug              String                     @unique
+  nameDa            String
+  nameEn            String?
+  icon              String?
+  accentColor       String?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  municipalityStats MunicipalityIndustryStat[]
+  jobs              Job[]
+  savedSearches     SavedSearch[]
+}
+
+model MunicipalityIndustryStat {
+  id              String       @id @default(cuid())
+  municipalityId  String
+  industryId      String
+  rank            Int
+  jobCount        Int
+  isMock          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  municipality    Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  industry        Industry     @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@unique([municipalityId, industryId])
+  @@index([municipalityId, rank])
+  @@index([industryId])
+}
+
+model Job {
+  id              String       @id @default(cuid())
+  municipalityId  String
+  industryId      String
+  title           String
+  employerName    String
+  locationLabel   String?
+  summary         String?
+  applyUrl        String?
+  language        String       @default("da")
+  isMock          Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  municipality    Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  industry        Industry     @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@index([municipalityId])
+  @@index([industryId])
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String?
+  locale        String        @default("da")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  savedSearches SavedSearch[]
+  auditEvents   AuditEvent[]
+}
+
+model SavedSearch {
+  id              String        @id @default(cuid())
+  userId          String
+  title           String
+  queryText       String?
+  filters         Json?
+  municipalityId  String?
+  industryId      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  municipality    Municipality? @relation(fields: [municipalityId], references: [id], onDelete: SetNull)
+  industry        Industry?     @relation(fields: [industryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([createdAt])
+}
