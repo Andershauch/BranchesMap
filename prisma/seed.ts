@@ -19,6 +19,9 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  await prisma.job.deleteMany({ where: { isMock: true } });
+  await prisma.municipalityIndustryStat.deleteMany({ where: { isMock: true } });
+
   let industryCount = 0;
   let statCount = 0;
   let jobCount = 0;
@@ -29,16 +32,12 @@ async function main() {
       update: {
         code: municipality.code,
         name: municipality.name,
-        mapX: municipality.mapX,
-        mapY: municipality.mapY,
         teaser: municipality.teaser,
       },
       create: {
         code: municipality.code,
         name: municipality.name,
         slug: municipality.slug,
-        mapX: municipality.mapX,
-        mapY: municipality.mapY,
         teaser: municipality.teaser,
       },
     });
@@ -62,22 +61,8 @@ async function main() {
       });
       industryCount += 1;
 
-      await prisma.municipalityIndustryStat.upsert({
-        where: {
-          municipalityId_industryId: {
-            municipalityId: municipalityRecord.id,
-            industryId: industryRecord.id,
-          },
-        },
-        update: {
-          rank:
-            municipality.topIndustries.findIndex(
-              ({ slug }) => slug === entry.industry.slug,
-            ) + 1,
-          jobCount: entry.industry.jobCount,
-          isMock: true,
-        },
-        create: {
+      await prisma.municipalityIndustryStat.create({
+        data: {
           municipalityId: municipalityRecord.id,
           industryId: industryRecord.id,
           rank:
@@ -91,20 +76,8 @@ async function main() {
       statCount += 1;
 
       for (const job of entry.jobs) {
-        await prisma.job.upsert({
-          where: { id: job.id },
-          update: {
-            title: job.title,
-            employerName: job.employerName,
-            locationLabel: job.locationLabel,
-            summary: job.summary,
-            applyUrl: job.applyUrl,
-            language: job.language,
-            municipalityId: municipalityRecord.id,
-            industryId: industryRecord.id,
-            isMock: true,
-          },
-          create: {
+        await prisma.job.create({
+          data: {
             id: job.id,
             title: job.title,
             employerName: job.employerName,

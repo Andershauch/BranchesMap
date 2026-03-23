@@ -1,3 +1,5 @@
+import { sjaellandMunicipalityProperties } from "@/lib/geo/sjaelland";
+
 export type IndustrySummary = {
   code: string;
   slug: string;
@@ -21,8 +23,6 @@ export type MunicipalityRecord = {
   code: string;
   slug: string;
   name: string;
-  mapX: number;
-  mapY: number;
   teaser: string;
   topIndustries: IndustrySummary[];
   jobsByIndustry: Array<{
@@ -38,14 +38,6 @@ type IndustryDefinition = {
   icon: string;
   accentColor: string;
   sampleRoles: readonly string[];
-};
-
-type MunicipalitySeed = {
-  code: string;
-  slug: string;
-  name: string;
-  mapX: number;
-  mapY: number;
 };
 
 const industryCatalog: IndustryDefinition[] = [
@@ -107,30 +99,11 @@ const industryCatalog: IndustryDefinition[] = [
   },
 ];
 
-const municipalitySeeds: MunicipalitySeed[] = [
-  { code: "sj-001", slug: "helsingor", name: "Helsingør", mapX: 82, mapY: 7 },
-  { code: "sj-002", slug: "gribskov", name: "Gribskov", mapX: 73, mapY: 10 },
-  { code: "sj-003", slug: "hillerod", name: "Hillerød", mapX: 67, mapY: 14 },
-  { code: "sj-004", slug: "frederikssund", name: "Frederikssund", mapX: 50, mapY: 19 },
-  { code: "sj-005", slug: "egedal", name: "Egedal", mapX: 61, mapY: 20 },
-  { code: "sj-006", slug: "ballerup", name: "Ballerup", mapX: 68, mapY: 23 },
-  { code: "sj-007", slug: "kobenhavn", name: "København", mapX: 81, mapY: 23 },
-  { code: "sj-008", slug: "frederiksberg", name: "Frederiksberg", mapX: 78, mapY: 25 },
-  { code: "sj-009", slug: "greve", name: "Greve", mapX: 69, mapY: 34 },
-  { code: "sj-010", slug: "koge", name: "Køge", mapX: 68, mapY: 40 },
-  { code: "sj-011", slug: "roskilde", name: "Roskilde", mapX: 58, mapY: 31 },
-  { code: "sj-012", slug: "lejre", name: "Lejre", mapX: 50, mapY: 33 },
-  { code: "sj-013", slug: "odsherred", name: "Odsherred", mapX: 34, mapY: 20 },
-  { code: "sj-014", slug: "holbaek", name: "Holbæk", mapX: 42, mapY: 30 },
-  { code: "sj-015", slug: "kalundborg", name: "Kalundborg", mapX: 20, mapY: 31 },
-  { code: "sj-016", slug: "slagelse", name: "Slagelse", mapX: 29, mapY: 46 },
-  { code: "sj-017", slug: "soro", name: "Sorø", mapX: 40, mapY: 46 },
-  { code: "sj-018", slug: "ringsted", name: "Ringsted", mapX: 53, mapY: 44 },
-  { code: "sj-019", slug: "naestved", name: "Næstved", mapX: 54, mapY: 59 },
-  { code: "sj-020", slug: "faxe", name: "Faxe", mapX: 67, mapY: 56 },
-  { code: "sj-021", slug: "stevns", name: "Stevns", mapX: 75, mapY: 49 },
-  { code: "sj-022", slug: "vordingborg", name: "Vordingborg", mapX: 61, mapY: 74 },
-];
+const municipalitySeeds = sjaellandMunicipalityProperties.map(({ code, slug, name }) => ({
+  code,
+  slug,
+  name,
+}));
 
 const rotateIndustryIndexes = (index: number) => [
   index % industryCatalog.length,
@@ -139,7 +112,7 @@ const rotateIndustryIndexes = (index: number) => [
 ];
 
 const buildMunicipality = (
-  seed: MunicipalitySeed,
+  seed: (typeof municipalitySeeds)[number],
   municipalityIndex: number,
 ): MunicipalityRecord => {
   const industryIndexes = rotateIndustryIndexes(municipalityIndex);
