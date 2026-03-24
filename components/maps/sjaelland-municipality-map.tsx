@@ -66,7 +66,7 @@ const uiCopy: Record<
     zoomIn: "Zoom ind",
     zoomOut: "Zoom ud",
     reset: "Nulstil",
-    hint: "Klik p\u00e5 en kommune for at fokusere den i hele viewporten. Brug knapperne eller musehjulet til finjustering, og klik igen for at \u00e5bne detaljer.",
+    hint: "Klik p\u00e5 en kommune for at fokusere den i hele viewporten. Klik p\u00e5 en anden kommune for at skifte fokus, eller klik igen p\u00e5 den valgte kommune for at \u00e5bne detaljer.",
     debugBadge: "Kort-debug aktiv",
     debugHint: "Debug viser centroid, bounding box og g\u00f8r det muligt at isolere \u00e9n kommune via URL-parametre.",
     debugFocusLabel: "Fokus",
@@ -76,7 +76,7 @@ const uiCopy: Record<
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     reset: "Reset",
-    hint: "Click a municipality to focus it across the viewport. Use the buttons or your mouse wheel for fine-tuning, then click again to open details.",
+    hint: "Click a municipality to focus it across the viewport. Click another municipality to switch focus, or click the selected one again to open details.",
     debugBadge: "Map debug enabled",
     debugHint: "Debug shows centroids, bounding boxes, and lets us isolate a municipality through URL params.",
     debugFocusLabel: "Focus",
@@ -381,13 +381,15 @@ export function SjaellandMunicipalityMap({
   }
 
   function handleMunicipalityClick(event: MouseEvent<HTMLAnchorElement>, feature: MapFeature) {
-    const shouldZoomFirst = selectedSlug !== feature.municipality.slug || zoomLevel < 4.5;
+    const isSelectedMunicipality = selectedSlug === feature.municipality.slug;
 
-    if (shouldZoomFirst) {
-      event.preventDefault();
-      event.stopPropagation();
-      zoomToFeature(feature);
+    if (isSelectedMunicipality) {
+      return;
     }
+
+    event.preventDefault();
+    event.stopPropagation();
+    zoomToFeature(feature);
   }
 
   function handleWheel(event: WheelEvent<SVGSVGElement>) {
