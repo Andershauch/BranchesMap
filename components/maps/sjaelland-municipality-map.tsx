@@ -60,27 +60,39 @@ const uiCopy: Record<
     debugHint: string;
     debugFocusLabel: string;
     debugAllLabel: string;
+    selectedLabel: string;
+    industriesLabel: string;
+    jobsLabel: string;
+    openDetails: string;
   }
 > = {
   da: {
     zoomIn: "Zoom ind",
     zoomOut: "Zoom ud",
     reset: "Nulstil",
-    hint: "Klik p\u00e5 en kommune for at fokusere den i hele viewporten. Klik p\u00e5 en anden kommune for at skifte fokus, eller klik igen p\u00e5 den valgte kommune for at \u00e5bne detaljer.",
+    hint: "Klik p\u00e5 en kommune for at fokusere den og se dens data direkte p\u00e5 kortet. Klik p\u00e5 en anden kommune for at skifte fokus.",
     debugBadge: "Kort-debug aktiv",
     debugHint: "Debug viser centroid, bounding box og g\u00f8r det muligt at isolere \u00e9n kommune via URL-parametre.",
     debugFocusLabel: "Fokus",
     debugAllLabel: "Alle kommuner",
+    selectedLabel: "Valgt kommune",
+    industriesLabel: "Mest repr\u00e6senterede brancher",
+    jobsLabel: "jobs i POC",
+    openDetails: "\u00c5bn kommuneside",
   },
   en: {
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     reset: "Reset",
-    hint: "Click a municipality to focus it across the viewport. Click another municipality to switch focus, or click the selected one again to open details.",
+    hint: "Click a municipality to focus it and view its data directly on the map. Click another municipality to switch focus.",
     debugBadge: "Map debug enabled",
     debugHint: "Debug shows centroids, bounding boxes, and lets us isolate a municipality through URL params.",
     debugFocusLabel: "Focus",
     debugAllLabel: "All municipalities",
+    selectedLabel: "Selected municipality",
+    industriesLabel: "Most represented industries",
+    jobsLabel: "jobs in the POC",
+    openDetails: "Open municipality page",
   },
 };
 
@@ -189,6 +201,10 @@ function getSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number, viewB
 
 function formatDebugNumber(value: number) {
   return value.toFixed(1);
+}
+
+function formatCount(locale: AppLocale, value: number) {
+  return new Intl.NumberFormat(locale).format(value);
 }
 
 function isDebugEnabled(value: string | null) {
@@ -384,12 +400,6 @@ export function SjaellandMunicipalityMap({
   }
 
   function handleMunicipalityClick(event: MouseEvent<HTMLAnchorElement>, feature: MapFeature) {
-    const isSelectedMunicipality = selectedSlug === feature.municipality.slug;
-
-    if (isSelectedMunicipality) {
-      return;
-    }
-
     event.preventDefault();
     event.stopPropagation();
     zoomToFeature(feature);
@@ -515,6 +525,42 @@ export function SjaellandMunicipalityMap({
         {ui.hint}
       </div>
 
+      {selectedFeature ? (
+        <div className="absolute bottom-3 right-3 z-10 w-[min(28rem,calc(100%-1.5rem))] rounded-[1.25rem] bg-white/92 p-4 text-slate-900 shadow-[0_20px_50px_rgba(15,23,42,0.18)] ring-1 ring-slate-900/10 backdrop-blur sm:bottom-4 sm:right-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{ui.selectedLabel}</p>
+          <div className="mt-2 flex items-start justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-semibold tracking-tight">{selectedFeature.municipality.name}</h3>
+            </div>
+            <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+              {formatCount(locale, selectedFeature.municipality.totalJobs)} {ui.jobsLabel}
+            </span>
+          </div>
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{ui.industriesLabel}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {selectedFeature.municipality.topIndustries.map((industry) => (
+                <span
+                  key={selectedFeature.municipality.slug + "-panel-" + industry.slug}
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium text-white"
+                  style={{ backgroundColor: industry.accentColor }}
+                >
+                  <span>{industry.icon}</span>
+                  <span>{industry.name}</span>
+                  <span className="text-white/80">{formatCount(locale, industry.jobCount)}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+          <a
+            href={"/" + locale + "/kommuner/" + selectedFeature.municipality.slug}
+            className="mt-4 inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            {ui.openDetails}
+          </a>
+        </div>
+      ) : null}
+
       <svg
         ref={svgRef}
         viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
@@ -584,7 +630,7 @@ export function SjaellandMunicipalityMap({
           );
         })}
 
-        <g style={{ pointerEvents: "none" }}>
+        <g>
           {features.map((feature) => {
             const { municipality, marker, bounds } = feature;
             const tuning = labelTuning[municipality.slug] ?? {};
@@ -628,10 +674,22 @@ export function SjaellandMunicipalityMap({
               (showIcons ? iconY + iconFontSize * 0.95 : 0) + (tuning.nameDy ?? 0);
 
             return (
-              <g
-                key={municipality.slug + "-label"}
-                transform={"translate(" + marker.x + ", " + marker.y + ") scale(" + labelScale + ")"}
+              <a
+                key={municipality.slug + "-label-link"}
+                href={"/" + locale + "/kommuner/" + municipality.slug}
+                onClick={(event) => handleMunicipalityClick(event, feature)}
+                onMouseEnter={() => setHoveredSlug(municipality.slug)}
+                onMouseLeave={() =>
+                  setHoveredSlug((current) => (current === municipality.slug ? null : current))
+                }
+                onFocus={() => setHoveredSlug(municipality.slug)}
+                onBlur={() =>
+                  setHoveredSlug((current) => (current === municipality.slug ? null : current))
+                }
               >
+                <g
+                  transform={"translate(" + marker.x + ", " + marker.y + ") scale(" + labelScale + ")"}
+                >
                 {showIcons
                   ? visibleIndustries.map((industry, index) => (
                       <text
@@ -695,7 +753,8 @@ export function SjaellandMunicipalityMap({
                     </text>
                   </>
                 ) : null}
-              </g>
+                </g>
+              </a>
             );
           })}
         </g>
