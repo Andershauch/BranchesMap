@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
 import {
+  buildMunicipalityTeaser,
   formatDemoJobsLabel,
   formatNumber,
   getIndustryLabel,
-  buildMunicipalityTeaser,
 } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
@@ -82,11 +83,17 @@ export default async function LocalizedHomePage({ params }: LocalizedHomePagePro
             </p>
           </div>
 
-          <SjaellandMunicipalityMap
-            municipalities={municipalities}
-            locale={locale as AppLocale}
-            ariaLabel={dictionary.home.mapAriaLabel}
-          />
+          <Suspense
+            fallback={
+              <div className="aspect-[9/10] rounded-[1.75rem] bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_34%,#9abdaf_100%)] sm:aspect-[9/8]" />
+            }
+          >
+            <SjaellandMunicipalityMap
+              municipalities={municipalities}
+              locale={locale as AppLocale}
+              ariaLabel={dictionary.home.mapAriaLabel}
+            />
+          </Suspense>
         </section>
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

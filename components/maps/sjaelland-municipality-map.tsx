@@ -1,7 +1,8 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { geoMercator, geoPath } from "d3-geo";
-import { useRef, useState, type PointerEvent, type WheelEvent } from "react";
+import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
@@ -42,6 +43,10 @@ const uiCopy: Record<
     zoomOut: string;
     reset: string;
     hint: string;
+    debugBadge: string;
+    debugHint: string;
+    debugFocusLabel: string;
+    debugAllLabel: string;
   }
 > = {
   da: {
@@ -49,12 +54,20 @@ const uiCopy: Record<
     zoomOut: "Zoom ud",
     reset: "Nulstil",
     hint: "Brug knapperne eller musehjulet til at zoome. Når du er zoomet ind, kan du trække kortet rundt.",
+    debugBadge: "Kort-debug aktiv",
+    debugHint: "Debug viser centroid, bounding box og gør det muligt at isolere én kommune via URL-parametre.",
+    debugFocusLabel: "Fokus",
+    debugAllLabel: "Alle kommuner",
   },
   en: {
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     reset: "Reset",
     hint: "Use the buttons or your mouse wheel to zoom. Once zoomed in, you can drag the map around.",
+    debugBadge: "Map debug enabled",
+    debugHint: "Debug shows centroids, bounding boxes, and lets us isolate a municipality through URL params.",
+    debugFocusLabel: "Focus",
+    debugAllLabel: "All municipalities",
   },
 };
 
@@ -80,6 +93,19 @@ type DragState = {
   clientX: number;
   clientY: number;
   viewBox: ViewBox;
+};
+
+type MapFeature = {
+  municipality: MunicipalitySummary;
+  pathData: string;
+  marker: Point;
+  centroid: Point;
+  bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -123,6 +149,14 @@ function getSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number, viewB
   };
 }
 
+function formatDebugNumber(value: number) {
+  return value.toFixed(1);
+}
+
+function isDebugEnabled(value: string | null) {
+  return value === "1" || value === "true" || value === "yes";
+}
+
 export function SjaellandMunicipalityMap({
   municipalities,
   locale,
@@ -132,39 +166,60 @@ export function SjaellandMunicipalityMap({
   locale: AppLocale;
   ariaLabel: string;
 }) {
+  const searchParams = useSearchParams();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const municipalityMap = new Map(
-    municipalities.map((municipality) => [municipality.code, municipality]),
-  );
   const zoomLevel = width / viewBox.width;
   const ui = uiCopy[locale];
+  const debugMode = isDebugEnabled(searchParams.get("mapDebug"));
+  const normalizedDebugSlug = searchParams.get("debugMunicipality")?.trim().toLowerCase() ?? null;
 
-  const features = sjaellandMunicipalityFeatureCollection.features
-    .map((feature) => {
-      const municipality = municipalityMap.get(feature.properties.code);
-      const pathData = path(feature as never);
+  const features = useMemo(() => {
+    const municipalityMap = new Map(
+      municipalities.map((municipality) => [municipality.code, municipality]),
+    );
 
-      if (!municipality || !pathData) {
-        return null;
-      }
+    return sjaellandMunicipalityFeatureCollection.features
+      .map((feature) => {
+        const municipality = municipalityMap.get(feature.properties.code);
+        const pathData = path(feature as never);
 
-      const [cx, cy] = path.centroid(feature as never);
-      const offset = markerOffsets[municipality.slug] ?? { dx: 0, dy: 0 };
+        if (!municipality || !pathData) {
+          return null;
+        }
 
-      return {
-        municipality,
-        pathData,
-        marker: {
-          x: cx + offset.dx,
-          y: cy + offset.dy,
-        },
-      };
-    })
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+        const [centroidX, centroidY] = path.centroid(feature as never);
+        const [[minX, minY], [maxX, maxY]] = path.bounds(feature as never);
+        const offset = markerOffsets[municipality.slug] ?? { dx: 0, dy: 0 };
+
+        return {
+          municipality,
+          pathData,
+          marker: {
+            x: centroidX + offset.dx,
+            y: centroidY + offset.dy,
+          },
+          centroid: {
+            x: centroidX,
+            y: centroidY,
+          },
+          bounds: {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          },
+        } satisfies MapFeature;
+      })
+      .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  }, [municipalities]);
+
+  const focusedFeature = normalizedDebugSlug
+    ? features.find((feature) => feature.municipality.slug === normalizedDebugSlug) ?? null
+    : null;
 
   function zoomAtCenter(factor: number) {
     setViewBox((current) =>
@@ -270,6 +325,31 @@ export function SjaellandMunicipalityMap({
         </span>
       </div>
 
+      {debugMode ? (
+        <div className="absolute left-3 top-3 z-10 max-w-sm rounded-[1rem] bg-slate-950/88 px-4 py-3 text-xs leading-5 text-white shadow-[0_10px_30px_rgba(15,23,42,0.22)] ring-1 ring-white/10 backdrop-blur sm:left-4 sm:top-4">
+          <p className="font-semibold text-emerald-300">{ui.debugBadge}</p>
+          <p className="mt-1 text-white/80">{ui.debugHint}</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
+            <span className="rounded-full bg-white/10 px-3 py-1">features: {features.length}</span>
+            <span className="rounded-full bg-white/10 px-3 py-1">zoom: x{zoomLevel.toFixed(1)}</span>
+            <span className="rounded-full bg-white/10 px-3 py-1">
+              {ui.debugFocusLabel}: {focusedFeature?.municipality.name ?? ui.debugAllLabel}
+            </span>
+          </div>
+          {focusedFeature ? (
+            <div className="mt-3 rounded-xl bg-white/10 px-3 py-2 text-[11px] text-white/85">
+              <div>{focusedFeature.municipality.name}</div>
+              <div>
+                centroid: {formatDebugNumber(focusedFeature.centroid.x)}, {formatDebugNumber(focusedFeature.centroid.y)}
+              </div>
+              <div>
+                bounds: {formatDebugNumber(focusedFeature.bounds.width)} x {formatDebugNumber(focusedFeature.bounds.height)}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[1rem] bg-white/82 px-4 py-3 text-xs leading-5 text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/10 backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm">
         {ui.hint}
       </div>
@@ -289,9 +369,11 @@ export function SjaellandMunicipalityMap({
       >
         <rect width={width} height={height} fill="transparent" />
 
-        {features.map(({ municipality, pathData, marker }) => {
-          const isHighlighted = hoveredSlug === municipality.slug;
-          const showName = isHighlighted || zoomLevel >= 1.8;
+        {features.map((feature) => {
+          const { municipality, pathData, marker, centroid, bounds } = feature;
+          const isFocused = !focusedFeature || focusedFeature.municipality.slug === municipality.slug;
+          const isHighlighted = hoveredSlug === municipality.slug || focusedFeature?.municipality.slug === municipality.slug;
+          const showName = isHighlighted || zoomLevel >= 1.8 || Boolean(focusedFeature);
           const iconCount = municipality.topIndustries.length;
           const badgeWidth = showName
             ? Math.max(86, municipality.name.length * 7.4 + 28)
@@ -316,12 +398,34 @@ export function SjaellandMunicipalityMap({
               <title>{municipality.name}</title>
               <path
                 d={pathData}
-                fill={municipality.topIndustries[0]?.accentColor ?? "#94a3b8"}
-                fillOpacity={isHighlighted ? 0.38 : 0.22}
+                fill={isFocused ? municipality.topIndustries[0]?.accentColor ?? "#94a3b8" : "#cbd5e1"}
+                fillOpacity={isHighlighted ? 0.38 : isFocused ? 0.22 : 0.08}
                 stroke="#0f172a"
-                strokeOpacity={isHighlighted ? 0.44 : 0.28}
+                strokeOpacity={isHighlighted ? 0.44 : isFocused ? 0.28 : 0.12}
                 strokeWidth={isHighlighted ? 1.6 : 1.2}
               />
+              {debugMode ? (
+                <g style={{ pointerEvents: "none" }}>
+                  <rect
+                    x={bounds.x}
+                    y={bounds.y}
+                    width={bounds.width}
+                    height={bounds.height}
+                    fill="none"
+                    stroke={isFocused ? "#06b6d4" : "#94a3b8"}
+                    strokeDasharray="6 4"
+                    strokeOpacity={isFocused ? 0.75 : 0.35}
+                    strokeWidth="1"
+                  />
+                  <circle
+                    cx={centroid.x}
+                    cy={centroid.y}
+                    r={4}
+                    fill={isFocused ? "#ef4444" : "#94a3b8"}
+                    fillOpacity={0.85}
+                  />
+                </g>
+              ) : null}
               <g transform={`translate(${marker.x}, ${marker.y})`} style={{ pointerEvents: "none" }}>
                 <rect
                   x={-badgeWidth / 2}
