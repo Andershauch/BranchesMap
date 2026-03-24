@@ -24,27 +24,28 @@ const labelTuning: Record<
     nameDy?: number;
     forceName?: boolean;
     hideNameUntilZoom?: boolean;
+    minZoomForName?: number;
   }
 > = {
-  albertslund: { dx: -12, dy: 2, hideNameUntilZoom: true },
-  ballerup: { dx: -10, dy: -8, hideNameUntilZoom: true },
-  brondby: { dx: -10, dy: 6, hideNameUntilZoom: true },
-  dragor: { dx: 10, dy: 14, nameDy: 2 },
-  frederiksberg: { dx: -3, dy: 0, hideNameUntilZoom: true },
-  fredrikstad: {},
-  gentofte: { dx: 12, dy: -10, hideNameUntilZoom: true },
-  gladsaxe: { dx: 8, dy: -10, hideNameUntilZoom: true },
-  glostrup: { dx: -6, dy: -6, hideNameUntilZoom: true },
-  herlev: { dx: -2, dy: -10, hideNameUntilZoom: true },
-  hvidovre: { dx: -8, dy: 10, hideNameUntilZoom: true },
-  "hoje-taastrup": { dx: -10, dy: 6, nameDy: 2 },
-  horsholm: { dx: 10, dy: -10, hideNameUntilZoom: true },
-  ishoj: { dx: -8, dy: 10, hideNameUntilZoom: true },
-  kobenhavn: { dx: 10, dy: -4, iconDy: -2, forceName: true },
-  "lyngby-taarbaek": { dx: 6, dy: -12, hideNameUntilZoom: true },
-  rodovre: { dx: -10, dy: -4, hideNameUntilZoom: true },
-  taarnby: { dx: 8, dy: 8, hideNameUntilZoom: true },
-  vallensbaek: { dx: -12, dy: 8, hideNameUntilZoom: true },
+  albertslund: { dx: -12, dy: 2, hideNameUntilZoom: true, minZoomForName: 2.35 },
+  ballerup: { dx: -10, dy: -8, hideNameUntilZoom: true, minZoomForName: 2.2 },
+  brondby: { dx: -10, dy: 6, hideNameUntilZoom: true, minZoomForName: 2.4 },
+  dragor: { dx: 12, dy: 14, nameDy: 1, minZoomForName: 2.15 },
+  frederiksberg: { dx: -2, dy: 0, hideNameUntilZoom: true, minZoomForName: 2.7 },
+  gentofte: { dx: 12, dy: -8, hideNameUntilZoom: true, minZoomForName: 2.7 },
+  gladsaxe: { dx: 8, dy: -10, hideNameUntilZoom: true, minZoomForName: 2.55 },
+  glostrup: { dx: -6, dy: -6, hideNameUntilZoom: true, minZoomForName: 2.55 },
+  herlev: { dx: -2, dy: -10, hideNameUntilZoom: true, minZoomForName: 2.7 },
+  hvidovre: { dx: -8, dy: 10, hideNameUntilZoom: true, minZoomForName: 2.45 },
+  "hoje-taastrup": { dx: -10, dy: 8, nameDy: 2, forceName: true },
+  horsholm: { dx: 10, dy: -10, hideNameUntilZoom: true, minZoomForName: 2.55 },
+  ishoj: { dx: -8, dy: 10, hideNameUntilZoom: true, minZoomForName: 2.45 },
+  kobenhavn: { dx: 10, dy: -4, iconDy: -1, forceName: true },
+  "lyngby-taarbaek": { dx: 8, dy: -12, hideNameUntilZoom: true, minZoomForName: 2.75 },
+  rodovre: { dx: -10, dy: -4, hideNameUntilZoom: true, minZoomForName: 2.55 },
+  taarnby: { dx: 8, dy: 10, hideNameUntilZoom: true, minZoomForName: 2.6 },
+  vallensbaek: { dx: -12, dy: 8, hideNameUntilZoom: true, minZoomForName: 2.65 },
+  vordingborg: { dx: 0, dy: -14, forceName: true },
 };
 
 const uiCopy: Record<
@@ -172,18 +173,18 @@ function isDebugEnabled(value: string | null) {
 }
 
 function getNameFontSize(bounds: MapFeature["bounds"], lineLength: number, mode: LabelMode) {
-  const maxSize = mode === "full" ? 16 : mode === "compact" ? 14 : 12;
+  const maxSize = mode === "full" ? 15 : mode === "compact" ? 13 : 11.5;
 
   return clamp(
-    Math.min(bounds.width / Math.max(lineLength * 0.66, 1), bounds.height / 3.2),
-    8,
+    Math.min(bounds.width / Math.max(lineLength * 0.72, 1), bounds.height / 3.8),
+    7.8,
     maxSize,
   );
 }
 
 function getIconFontSize(bounds: MapFeature["bounds"], mode: LabelMode) {
-  const base = mode === "full" ? 17 : mode === "compact" ? 15 : 12;
-  return clamp(Math.min(bounds.width / 4.8, bounds.height / 2.8), 10, base);
+  const maxSize = mode === "full" ? 16 : 13.5;
+  return clamp(Math.min(bounds.width / 5.4, bounds.height / 3.4), 9, maxSize);
 }
 
 function splitMunicipalityName(name: string) {
@@ -202,46 +203,59 @@ function splitMunicipalityName(name: string) {
   return [name];
 }
 
+function getLabelScale(zoomLevel: number) {
+  return clamp(1 / Math.pow(zoomLevel, 0.42), 0.52, 1);
+}
+
 function getLabelMode(
   bounds: MapFeature["bounds"],
   zoomLevel: number,
   isHighlighted: boolean,
   hasFocusedFeature: boolean,
-  tuning?: { forceName?: boolean; hideNameUntilZoom?: boolean },
+  tuning?: { forceName?: boolean; hideNameUntilZoom?: boolean; minZoomForName?: number },
 ): LabelMode {
+  const effectiveZoom = tuning?.minZoomForName ?? 0;
+
   if (isHighlighted || hasFocusedFeature) {
-    return bounds.area >= 2600 ? "full" : "compact";
+    if (bounds.area >= 3200) return "full";
+    if (bounds.area >= 1500) return "compact";
+    return "name-only";
   }
 
-  if (zoomLevel >= 2.8) {
-    return bounds.area >= 2200 ? "full" : "compact";
+  if (zoomLevel >= 3) {
+    if (bounds.area >= 7000) return "full";
+    if (bounds.area >= 2200) return "compact";
+    return zoomLevel >= effectiveZoom ? "name-only" : tuning?.forceName ? "name-only" : "hidden";
   }
 
-  if (zoomLevel >= 1.9) {
-    if (bounds.area >= 5200) return "full";
-    if (bounds.area >= 1800) return "compact";
+  if (zoomLevel >= 2) {
+    if (bounds.area >= 10000) return "full";
+    if (bounds.area >= 4200) return "compact";
+    if (bounds.area >= 2200 && zoomLevel >= effectiveZoom) return "name-only";
     return tuning?.forceName ? "name-only" : "hidden";
   }
 
   if (zoomLevel >= 1.35) {
-    if (bounds.area >= 8500) return "full";
-    if (bounds.area >= 4200) return "compact";
-    if (bounds.area >= 2200 && !tuning?.hideNameUntilZoom) return "name-only";
+    if (bounds.area >= 14000) return "full";
+    if (bounds.area >= 7000) return "compact";
+    if (bounds.area >= 3400 && !tuning?.hideNameUntilZoom && zoomLevel >= effectiveZoom) {
+      return "name-only";
+    }
     return tuning?.forceName ? "name-only" : "hidden";
   }
 
-  if (bounds.area >= 12000) return "full";
-  if (bounds.area >= 5200) return "compact";
-  if (bounds.area >= 3000 && !tuning?.hideNameUntilZoom) return "name-only";
+  if (bounds.area >= 18000) return "full";
+  if (bounds.area >= 9000) return "name-only";
   return tuning?.forceName ? "name-only" : "hidden";
 }
 
 function getVisibleIndustries(
   industries: MunicipalitySummary["topIndustries"],
   mode: LabelMode,
+  isHighlighted: boolean,
 ) {
   if (mode === "full") {
-    return industries.slice(0, 3);
+    return industries.slice(0, isHighlighted ? 3 : 2);
   }
 
   if (mode === "compact") {
@@ -490,6 +504,7 @@ export function SjaellandMunicipalityMap({
           const visibleIndustries = getVisibleIndustries(
             municipality.topIndustries,
             labelMode,
+            isHighlighted,
           );
           const showName = labelMode !== "hidden";
           const showIcons = visibleIndustries.length > 0;
@@ -498,16 +513,17 @@ export function SjaellandMunicipalityMap({
             (longest, line) => Math.max(longest, line.length),
             0,
           );
+          const labelScale = getLabelScale(zoomLevel);
           const nameFontSize = getNameFontSize(bounds, longestLine, labelMode);
           const iconFontSize = getIconFontSize(bounds, labelMode);
-          const iconGap = Math.max(12, iconFontSize * 0.88);
+          const iconGap = Math.max(10, iconFontSize * 0.84);
           const iconStartX = -((visibleIndustries.length - 1) * iconGap) / 2;
           const iconY =
             showIcons && showName
-              ? -(nameLines.length === 1 ? 7 : 10) + (tuning.iconDy ?? 0)
+              ? -(nameLines.length === 1 ? 6 : 8) + (tuning.iconDy ?? 0)
               : (tuning.iconDy ?? 0);
           const nameBaseY =
-            (showIcons ? iconY + iconFontSize * 1.05 : 0) + (tuning.nameDy ?? 0);
+            (showIcons ? iconY + iconFontSize * 0.95 : 0) + (tuning.nameDy ?? 0);
 
           return (
             <a
@@ -557,7 +573,7 @@ export function SjaellandMunicipalityMap({
                 clipPath={`url(#municipality-clip-${municipality.slug})`}
                 style={{ pointerEvents: "none" }}
               >
-                <g transform={`translate(${marker.x}, ${marker.y})`}>
+                <g transform={`translate(${marker.x}, ${marker.y}) scale(${labelScale})`}>
                   {showIcons
                     ? visibleIndustries.map((industry, index) => (
                         <text
@@ -581,8 +597,8 @@ export function SjaellandMunicipalityMap({
                         fontSize={nameFontSize}
                         fontWeight="700"
                         fill="#0f172a"
-                        stroke="rgba(247,245,239,0.92)"
-                        strokeWidth={showIcons ? 3.2 : 2.8}
+                        stroke="rgba(247,245,239,0.9)"
+                        strokeWidth={showIcons ? 2.7 : 2.4}
                         strokeLinejoin="round"
                         paintOrder="stroke"
                       >
@@ -590,7 +606,7 @@ export function SjaellandMunicipalityMap({
                           <tspan
                             key={`${municipality.slug}-label-shadow-${line}`}
                             x="0"
-                            dy={index === 0 ? 0 : nameFontSize + 1.2}
+                            dy={index === 0 ? 0 : nameFontSize + 1}
                           >
                             {line}
                           </tspan>
@@ -608,7 +624,7 @@ export function SjaellandMunicipalityMap({
                           <tspan
                             key={`${municipality.slug}-label-fill-${line}`}
                             x="0"
-                            dy={index === 0 ? 0 : nameFontSize + 1.2}
+                            dy={index === 0 ? 0 : nameFontSize + 1}
                           >
                             {line}
                           </tspan>
