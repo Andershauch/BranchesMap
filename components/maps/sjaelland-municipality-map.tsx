@@ -12,7 +12,7 @@ const width = 900;
 const height = 980;
 const aspectRatio = height / width;
 const initialViewBox = { x: 0, y: 0, width, height };
-const minViewWidth = width / 3.6;
+const minViewWidth = width / 8.5;
 const zoomStep = 1.22;
 const mapLabelFontFamily = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -66,7 +66,7 @@ const uiCopy: Record<
     zoomIn: "Zoom ind",
     zoomOut: "Zoom ud",
     reset: "Nulstil",
-    hint: "Klik p\u00e5 en kommune for at zoome ind. Brug knapperne eller musehjulet til at justere zoom, og klik igen for at åbne detaljer.",
+    hint: "Klik p\u00e5 en kommune for at fokusere den i hele viewporten. Brug knapperne eller musehjulet til finjustering, og klik igen for at \u00e5bne detaljer.",
     debugBadge: "Kort-debug aktiv",
     debugHint: "Debug viser centroid, bounding box og g\u00f8r det muligt at isolere \u00e9n kommune via URL-parametre.",
     debugFocusLabel: "Fokus",
@@ -76,7 +76,7 @@ const uiCopy: Record<
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     reset: "Reset",
-    hint: "Click a municipality to zoom in. Use the buttons or your mouse wheel to adjust the zoom, then click again to open details.",
+    hint: "Click a municipality to focus it across the viewport. Use the buttons or your mouse wheel for fine-tuning, then click again to open details.",
     debugBadge: "Map debug enabled",
     debugHint: "Debug shows centroids, bounding boxes, and lets us isolate a municipality through URL params.",
     debugFocusLabel: "Focus",
@@ -157,10 +157,12 @@ function scaleViewBox(viewBox: ViewBox, factor: number, center: Point): ViewBox 
 }
 
 function createFeatureViewBox(bounds: MapFeature["bounds"]): ViewBox {
-  const padding = clamp(Math.max(bounds.width, bounds.height) * 0.55, 36, 120);
+  const longestSide = Math.max(bounds.width, bounds.height);
+  const padding = clamp(longestSide * 0.18, 14, 42);
   const paddedWidth = bounds.width + padding * 2;
   const paddedHeight = bounds.height + padding * 2;
-  const nextWidth = clamp(Math.max(paddedWidth, paddedHeight / aspectRatio), minViewWidth, width);
+  const fitWidth = Math.max(paddedWidth, paddedHeight / aspectRatio);
+  const nextWidth = clamp(fitWidth, minViewWidth, width);
   const nextHeight = nextWidth * aspectRatio;
   const centerX = bounds.x + bounds.width / 2;
   const centerY = bounds.y + bounds.height / 2;
@@ -379,7 +381,7 @@ export function SjaellandMunicipalityMap({
   }
 
   function handleMunicipalityClick(event: MouseEvent<HTMLAnchorElement>, feature: MapFeature) {
-    const shouldZoomFirst = selectedSlug !== feature.municipality.slug || zoomLevel < 2.2;
+    const shouldZoomFirst = selectedSlug !== feature.municipality.slug || zoomLevel < 4.5;
 
     if (shouldZoomFirst) {
       event.preventDefault();
