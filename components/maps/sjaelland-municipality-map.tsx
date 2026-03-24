@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { geoMercator, geoPath } from "d3-geo";
-import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
+import { useMemo, useRef, useState, type MouseEvent, type PointerEvent, type WheelEvent } from "react";
 
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
@@ -66,7 +66,7 @@ const uiCopy: Record<
     zoomIn: "Zoom ind",
     zoomOut: "Zoom ud",
     reset: "Nulstil",
-    hint: "Brug knapperne eller musehjulet til at zoome. N\u00e5r du er zoomet ind, kan du tr\u00e6kke kortet rundt.",
+    hint: "Klik p\u00e5 en kommune for at zoome ind. Brug knapperne eller musehjulet til at justere zoom, og klik igen for at åbne detaljer.",
     debugBadge: "Kort-debug aktiv",
     debugHint: "Debug viser centroid, bounding box og g\u00f8r det muligt at isolere \u00e9n kommune via URL-parametre.",
     debugFocusLabel: "Fokus",
@@ -76,7 +76,7 @@ const uiCopy: Record<
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     reset: "Reset",
-    hint: "Use the buttons or your mouse wheel to zoom. Once zoomed in, you can drag the map around.",
+    hint: "Click a municipality to zoom in. Use the buttons or your mouse wheel to adjust the zoom, then click again to open details.",
     debugBadge: "Map debug enabled",
     debugHint: "Debug shows centroids, bounding boxes, and lets us isolate a municipality through URL params.",
     debugFocusLabel: "Focus",
@@ -151,6 +151,23 @@ function scaleViewBox(viewBox: ViewBox, factor: number, center: Point): ViewBox 
   return clampViewBox({
     x: center.x - relativeX * nextWidth,
     y: center.y - relativeY * nextHeight,
+    width: nextWidth,
+    height: nextHeight,
+  });
+}
+
+function createFeatureViewBox(bounds: MapFeature["bounds"]): ViewBox {
+  const padding = clamp(Math.max(bounds.width, bounds.height) * 0.55, 36, 120);
+  const paddedWidth = bounds.width + padding * 2;
+  const paddedHeight = bounds.height + padding * 2;
+  const nextWidth = clamp(Math.max(paddedWidth, paddedHeight / aspectRatio), minViewWidth, width);
+  const nextHeight = nextWidth * aspectRatio;
+  const centerX = bounds.x + bounds.width / 2;
+  const centerY = bounds.y + bounds.height / 2;
+
+  return clampViewBox({
+    x: centerX - nextWidth / 2,
+    y: centerY - nextHeight / 2,
     width: nextWidth,
     height: nextHeight,
   });
@@ -284,6 +301,7 @@ export function SjaellandMunicipalityMap({
   const dragStateRef = useRef<DragState | null>(null);
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const zoomLevel = width / viewBox.width;
   const ui = uiCopy[locale];
@@ -331,9 +349,15 @@ export function SjaellandMunicipalityMap({
       .filter((value): value is NonNullable<typeof value> => Boolean(value));
   }, [municipalities]);
 
-  const focusedFeature = normalizedDebugSlug
+  const debugFocusedFeature = normalizedDebugSlug
     ? features.find((feature) => feature.municipality.slug === normalizedDebugSlug) ?? null
     : null;
+
+  const selectedFeature = selectedSlug
+    ? features.find((feature) => feature.municipality.slug === selectedSlug) ?? null
+    : null;
+
+  const focusedFeature = debugFocusedFeature ?? selectedFeature;
 
   function zoomAtCenter(factor: number) {
     setViewBox((current) =>
@@ -344,8 +368,24 @@ export function SjaellandMunicipalityMap({
     );
   }
 
+  function zoomToFeature(feature: MapFeature) {
+    setSelectedSlug(feature.municipality.slug);
+    setViewBox(createFeatureViewBox(feature.bounds));
+  }
+
   function resetView() {
+    setSelectedSlug(null);
     setViewBox(initialViewBox);
+  }
+
+  function handleMunicipalityClick(event: MouseEvent<HTMLAnchorElement>, feature: MapFeature) {
+    const shouldZoomFirst = selectedSlug !== feature.municipality.slug || zoomLevel < 2.2;
+
+    if (shouldZoomFirst) {
+      event.preventDefault();
+      event.stopPropagation();
+      zoomToFeature(feature);
+    }
   }
 
   function handleWheel(event: WheelEvent<SVGSVGElement>) {
@@ -482,59 +522,17 @@ export function SjaellandMunicipalityMap({
         style={{ touchAction: zoomLevel > 1.02 ? "none" : "pan-y" }}
       >
         <rect width={width} height={height} fill="transparent" />
-        <defs>
-          {features.map(({ municipality, pathData }) => (
-            <clipPath
-              key={`${municipality.slug}-clip`}
-              id={`municipality-clip-${municipality.slug}`}
-            >
-              <path d={pathData} />
-            </clipPath>
-          ))}
-        </defs>
-
         {features.map((feature) => {
-          const { municipality, pathData, marker, centroid, bounds } = feature;
-          const tuning = labelTuning[municipality.slug] ?? {};
+          const { municipality, pathData, centroid, bounds } = feature;
           const isFocused = !focusedFeature || focusedFeature.municipality.slug === municipality.slug;
           const isHighlighted =
             hoveredSlug === municipality.slug || focusedFeature?.municipality.slug === municipality.slug;
-          const labelMode = getLabelMode(
-            bounds,
-            zoomLevel,
-            isHighlighted,
-            Boolean(focusedFeature),
-            tuning,
-          );
-          const visibleIndustries = getVisibleIndustries(
-            municipality.topIndustries,
-            labelMode,
-            zoomLevel,
-            isHighlighted,
-          );
-          const showName = labelMode !== "hidden";
-          const showIcons = visibleIndustries.length > 0;
-          const nameLines = splitMunicipalityName(municipality.name);
-          const longestLine = nameLines.reduce(
-            (longest, line) => Math.max(longest, line.length),
-            0,
-          );
-          const labelScale = getLabelScale(zoomLevel);
-          const nameFontSize = getNameFontSize(bounds, longestLine, labelMode);
-          const iconFontSize = getIconFontSize(bounds, labelMode);
-          const iconGap = Math.max(10, iconFontSize * 0.84);
-          const iconStartX = -((visibleIndustries.length - 1) * iconGap) / 2;
-          const iconY =
-            showIcons && showName
-              ? -(nameLines.length === 1 ? 6 : 8) + (tuning.iconDy ?? 0)
-              : (tuning.iconDy ?? 0);
-          const nameBaseY =
-            (showIcons ? iconY + iconFontSize * 0.95 : 0) + (tuning.nameDy ?? 0);
 
           return (
             <a
               key={municipality.slug}
-              href={`/${locale}/kommuner/${municipality.slug}`}
+              href={"/" + locale + "/kommuner/" + municipality.slug}
+              onClick={(event) => handleMunicipalityClick(event, feature)}
               onMouseEnter={() => setHoveredSlug(municipality.slug)}
               onMouseLeave={() =>
                 setHoveredSlug((current) => (current === municipality.slug ? null : current))
@@ -575,79 +573,125 @@ export function SjaellandMunicipalityMap({
                   />
                 </g>
               ) : null}
-              <g
-                clipPath={`url(#municipality-clip-${municipality.slug})`}
-                style={{ pointerEvents: "none" }}
-              >
-                <g transform={`translate(${marker.x}, ${marker.y}) scale(${labelScale})`}>
-                  {showIcons
-                    ? visibleIndustries.map((industry, index) => (
-                        <text
-                          key={`${municipality.slug}-${industry.slug}-icon`}
-                          x={iconStartX + index * iconGap}
-                          y={iconY}
-                          fontSize={iconFontSize}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          opacity={0.95}
-                        >
-                          {industry.icon}
-                        </text>
-                      ))
-                    : null}
-                  {showName ? (
-                    <>
-                      <text
-                        x="0"
-                        y={nameBaseY}
-                        textAnchor="middle"
-                        fontFamily={mapLabelFontFamily}
-                        fontSize={nameFontSize}
-                        fontWeight="600"
-                        letterSpacing="-0.1"
-                        fill="#0f172a"
-                        stroke="rgba(248,250,252,0.96)"
-                        strokeWidth={showIcons ? 2.1 : 1.8}
-                        strokeLinejoin="round"
-                        paintOrder="stroke"
-                      >
-                        {nameLines.map((line, index) => (
-                          <tspan
-                            key={`${municipality.slug}-label-shadow-${line}`}
-                            x="0"
-                            dy={index === 0 ? 0 : nameFontSize * 0.92}
-                          >
-                            {line}
-                          </tspan>
-                        ))}
-                      </text>
-                      <text
-                        x="0"
-                        y={nameBaseY}
-                        textAnchor="middle"
-                        fontFamily={mapLabelFontFamily}
-                        fontSize={nameFontSize}
-                        fontWeight="600"
-                        letterSpacing="-0.1"
-                        fill="#0f172a"
-                      >
-                        {nameLines.map((line, index) => (
-                          <tspan
-                            key={`${municipality.slug}-label-fill-${line}`}
-                            x="0"
-                            dy={index === 0 ? 0 : nameFontSize * 0.92}
-                          >
-                            {line}
-                          </tspan>
-                        ))}
-                      </text>
-                    </>
-                  ) : null}
-                </g>
-              </g>
             </a>
           );
         })}
+
+        <g style={{ pointerEvents: "none" }}>
+          {features.map((feature) => {
+            const { municipality, marker, bounds } = feature;
+            const tuning = labelTuning[municipality.slug] ?? {};
+            const isHighlighted =
+              hoveredSlug === municipality.slug || focusedFeature?.municipality.slug === municipality.slug;
+            const labelMode = getLabelMode(
+              bounds,
+              zoomLevel,
+              isHighlighted,
+              Boolean(focusedFeature),
+              tuning,
+            );
+            const visibleIndustries = getVisibleIndustries(
+              municipality.topIndustries,
+              labelMode,
+              zoomLevel,
+              isHighlighted,
+            );
+            const showName = labelMode !== "hidden";
+            const showIcons = visibleIndustries.length > 0;
+
+            if (!showName && !showIcons) {
+              return null;
+            }
+
+            const nameLines = splitMunicipalityName(municipality.name);
+            const longestLine = nameLines.reduce(
+              (longest, line) => Math.max(longest, line.length),
+              0,
+            );
+            const labelScale = getLabelScale(zoomLevel);
+            const nameFontSize = getNameFontSize(bounds, longestLine, labelMode);
+            const iconFontSize = getIconFontSize(bounds, labelMode);
+            const iconGap = Math.max(10, iconFontSize * 0.84);
+            const iconStartX = -((visibleIndustries.length - 1) * iconGap) / 2;
+            const iconY =
+              showIcons && showName
+                ? -(nameLines.length === 1 ? 6 : 8) + (tuning.iconDy ?? 0)
+                : (tuning.iconDy ?? 0);
+            const nameBaseY =
+              (showIcons ? iconY + iconFontSize * 0.95 : 0) + (tuning.nameDy ?? 0);
+
+            return (
+              <g
+                key={municipality.slug + "-label"}
+                transform={"translate(" + marker.x + ", " + marker.y + ") scale(" + labelScale + ")"}
+              >
+                {showIcons
+                  ? visibleIndustries.map((industry, index) => (
+                      <text
+                        key={municipality.slug + "-" + industry.slug + "-icon"}
+                        x={iconStartX + index * iconGap}
+                        y={iconY}
+                        fontSize={iconFontSize}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        opacity={0.95}
+                      >
+                        {industry.icon}
+                      </text>
+                    ))
+                  : null}
+                {showName ? (
+                  <>
+                    <text
+                      x="0"
+                      y={nameBaseY}
+                      textAnchor="middle"
+                      fontFamily={mapLabelFontFamily}
+                      fontSize={nameFontSize}
+                      fontWeight="600"
+                      letterSpacing="-0.1"
+                      fill="#0f172a"
+                      stroke="rgba(248,250,252,0.98)"
+                      strokeWidth={showIcons ? 2.2 : 2}
+                      strokeLinejoin="round"
+                      paintOrder="stroke"
+                    >
+                      {nameLines.map((line, index) => (
+                        <tspan
+                          key={municipality.slug + "-label-shadow-" + line}
+                          x="0"
+                          dy={index === 0 ? 0 : nameFontSize * 0.92}
+                        >
+                          {line}
+                        </tspan>
+                      ))}
+                    </text>
+                    <text
+                      x="0"
+                      y={nameBaseY}
+                      textAnchor="middle"
+                      fontFamily={mapLabelFontFamily}
+                      fontSize={nameFontSize}
+                      fontWeight="600"
+                      letterSpacing="-0.1"
+                      fill="#0f172a"
+                    >
+                      {nameLines.map((line, index) => (
+                        <tspan
+                          key={municipality.slug + "-label-fill-" + line}
+                          x="0"
+                          dy={index === 0 ? 0 : nameFontSize * 0.92}
+                        >
+                          {line}
+                        </tspan>
+                      ))}
+                    </text>
+                  </>
+                ) : null}
+              </g>
+            );
+          })}
+        </g>
       </svg>
     </div>
   );
