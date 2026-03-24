@@ -222,6 +222,12 @@ function getLabelMode(
     return "name-only";
   }
 
+  if (zoomLevel >= 3.2) {
+    if (bounds.area >= 9000) return "full";
+    if (bounds.area >= 2800) return "compact";
+    return "name-only";
+  }
+
   if (zoomLevel >= 3) {
     if (bounds.area >= 7000) return "full";
     if (bounds.area >= 2200) return "compact";
