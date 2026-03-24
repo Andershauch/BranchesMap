@@ -12,7 +12,7 @@ const width = 900;
 const height = 980;
 const aspectRatio = height / width;
 const initialViewBox = { x: 0, y: 0, width, height };
-const minViewWidth = width / 8.5;
+const minViewWidth = width / 13;
 const zoomStep = 1.22;
 const mapLabelFontFamily = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -158,10 +158,13 @@ function scaleViewBox(viewBox: ViewBox, factor: number, center: Point): ViewBox 
 
 function createFeatureViewBox(bounds: MapFeature["bounds"]): ViewBox {
   const longestSide = Math.max(bounds.width, bounds.height);
-  const padding = clamp(longestSide * 0.18, 14, 42);
+  const zoomBias =
+    longestSide < 42 ? 0.48 : longestSide < 60 ? 0.58 : longestSide < 90 ? 0.72 : 0.88;
+  const paddingRatio = longestSide < 60 ? 0.08 : longestSide < 110 ? 0.12 : 0.18;
+  const padding = clamp(longestSide * paddingRatio, 8, 34);
   const paddedWidth = bounds.width + padding * 2;
   const paddedHeight = bounds.height + padding * 2;
-  const fitWidth = Math.max(paddedWidth, paddedHeight / aspectRatio);
+  const fitWidth = Math.max(paddedWidth, paddedHeight / aspectRatio) * zoomBias;
   const nextWidth = clamp(fitWidth, minViewWidth, width);
   const nextHeight = nextWidth * aspectRatio;
   const centerX = bounds.x + bounds.width / 2;
