@@ -270,6 +270,52 @@ En bruger kan åbne appen på mobil, trykke på en kommune og se brancher og job
 - ingen offentlig mutation uden auth, når adminsporet flyttes til database
 - tydelig adskillelse mellem offentlige kortdata og fremtidige private adminfunktioner
 
+### Implementeringstrin - anbefalet rækkefølge
+
+1. Lås kortets interaktionskontrakt
+   - bekræft og dokumentér den endelige adfærd for zoom, pan, første klik, andet klik og nulstilling
+   - fjern eller omskriv interaktioner som overlapper hinanden eller giver skjult adfærd
+2. Stabiliser mobilkortet visuelt
+   - test portrait-layout på typiske mobilstørrelser
+   - fastlæg minimums- og maksimumzoom
+   - verificér pinch, pan og klik uden konflikter
+3. Ryd labelmotoren op
+   - definér faste regler for navn, ikonantal og skalering pr. zoomniveau
+   - lav særregler for små kommuner og tætte områder
+   - dokumentér fallback-regler når der ikke er plads
+4. Indfør kort-UX smoke tests
+   - manuel testtjekliste for mobil og desktop
+   - senere e2e-tests for fokusér kommune, skift kommune og vis data
+5. Flyt hovedkortkonfiguration ind i datamodellen
+   - tilføj felter til styring af synlighed, prioritet og labelmode
+   - beslut hvad der skal ligge i Prisma, seed og DTO'er
+6. Byg server-side læselag for hovedkortvisning
+   - fjern afhængighed af `localStorage` som sandhedskilde
+   - læs featured kommuner fra server-side konfiguration
+7. Byg intern admin-mutation
+   - opret sikker server-side mutation til at opdatere hovedkortkonfiguration
+   - beskyt den som intern funktion indtil auth er på plads
+8. Lav enkel intern admin-UI
+   - vis liste over kommuner med synlighed, prioritet og labelmode
+   - gør ændringer reversible og lette at teste
+9. Seed og dokumentér standardopsætning
+   - definér standardudvalg af kommuner til hovedkortet
+   - dokumentér hvorfor netop de kommuner er valgt
+10. Verificér hele Fase 1A som release-kandidat
+   - test mobil og desktop ende-til-ende
+   - test at adminændringer slår igennem uden kodeændring eller redeploy af datafil
+
+### Definition of Done - Fase 1A
+
+- kortet starter på hele Sjælland og ikke i en tvungen kommune
+- zoom, pan og touch fungerer stabilt på mobil og desktop
+- første klik fokuserer kommune, andet klik på samme kommune viser data
+- skift til anden kommune virker uden nulstilling
+- kommunenavne og ikoner er læsbare i default-view og ved zoom
+- hovedkortets kommunevalg styres af server-side konfiguration, ikke kun browser-state
+- intern adminfunktion kan ændre hvilke kommuner der vises på hovedkortet
+- ændringer i hovedkortopsætning kræver ikke kodeændring i komponenter
+
 ### Exit-kriterium
 
 Kortet fungerer stabilt på mobil og desktop, hovedkortets kommunevisning kan styres struktureret, og vi har fjernet behovet for kodeændringer hver gang udvalget af kommuner skal justeres.
