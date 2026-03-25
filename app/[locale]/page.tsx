@@ -1,16 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
-import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
+import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
-import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
-import {
-  buildMunicipalityTeaser,
-  formatDemoJobsLabel,
-  formatNumber,
-  getIndustryLabel,
-} from "@/lib/i18n/format";
+import { formatNumber } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 
@@ -36,109 +28,41 @@ export default async function LocalizedHomePage({ params }: LocalizedHomePagePro
     getDictionary(locale),
   ]);
 
+  const primaryMunicipalities = municipalities.filter((municipality) => municipality.homeMap.isPrimary);
+
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-6 py-12 text-slate-900">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
-        <section className="overflow-hidden rounded-[2rem] border border-slate-900/10 bg-white/90 p-8 shadow-[0_20px_80px_rgba(15,23,42,0.08)]">
+    <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-4 py-6 text-slate-900 sm:px-6 sm:py-10">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 sm:gap-8">
+        <section className="overflow-hidden rounded-[2rem] border border-slate-900/10 bg-white/90 p-6 shadow-[0_20px_80px_rgba(15,23,42,0.08)] sm:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-teal-700">
             {dictionary.home.kicker}
           </p>
           <div className="mt-4 max-w-4xl">
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+            <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
               {dictionary.home.title}
             </h1>
-            <p className="mt-4 text-lg leading-8 text-slate-700">
+            <p className="mt-4 text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
               {dictionary.home.intro}
             </p>
           </div>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-700">
+          <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-700">
             <span className="rounded-full border border-slate-300 px-4 py-2">
-              {formatNumber(locale, municipalities.length)} {dictionary.home.municipalitiesBadge}
+              {formatNumber(locale as AppLocale, municipalities.length)} {dictionary.home.municipalitiesBadge}
             </span>
             <span className="rounded-full border border-slate-300 px-4 py-2">
-              {formatNumber(locale, sjaellandMunicipalityFeatureCollection.features.length)} {dictionary.home.boundariesBadge}
+              {formatNumber(locale as AppLocale, primaryMunicipalities.length)} {locale === "da" ? "synlige p\u00e5 hovedkortet" : "visible on the home map"}
             </span>
             <span className="rounded-full border border-slate-300 px-4 py-2">
-              {dictionary.home.geometryBadge}
+              {locale === "da" ? "Mobile-first kortoplevelse" : "Mobile-first map experience"}
             </span>
-            <Link
-              href="/api/utf8"
-              className="rounded-full bg-slate-900 px-4 py-2 font-medium text-white transition hover:bg-slate-700"
-            >
-              {dictionary.home.utf8Action}
-            </Link>
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-slate-900/10 bg-white/90 p-5 shadow-[0_20px_80px_rgba(15,23,42,0.06)] sm:p-8">
-          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold">{dictionary.home.mapTitle}</h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                {dictionary.home.mapDescription}
-              </p>
-            </div>
-            <p className="max-w-md text-sm leading-6 text-slate-600">
-              {dictionary.home.mapNote}
-            </p>
-          </div>
-
-          <Suspense
-            fallback={
-              <div className="aspect-[9/10] rounded-[1.75rem] bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_34%,#9abdaf_100%)] sm:aspect-[9/8]" />
-            }
-          >
-            <SjaellandMunicipalityMap
-              municipalities={municipalities}
-              locale={locale as AppLocale}
-              ariaLabel={dictionary.home.mapAriaLabel}
-            />
-          </Suspense>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {municipalities.map((municipality) => {
-            const industryNames = municipality.topIndustries.map((industry) =>
-              getIndustryLabel(dictionary, industry.code, industry.name),
-            );
-            const teaser = buildMunicipalityTeaser(
-              locale as AppLocale,
-              dictionary,
-              municipality.name,
-              industryNames,
-            );
-
-            return (
-              <Link
-                key={municipality.slug}
-                href={`/${locale}/kommuner/${municipality.slug}`}
-                className="rounded-[1.5rem] border border-slate-900/10 bg-white/85 p-5 transition hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(15,23,42,0.08)]"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-semibold">{municipality.name}</h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{teaser}</p>
-                  </div>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                    {formatDemoJobsLabel(locale as AppLocale, dictionary, municipality.totalJobs)}
-                  </span>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {municipality.topIndustries.map((industry) => (
-                    <span
-                      key={`${municipality.slug}-${industry.slug}-badge`}
-                      className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium text-white"
-                      style={{ backgroundColor: industry.accentColor }}
-                    >
-                      <span>{industry.icon}</span>
-                      <span>{getIndustryLabel(dictionary, industry.code, industry.name)}</span>
-                    </span>
-                  ))}
-                </div>
-              </Link>
-            );
-          })}
-        </section>
+        <HomeMapExplorer
+          municipalities={municipalities}
+          locale={locale as AppLocale}
+          ariaLabel={dictionary.home.mapAriaLabel}
+        />
       </div>
     </main>
   );
