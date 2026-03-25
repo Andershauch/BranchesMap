@@ -220,14 +220,21 @@ function splitMunicipalityName(name: string) {
   return [name];
 }
 
-function getNameFontSize(bounds: MapFeature["bounds"], lineLength: number, mode: LabelMode) {
-  const maxSize = mode === "full" ? 12.5 : mode === "compact" ? 11.25 : 10.5;
+function getNameFontSize(
+  bounds: MapFeature["bounds"],
+  lines: string[],
+  reservedTopSpace: number,
+  mode: LabelMode,
+) {
+  const innerPadding = 10;
+  const longestLine = lines.reduce((longest, line) => Math.max(longest, line.length), 0);
+  const availableWidth = Math.max(bounds.width - innerPadding * 2, 18);
+  const availableHeight = Math.max(bounds.height - innerPadding * 2 - reservedTopSpace, 16);
+  const widthLimitedSize = availableWidth / Math.max(longestLine * 0.62, 1);
+  const heightLimitedSize = availableHeight / Math.max(lines.length * 0.94, 1);
+  const maxSize = mode === "full" ? 28 : mode === "compact" ? 22 : 18;
 
-  return clamp(
-    Math.min(bounds.width / Math.max(lineLength * 0.92, 1), bounds.height / 4.8),
-    7,
-    maxSize,
-  );
+  return clamp(Math.min(widthLimitedSize, heightLimitedSize), 7, maxSize);
 }
 
 function getIconFontSize(bounds: MapFeature["bounds"], mode: LabelMode) {
@@ -676,9 +683,7 @@ export function SjaellandMunicipalityMap({
             }
 
             const nameLines = splitMunicipalityName(municipality.name);
-            const longestLine = nameLines.reduce((longest, line) => Math.max(longest, line.length), 0);
             const labelScale = getLabelScale(zoomLevel);
-            const nameFontSize = getNameFontSize(bounds, longestLine, labelMode);
             const iconFontSize = getIconFontSize(bounds, labelMode);
             const iconPositions = getIconPositions(
               visibleIndustries.length,
@@ -687,7 +692,9 @@ export function SjaellandMunicipalityMap({
               tuning.iconDy ?? 0,
             );
             const lowestIconY = iconPositions.reduce((lowest, position) => Math.max(lowest, position.y), -12);
-            const nameBaseY = (showIcons ? lowestIconY + iconFontSize * 0.95 : 0) + 8 + (tuning.nameDy ?? 0);
+            const reservedTopSpace = showIcons ? Math.max(lowestIconY + iconFontSize * 1.05 + 10, 0) : 0;
+            const nameFontSize = getNameFontSize(bounds, nameLines, reservedTopSpace, labelMode);
+            const nameBaseY = (reservedTopSpace > 0 ? reservedTopSpace : 8) + (tuning.nameDy ?? 0);
 
             return (
               <g
