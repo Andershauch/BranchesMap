@@ -292,6 +292,33 @@ function getVisibleIndustries(
   return [];
 }
 
+function getIconPositions(
+  count: number,
+  bounds: MapFeature["bounds"],
+  mode: LabelMode,
+  iconDy = 0,
+) {
+  const spreadX = clamp(bounds.width * (mode === "full" ? 0.16 : 0.12), 12, mode === "full" ? 28 : 20);
+  const wideSpreadX = spreadX * 1.18;
+
+  if (count <= 1) {
+    return [{ x: 0, y: -14 + iconDy }];
+  }
+
+  if (count === 2) {
+    return [
+      { x: -spreadX, y: -12 + iconDy },
+      { x: spreadX, y: -12 + iconDy },
+    ];
+  }
+
+  return [
+    { x: -wideSpreadX, y: -8 + iconDy },
+    { x: 0, y: -22 + iconDy },
+    { x: wideSpreadX, y: -8 + iconDy },
+  ];
+}
+
 function getDistance(left: PointerSnapshot, right: PointerSnapshot) {
   return Math.hypot(right.clientX - left.clientX, right.clientY - left.clientY);
 }
@@ -653,10 +680,14 @@ export function SjaellandMunicipalityMap({
             const labelScale = getLabelScale(zoomLevel);
             const nameFontSize = getNameFontSize(bounds, longestLine, labelMode);
             const iconFontSize = getIconFontSize(bounds, labelMode);
-            const iconGap = Math.max(10, iconFontSize * 0.86);
-            const iconStartX = -((visibleIndustries.length - 1) * iconGap) / 2;
-            const iconY = showIcons && showName ? -8 + (tuning.iconDy ?? 0) : 0;
-            const nameBaseY = (showIcons ? iconY + iconFontSize * 0.95 : 0) + 8 + (tuning.nameDy ?? 0);
+            const iconPositions = getIconPositions(
+              visibleIndustries.length,
+              bounds,
+              labelMode,
+              tuning.iconDy ?? 0,
+            );
+            const lowestIconY = iconPositions.reduce((lowest, position) => Math.max(lowest, position.y), -12);
+            const nameBaseY = (showIcons ? lowestIconY + iconFontSize * 0.95 : 0) + 8 + (tuning.nameDy ?? 0);
 
             return (
               <g
@@ -673,8 +704,8 @@ export function SjaellandMunicipalityMap({
                   ? visibleIndustries.map((industry, index) => (
                       <text
                         key={municipality.slug + "-" + industry.slug + "-icon"}
-                        x={iconStartX + index * iconGap}
-                        y={iconY}
+                        x={iconPositions[index]?.x ?? 0}
+                        y={iconPositions[index]?.y ?? 0}
                         fontSize={iconFontSize}
                         textAnchor="middle"
                         dominantBaseline="middle"
