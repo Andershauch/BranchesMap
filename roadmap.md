@@ -1,4 +1,4 @@
-﻿# Sjællandskort App Roadmap
+# Sjællandskort App Roadmap
 
 ## Første fundamentkrav - danske tegn og UTF-8
 
@@ -212,6 +212,67 @@ Vi har en klar product brief, datamodel og arkitekturbeslutning, som et lille te
 
 En bruger kan åbne appen på mobil, trykke på en kommune og se brancher og jobs uden at kende systemet på forhånd.
 
+## Fase 1A - Kort-UX og admin-styring
+
+**Mål:** Gør hovedkortet stabilt, læsbart og styrbart, så POC'en faktisk kan bruges på mobil og senere redigeres af admin uden kodeændringer.
+
+### Leverancer
+
+- stabil mobile-first kortoplevelse med zoom, pan og touch
+- tydelig to-trins interaktion: fokusér kommune, vis derefter data
+- mere robust label- og ikonlayout på tværs af små og store kommuner
+- admin-styret visning af kommuner på hovedkortet
+- forberedelse til databasebaseret adminstyring i stedet for browser-state
+
+### Konkrete opgaver - Kort-UX
+
+- fastlæg endelig interaktionsmodel for kortet:
+  - første tryk klik fokuserer kommune
+  - andet tryk klik på samme kommune viser data
+  - tryk på anden kommune skifter fokus uden nulstilling
+- stabilisér zoom og pan på mobil og desktop
+- fastlæg portrait-first kortformat til forsidevisningen
+- gør labels mere kartografiske og mindre støjende
+- gør ikonplacering mere jævn inde i kommunen
+- indfør klare regler for hvornår navn og ikoner vises ved forskellige zoomniveauer
+- test særligt små og tætte kommuner i hovedstadsområdet
+- definér fallback-adfærd for kommuner med for lidt plads til 3 ikoner
+
+### Konkrete opgaver - Admin-styring
+
+- udvid datamodellen med feltkoncept for hovedkortvisning, fx:
+  - `isVisibleOnHomeMap`
+  - `displayPriority`
+  - `labelMode`
+- flyt visningsvalg ud af `localStorage` og ind i database eller seedbar konfiguration
+- opret sikre server-side funktioner til at læse hovedkortkonfiguration
+- definer hvilke kommuner der som standard skal fremhæves på hovedkortet
+- forbered simpelt admin-flow til at:
+  - skjule vise kommuner på hovedkortet
+  - ændre prioritet
+  - styre hvordan labels vises
+- afgræns adminfunktionalitet som intern feature, indtil rigtig auth er på plads
+
+### Design- og produktregler
+
+- hovedkortet må aldrig starte i en tvungen zoomet kommune
+- kortet skal være brugbart med én hånd på mobil
+- kommunenavn skal fylde mest muligt inden for kommunen med luft omkring sig
+- ikoner må aldrig gøre kommunenavnet ulæseligt
+- informationspanel og kortnavigation skal være tydeligt adskilt
+- små kommuner må gerne have færre synlige elementer end store kommuner
+
+### Sikkerhedskrav
+
+- adminkonfiguration må kun kunne ændres server-side
+- ingen skjulte adminflag kun i klienten som fremtidig permanent løsning
+- validering på alle adminfelter og prioriteringer
+- ingen offentlig mutation uden auth, når adminsporet flyttes til database
+- tydelig adskillelse mellem offentlige kortdata og fremtidige private adminfunktioner
+
+### Exit-kriterium
+
+Kortet fungerer stabilt på mobil og desktop, hovedkortets kommunevisning kan styres struktureret, og vi har fjernet behovet for kodeændringer hver gang udvalget af kommuner skal justeres.
 ## Fase 2 - PWA og app-oplevelse
 
 **Mål:** Gør webappen installérbar og mere native i følelsen.
@@ -382,11 +443,12 @@ Appen kan drives med synlighed på fejl, performance og sikkerhed.
 
 1. Fase 0
 2. Fase 1
-3. Fase 2
-4. Fase 3
-5. Fase 4
-6. Fase 5
-7. Fase 6
+3. Fase 1A
+4. Fase 2
+5. Fase 3
+6. Fase 4
+7. Fase 5
+8. Fase 6
 
 ## Hvad der bevidst ikke skal med i POC v1
 
