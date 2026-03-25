@@ -1,7 +1,15 @@
 "use client";
 
 import { geoMercator, geoPath } from "d3-geo";
-import { useMemo, useRef, useState, type MouseEvent, type PointerEvent, type WheelEvent } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type PointerEvent,
+  type TouchEvent,
+  type WheelEvent,
+} from "react";
 
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
@@ -68,6 +76,11 @@ const uiCopy: Record<
     reset: string;
     header: string;
     hint: string;
+    jobsSuffix: string;
+    industriesTitle: string;
+    selectedEyebrow: string;
+    close: string;
+    swipeHint: string;
   }
 > = {
   da: {
@@ -76,6 +89,11 @@ const uiCopy: Record<
     reset: "Nulstil",
     header: "Hovedkort",
     hint: "Brug fingre eller mus til at panorere og zoome. Tryk én gang for fokus. Tryk igen på samme kommune for at vise data.",
+    jobsSuffix: "jobs i POC",
+    industriesTitle: "Brancher med flest jobs i POC'en",
+    selectedEyebrow: "Kommunedata",
+    close: "Luk",
+    swipeHint: "Swipe kortet væk eller tryk på X for at lukke.",
   },
   en: {
     zoomIn: "Zoom in",
@@ -83,6 +101,11 @@ const uiCopy: Record<
     reset: "Reset",
     header: "Home map",
     hint: "Use touch or mouse to pan and zoom. Tap once to focus. Tap the same municipality again to show data.",
+    jobsSuffix: "jobs in the POC",
+    industriesTitle: "Industries with the most jobs in the POC",
+    selectedEyebrow: "Municipality data",
+    close: "Close",
+    swipeHint: "Swipe the card away or tap X to close.",
   },
 };
 
@@ -140,6 +163,12 @@ type MapFeature = {
 };
 
 type LabelMode = "hidden" | "name-only" | "compact" | "full";
+
+type OverlayPlacement = {
+  left: string;
+  top: string;
+  transform: string;
+};
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
@@ -337,28 +366,53 @@ function getCenter(left: PointerSnapshot, right: PointerSnapshot) {
   };
 }
 
+function formatCount(locale: AppLocale, value: number) {
+  return new Intl.NumberFormat(locale).format(value);
+}
+
+function getOverlayPlacement(marker: Point, viewBox: ViewBox): OverlayPlacement {
+  const markerX = ((marker.x - viewBox.x) / viewBox.width) * 100;
+  const markerY = ((marker.y - viewBox.y) / viewBox.height) * 100;
+  const clampedLeft = clamp(markerX, 18, 82);
+  const placeBelow = markerY < 46;
+  const clampedTop = clamp(markerY + (placeBelow ? 11 : -11), 16, 84);
+  const horizontalTransform = markerX > 60 ? "-100%" : markerX < 40 ? "0" : "-50%";
+  const verticalTransform = placeBelow ? "0" : "-100%";
+
+  return {
+    left: `${clampedLeft}%`,
+    top: `${clampedTop}%`,
+    transform: `translate(${horizontalTransform}, ${verticalTransform})`,
+  };
+}
+
 export function SjaellandMunicipalityMap({
   municipalities,
   locale,
   ariaLabel,
   focusedSlug,
   detailsSlug,
+  detailsMunicipality,
   featuredSlugs,
   onMunicipalityPress,
+  onDismissDetails,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
   focusedSlug: string | null;
   detailsSlug: string | null;
+  detailsMunicipality: MunicipalitySummary | null;
   featuredSlugs: string[];
   onMunicipalityPress: (slug: string) => void;
+  onDismissDetails: () => void;
 }) {
   const ui = uiCopy[locale];
   const svgRef = useRef<SVGSVGElement | null>(null);
   const gestureRef = useRef<GestureState | null>(null);
   const pointersRef = useRef(new Map<number, PointerSnapshot>());
   const movedDuringGestureRef = useRef(false);
+  const dismissTouchStartRef = useRef<{ x: number; y: number } | null>(null);
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -400,6 +454,10 @@ export function SjaellandMunicipalityMap({
   }, [municipalities]);
 
   const featuredSlugSet = useMemo(() => new Set(featuredSlugs), [featuredSlugs]);
+  const detailsFeature = detailsSlug
+    ? features.find((feature) => feature.municipality.slug === detailsSlug) ?? null
+    : null;
+  const detailsPlacement = detailsFeature ? getOverlayPlacement(detailsFeature.marker, viewBox) : null;
 
   function zoomAtCenter(factor: number) {
     setViewBox((current) =>
@@ -577,6 +635,32 @@ export function SjaellandMunicipalityMap({
     }
   }
 
+  function handleCardTouchStart(event: TouchEvent<HTMLDivElement>) {
+    const touch = event.touches[0];
+    if (!touch) {
+      return;
+    }
+
+    dismissTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handleCardTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const start = dismissTouchStartRef.current;
+    const touch = event.changedTouches[0];
+    dismissTouchStartRef.current = null;
+
+    if (!start || !touch) {
+      return;
+    }
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+
+    if (Math.abs(deltaX) > 70 || deltaY > 70) {
+      onDismissDetails();
+    }
+  }
+
   return (
     <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_36%,#9abdaf_100%)]">
       <div className="absolute left-3 top-3 z-10 rounded-full bg-white/85 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-800 shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/10 backdrop-blur sm:left-4 sm:top-4">
@@ -612,9 +696,58 @@ export function SjaellandMunicipalityMap({
         </span>
       </div>
 
-      <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[1rem] bg-white/82 px-4 py-3 text-xs leading-5 text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/10 backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm">
-        {ui.hint}
-      </div>
+      {!detailsMunicipality ? (
+        <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[1rem] bg-white/82 px-4 py-3 text-xs leading-5 text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/10 backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm">
+          {ui.hint}
+        </div>
+      ) : null}
+
+      {detailsMunicipality && detailsPlacement ? (
+        <div
+          className="absolute z-20 w-[min(18rem,calc(100%-1.5rem))] rounded-[1.35rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur sm:w-[20rem]"
+          style={detailsPlacement}
+          onTouchStart={handleCardTouchStart}
+          onTouchEnd={handleCardTouchEnd}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{ui.selectedEyebrow}</p>
+              <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">{detailsMunicipality.name}</h3>
+            </div>
+            <button
+              type="button"
+              onClick={onDismissDetails}
+              className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
+              aria-label={ui.close}
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+            {formatCount(locale, detailsMunicipality.totalJobs)} {ui.jobsSuffix}
+          </div>
+
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{ui.industriesTitle}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {detailsMunicipality.topIndustries.map((industry) => (
+                <span
+                  key={detailsMunicipality.slug + "-map-industry-" + industry.slug}
+                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white sm:text-sm"
+                  style={{ backgroundColor: industry.accentColor }}
+                >
+                  <span>{industry.icon}</span>
+                  <span>{industry.name}</span>
+                  <span className="text-white/80">{formatCount(locale, industry.jobCount)}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <p className="mt-4 text-[11px] leading-5 text-slate-500">{ui.swipeHint}</p>
+        </div>
+      ) : null}
 
       <svg
         ref={svgRef}

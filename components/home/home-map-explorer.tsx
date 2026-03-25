@@ -22,9 +22,6 @@ const explorerCopy = {
     focusedHint:
       "Kommunen er nu i fokus på kortet. Tryk én gang mere på den samme kommune for at vise dens data.",
     showData: "Vis kommunedata",
-    selectedEyebrow: "Kommunedata",
-    industriesTitle: "Brancher med flest jobs i POC'en",
-    jobsSuffix: "jobs i POC",
     allMunicipalitiesTitle: "Alle kommuner",
     allMunicipalitiesHint: "Brug listen til små eller skjulte kommuner.",
     selectPlaceholder: "Vælg kommune...",
@@ -44,9 +41,6 @@ const explorerCopy = {
     focusedHint:
       "The municipality is now focused on the map. Tap the same municipality one more time to show its data.",
     showData: "Show municipality data",
-    selectedEyebrow: "Municipality data",
-    industriesTitle: "Industries with the most jobs in the POC",
-    jobsSuffix: "jobs in the POC",
     allMunicipalitiesTitle: "All municipalities",
     allMunicipalitiesHint: "Use the list for small or hidden municipalities.",
     selectPlaceholder: "Choose municipality...",
@@ -54,10 +48,6 @@ const explorerCopy = {
     showOnMap: "Show on map",
   },
 } as const;
-
-function formatCount(locale: AppLocale, value: number) {
-  return new Intl.NumberFormat(locale).format(value);
-}
 
 function sortMunicipalities(items: MunicipalitySummary[]) {
   return [...items].sort((left, right) => {
@@ -84,7 +74,10 @@ export function HomeMapExplorer({
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
   const defaultFeaturedSlugs = useMemo(
-    () => sortedMunicipalities.filter((municipality) => municipality.homeMap.isPrimary).map((municipality) => municipality.slug),
+    () =>
+      sortedMunicipalities
+        .filter((municipality) => municipality.homeMap.isPrimary)
+        .map((municipality) => municipality.slug),
     [sortedMunicipalities],
   );
 
@@ -105,7 +98,9 @@ export function HomeMapExplorer({
       }
 
       const validSlugs = new Set(sortedMunicipalities.map((municipality) => municipality.slug));
-      const nextFeatured = parsed.filter((value): value is string => typeof value === "string" && validSlugs.has(value));
+      const nextFeatured = parsed.filter(
+        (value): value is string => typeof value === "string" && validSlugs.has(value),
+      );
       return nextFeatured.length > 0 ? nextFeatured : defaultFeaturedSlugs;
     } catch {
       return defaultFeaturedSlugs;
@@ -120,10 +115,12 @@ export function HomeMapExplorer({
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(featuredSlugs));
   }, [featuredSlugs]);
 
-  const focusedMunicipality =
-    focusedSlug ? sortedMunicipalities.find((municipality) => municipality.slug === focusedSlug) ?? null : null;
-  const detailsMunicipality =
-    detailsSlug ? sortedMunicipalities.find((municipality) => municipality.slug === detailsSlug) ?? null : null;
+  const focusedMunicipality = focusedSlug
+    ? sortedMunicipalities.find((municipality) => municipality.slug === focusedSlug) ?? null
+    : null;
+  const detailsMunicipality = detailsSlug
+    ? sortedMunicipalities.find((municipality) => municipality.slug === detailsSlug) ?? null
+    : null;
 
   function handleMunicipalityPress(slug: string) {
     if (focusedSlug === slug) {
@@ -140,6 +137,10 @@ export function HomeMapExplorer({
     setDetailsSlug(slug);
   }
 
+  function handleDismissDetails() {
+    setDetailsSlug(null);
+  }
+
   function toggleFeaturedMunicipality(slug: string) {
     setFeaturedSlugs((current) => {
       if (current.includes(slug)) {
@@ -151,37 +152,11 @@ export function HomeMapExplorer({
     });
   }
 
-  const panel = detailsMunicipality ? (
+  const panel = focusedMunicipality ? (
     <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{copy.selectedEyebrow}</p>
-      <div className="mt-3 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{detailsMunicipality.name}</h2>
-        </div>
-        <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-          {formatCount(locale, detailsMunicipality.totalJobs)} {copy.jobsSuffix}
-        </span>
-      </div>
-      <div className="mt-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.industriesTitle}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {detailsMunicipality.topIndustries.map((industry) => (
-            <span
-              key={detailsMunicipality.slug + "-industry-" + industry.slug}
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-white"
-              style={{ backgroundColor: industry.accentColor }}
-            >
-              <span>{industry.icon}</span>
-              <span>{industry.name}</span>
-              <span className="text-white/80">{formatCount(locale, industry.jobCount)}</span>
-            </span>
-          ))}
-        </div>
-      </div>
-    </div>
-  ) : focusedMunicipality ? (
-    <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{copy.focusedEyebrow}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
+        {copy.focusedEyebrow}
+      </p>
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{focusedMunicipality.name}</h2>
@@ -198,7 +173,9 @@ export function HomeMapExplorer({
     </div>
   ) : (
     <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{copy.emptyEyebrow}</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
+        {copy.emptyEyebrow}
+      </p>
       <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{copy.emptyTitle}</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">{copy.emptyHint}</p>
     </div>
@@ -210,7 +187,9 @@ export function HomeMapExplorer({
         <div className="rounded-[2rem] border border-slate-900/10 bg-white/88 p-3 shadow-[0_20px_80px_rgba(15,23,42,0.06)] sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">BranchesMap</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
+                BranchesMap
+              </p>
               <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
                 {locale === "da" ? "Kommunekort og kommunedata" : "Municipality map and municipality data"}
               </h1>
@@ -263,16 +242,20 @@ export function HomeMapExplorer({
               ariaLabel={ariaLabel}
               focusedSlug={focusedSlug}
               detailsSlug={detailsSlug}
+              detailsMunicipality={detailsMunicipality}
               featuredSlugs={featuredSlugs}
               onMunicipalityPress={handleMunicipalityPress}
+              onDismissDetails={handleDismissDetails}
             />
           </div>
 
-          <div className="relative z-10 -mt-8 px-1 lg:hidden">
-            {panel}
+          <div className="relative z-10 mt-3 px-1 lg:hidden">
+            {!detailsMunicipality ? panel : null}
             <div className="mt-3 rounded-[1.4rem] border border-slate-900/10 bg-white/94 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.allMunicipalitiesTitle}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  {copy.allMunicipalitiesTitle}
+                </p>
                 <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
               </div>
               <select
@@ -294,10 +277,14 @@ export function HomeMapExplorer({
         </div>
 
         <aside className="hidden lg:block lg:sticky lg:top-4">
-          {panel}
-          <div className="mt-4 rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+          {!detailsMunicipality ? panel : null}
+          <div
+            className={`${detailsMunicipality ? "mt-0" : "mt-4"} rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur`}
+          >
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.allMunicipalitiesTitle}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                {copy.allMunicipalitiesTitle}
+              </p>
               <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
             </div>
             <select
