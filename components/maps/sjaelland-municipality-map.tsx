@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { geoMercator, geoPath } from "d3-geo";
 import { useMemo } from "react";
@@ -8,7 +8,10 @@ import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
 import type { AppLocale } from "@/lib/i18n/config";
 
 const width = 900;
-const height = 1400;
+const height = 1600;
+const initialViewBox = { x: 0, y: 0, width, height };
+const minViewWidth = width / 10.5;
+const aspectRatio = height / width;
 const mapLabelFontFamily =
   'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -21,20 +24,20 @@ const labelTuning: Record<
     nameDy?: number;
   }
 > = {
-  helsingor: { dx: 8, dy: -6 },
-  hillerod: { dx: 0, dy: 2 },
+  helsingor: { dx: 10, dy: -10 },
+  hillerod: { dx: 0, dy: 4 },
   holbaek: { dx: 0, dy: 4 },
-  roskilde: { dx: 0, dy: -2 },
-  "hoje-taastrup": { dx: -10, dy: 12 },
-  greve: { dx: 8, dy: 14 },
-  koge: { dx: 8, dy: 8 },
+  roskilde: { dx: -8, dy: -4 },
+  "hoje-taastrup": { dx: -12, dy: 14 },
+  greve: { dx: 10, dy: 14 },
+  koge: { dx: 8, dy: 10 },
   ringsted: { dx: 0, dy: 4 },
-  soro: { dx: -6, dy: 0 },
-  naestved: { dx: 0, dy: 10 },
-  slagelse: { dx: -6, dy: 6 },
-  kalundborg: { dx: -6, dy: 4 },
-  stevns: { dx: 10, dy: 8 },
-  vordingborg: { dx: 0, dy: -8 },
+  soro: { dx: -8, dy: 0 },
+  naestved: { dx: 0, dy: 12 },
+  slagelse: { dx: -8, dy: 8 },
+  kalundborg: { dx: -8, dy: 6 },
+  stevns: { dx: 12, dy: 10 },
+  vordingborg: { dx: 0, dy: -10 },
 };
 
 const projection = geoMercator().fitExtent(
@@ -47,6 +50,8 @@ const projection = geoMercator().fitExtent(
 
 const path = geoPath(projection);
 
+type ViewBox = typeof initialViewBox;
+
 type MapFeature = {
   municipality: MunicipalitySummary;
   pathData: string;
@@ -54,7 +59,53 @@ type MapFeature = {
     x: number;
     y: number;
   };
+  bounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 };
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function clampViewBox(viewBox: ViewBox): ViewBox {
+  const nextWidth = clamp(viewBox.width, minViewWidth, width);
+  const nextHeight = nextWidth * aspectRatio;
+  const maxX = width - nextWidth;
+  const maxY = height - nextHeight;
+
+  return {
+    x: clamp(viewBox.x, 0, maxX),
+    y: clamp(viewBox.y, 0, maxY),
+    width: nextWidth,
+    height: nextHeight,
+  };
+}
+
+function createFeatureViewBox(bounds: MapFeature["bounds"]): ViewBox {
+  const longestSide = Math.max(bounds.width, bounds.height);
+  const zoomBias =
+    longestSide < 42 ? 0.42 : longestSide < 60 ? 0.52 : longestSide < 90 ? 0.64 : 0.82;
+  const paddingRatio = longestSide < 60 ? 0.08 : longestSide < 110 ? 0.12 : 0.18;
+  const padding = clamp(longestSide * paddingRatio, 8, 34);
+  const paddedWidth = bounds.width + padding * 2;
+  const paddedHeight = bounds.height + padding * 2;
+  const fitWidth = Math.max(paddedWidth, paddedHeight / aspectRatio) * zoomBias;
+  const nextWidth = clamp(fitWidth, minViewWidth, width);
+  const nextHeight = nextWidth * aspectRatio;
+  const centerX = bounds.x + bounds.width / 2;
+  const centerY = bounds.y + bounds.height / 2;
+
+  return clampViewBox({
+    x: centerX - nextWidth / 2,
+    y: centerY - nextHeight / 2,
+    width: nextWidth,
+    height: nextHeight,
+  });
+}
 
 function splitMunicipalityName(name: string) {
   if (name.length <= 12) {
@@ -76,14 +127,18 @@ export function SjaellandMunicipalityMap({
   municipalities,
   locale,
   ariaLabel,
-  selectedSlug,
-  onSelect,
+  focusedSlug,
+  detailsSlug,
+  featuredSlugs,
+  onMunicipalityPress,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
-  selectedSlug: string;
-  onSelect: (slug: string) => void;
+  focusedSlug: string;
+  detailsSlug: string | null;
+  featuredSlugs: string[];
+  onMunicipalityPress: (slug: string) => void;
 }) {
   const features = useMemo(() => {
     const municipalityMap = new Map(
@@ -100,6 +155,7 @@ export function SjaellandMunicipalityMap({
         }
 
         const [centroidX, centroidY] = path.centroid(feature as never);
+        const [[minX, minY], [maxX, maxY]] = path.bounds(feature as never);
         const tuning = labelTuning[municipality.slug] ?? {};
 
         return {
@@ -109,12 +165,23 @@ export function SjaellandMunicipalityMap({
             x: centroidX + (tuning.dx ?? 0),
             y: centroidY + (tuning.dy ?? 0),
           },
+          bounds: {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            height: maxY - minY,
+          },
         } satisfies MapFeature;
       })
       .filter((value): value is NonNullable<typeof value> => Boolean(value));
   }, [municipalities]);
 
-  const primaryFeatures = features.filter((feature) => feature.municipality.homeMap.isPrimary);
+  const featuredSlugSet = useMemo(() => new Set(featuredSlugs), [featuredSlugs]);
+  const focusedFeature = features.find((feature) => feature.municipality.slug === focusedSlug) ?? null;
+  const viewBox = focusedFeature ? createFeatureViewBox(focusedFeature.bounds) : initialViewBox;
+  const labelFeatures = features.filter(
+    (feature) => featuredSlugSet.has(feature.municipality.slug) || feature.municipality.slug === focusedSlug,
+  );
 
   return (
     <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_36%,#9abdaf_100%)]">
@@ -123,8 +190,8 @@ export function SjaellandMunicipalityMap({
       </div>
 
       <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-full w-full"
+        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+        className="h-full w-full transition-[viewBox] duration-500 ease-out"
         aria-label={ariaLabel}
         role="img"
       >
@@ -132,11 +199,12 @@ export function SjaellandMunicipalityMap({
 
         {features.map((feature) => {
           const { municipality, pathData } = feature;
-          const isSelected = municipality.slug === selectedSlug;
-          const isPrimary = municipality.homeMap.isPrimary;
-          const fillColor = isSelected
+          const isFocused = municipality.slug === focusedSlug;
+          const isDetailed = municipality.slug === detailsSlug;
+          const isFeatured = featuredSlugSet.has(municipality.slug);
+          const fillColor = isFocused
             ? municipality.topIndustries[0]?.accentColor ?? "#0f766e"
-            : isPrimary
+            : isFeatured
               ? municipality.topIndustries[0]?.accentColor ?? "#94a3b8"
               : "#d7dfdc";
 
@@ -145,22 +213,23 @@ export function SjaellandMunicipalityMap({
               key={municipality.slug}
               d={pathData}
               fill={fillColor}
-              fillOpacity={isSelected ? 0.3 : isPrimary ? 0.18 : 0.12}
-              stroke={isSelected ? "#0f172a" : "#475569"}
-              strokeOpacity={isSelected ? 0.8 : 0.35}
-              strokeWidth={isSelected ? 2.2 : 1.35}
+              fillOpacity={isDetailed ? 0.36 : isFocused ? 0.28 : isFeatured ? 0.17 : 0.11}
+              stroke={isFocused ? "#0f172a" : "#475569"}
+              strokeOpacity={isFocused ? 0.82 : 0.35}
+              strokeWidth={isFocused ? 2.2 : 1.35}
               className="cursor-pointer transition"
-              onClick={() => onSelect(municipality.slug)}
+              onClick={() => onMunicipalityPress(municipality.slug)}
             />
           );
         })}
 
-        {primaryFeatures.map((feature) => {
+        {labelFeatures.map((feature) => {
           const { municipality, marker } = feature;
-          const isSelected = municipality.slug === selectedSlug;
+          const isFocused = municipality.slug === focusedSlug;
+          const isDetailed = municipality.slug === detailsSlug;
           const nameLines = splitMunicipalityName(municipality.name);
-          const labelColor = isSelected ? municipality.topIndustries[0]?.accentColor ?? "#0f766e" : "#0f172a";
-          const visibleIndustries = municipality.topIndustries.slice(0, 3);
+          const labelColor = isFocused ? municipality.topIndustries[0]?.accentColor ?? "#0f766e" : "#0f172a";
+          const visibleIndustries = municipality.topIndustries.slice(0, isFocused ? 3 : 2);
           const iconGap = 26;
           const iconStartX = -((visibleIndustries.length - 1) * iconGap) / 2;
           const iconY = -18 + ((labelTuning[municipality.slug] ?? {}).iconDy ?? 0);
@@ -170,7 +239,7 @@ export function SjaellandMunicipalityMap({
             <g
               key={municipality.slug + "-label"}
               transform={`translate(${marker.x}, ${marker.y})`}
-              onClick={() => onSelect(municipality.slug)}
+              onClick={() => onMunicipalityPress(municipality.slug)}
               className="cursor-pointer"
             >
               {visibleIndustries.map((industry, index) => (
@@ -178,9 +247,10 @@ export function SjaellandMunicipalityMap({
                   key={municipality.slug + "-" + industry.slug}
                   x={iconStartX + index * iconGap}
                   y={iconY}
-                  fontSize={18}
+                  fontSize={isFocused ? 20 : 18}
                   textAnchor="middle"
                   dominantBaseline="middle"
+                  opacity={isDetailed ? 1 : 0.96}
                 >
                   {industry.icon}
                 </text>
@@ -191,7 +261,7 @@ export function SjaellandMunicipalityMap({
                 y={nameY}
                 textAnchor="middle"
                 fontFamily={mapLabelFontFamily}
-                fontSize={isSelected ? 22 : 18}
+                fontSize={isFocused ? 24 : 18}
                 fontWeight="700"
                 fill={labelColor}
                 stroke="rgba(248,250,252,0.98)"

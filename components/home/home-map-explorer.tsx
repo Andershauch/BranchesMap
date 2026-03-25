@@ -1,43 +1,46 @@
-"use client";
+﻿"use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
 import { defaultHomeMapSelectionSlug } from "@/lib/config/home-map-display";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { AppLocale } from "@/lib/i18n/config";
 
+const STORAGE_KEY = "branches-map-home-featured-municipalities";
+
 const explorerCopy = {
   da: {
-    eyebrow: "Kurateret hovedkort",
-    title: "Udvalgte kommuner viser navn og brancheprofil direkte på kortet",
-    body:
-      "Hovedkortet viser kun de kommuner, du som admin har valgt skal være synlige. Alle øvrige kommuner kan stadig vælges i listen nedenfor.",
-    featuredBadge: "kommuner vist på hovedkortet",
-    panelEyebrow: "Valgt kommune",
-    panelEmpty: "Vælg en kommune på kortet eller i listen for at se brancheprofilen.",
-    industriesTitle: "Største brancher i denne POC",
-    allMunicipalitiesTitle: "Alle kommuner",
-    allMunicipalitiesHint: "Brug listen til de små eller skjulte kommuner.",
-    featuredShortcutsTitle: "Hurtigvalg på hovedkortet",
-    openMunicipality: "Åbn kommuneside",
+    adminToggle: "Adminvisning",
+    adminTitle: "Vælg kommuner til hovedkortet",
+    adminBody:
+      "Til- og fravælg hvilke kommuner der skal have navn og brancheikoner direkte på hovedkortet.",
+    focusedEyebrow: "Fokuseret kommune",
+    focusedHint: "Tryk p\u00e5 den samme kommune igen for at vise data. Tryk p\u00e5 en anden kommune for at skifte fokus.",
+    showData: "Vis kommunedata",
+    selectedEyebrow: "Kommunedata",
+    industriesTitle: "Brancher med flest jobs i POC'en",
     jobsSuffix: "jobs i POC",
+    allMunicipalitiesTitle: "Alle kommuner",
+    allMunicipalitiesHint: "Brug listen til sm\u00e5 eller skjulte kommuner.",
+    hideOnMap: "Skjul p\u00e5 kort",
+    showOnMap: "Vis p\u00e5 kort",
   },
   en: {
-    eyebrow: "Curated home map",
-    title: "Selected municipalities show names and industry signals directly on the map",
-    body:
-      "The home map only shows municipalities that you as an admin have chosen to feature. All other municipalities can still be selected from the list below.",
-    featuredBadge: "municipalities shown on the home map",
-    panelEyebrow: "Selected municipality",
-    panelEmpty: "Choose a municipality on the map or from the list to see its industry profile.",
-    industriesTitle: "Largest industries in this POC",
-    allMunicipalitiesTitle: "All municipalities",
-    allMunicipalitiesHint: "Use the list for the small or hidden municipalities.",
-    featuredShortcutsTitle: "Home map shortcuts",
-    openMunicipality: "Open municipality page",
+    adminToggle: "Admin mode",
+    adminTitle: "Choose municipalities for the home map",
+    adminBody:
+      "Toggle which municipalities should show a name and industry icons directly on the home map.",
+    focusedEyebrow: "Focused municipality",
+    focusedHint: "Tap the same municipality again to show its data. Tap another municipality to switch focus.",
+    showData: "Show municipality data",
+    selectedEyebrow: "Municipality data",
+    industriesTitle: "Industries with the most jobs in the POC",
     jobsSuffix: "jobs in the POC",
+    allMunicipalitiesTitle: "All municipalities",
+    allMunicipalitiesHint: "Use the list for small or hidden municipalities.",
+    hideOnMap: "Hide on map",
+    showOnMap: "Show on map",
   },
 } as const;
 
@@ -69,39 +72,99 @@ export function HomeMapExplorer({
   ariaLabel: string;
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
-  const primaryMunicipalities = sortedMunicipalities.filter((municipality) => municipality.homeMap.isPrimary);
+  const defaultFeaturedSlugs = useMemo(
+    () => sortedMunicipalities.filter((municipality) => municipality.homeMap.isPrimary).map((municipality) => municipality.slug),
+    [sortedMunicipalities],
+  );
   const fallbackMunicipality =
     sortedMunicipalities.find((municipality) => municipality.slug === defaultHomeMapSelectionSlug) ??
-    primaryMunicipalities[0] ??
     sortedMunicipalities[0] ??
     null;
-  const [selectedSlug, setSelectedSlug] = useState<string>(fallbackMunicipality?.slug ?? "");
-  const selectedMunicipality =
-    sortedMunicipalities.find((municipality) => municipality.slug === selectedSlug) ?? fallbackMunicipality;
+
+  const [featuredSlugs, setFeaturedSlugs] = useState<string[]>(() => {
+    if (typeof window === "undefined") {
+      return defaultFeaturedSlugs;
+    }
+
+    try {
+      const rawValue = window.localStorage.getItem(STORAGE_KEY);
+      if (!rawValue) {
+        return defaultFeaturedSlugs;
+      }
+
+      const parsed = JSON.parse(rawValue);
+      if (!Array.isArray(parsed)) {
+        return defaultFeaturedSlugs;
+      }
+
+      const validSlugs = new Set(sortedMunicipalities.map((municipality) => municipality.slug));
+      const nextFeatured = parsed.filter((value): value is string => typeof value === "string" && validSlugs.has(value));
+      return nextFeatured.length > 0 ? nextFeatured : defaultFeaturedSlugs;
+    } catch {
+      return defaultFeaturedSlugs;
+    }
+  });
+  const [focusedSlug, setFocusedSlug] = useState<string>(() => fallbackMunicipality?.slug ?? "");
+  const [detailsSlug, setDetailsSlug] = useState<string | null>(null);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const copy = explorerCopy[locale];
 
-  if (!selectedMunicipality) {
+  useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(featuredSlugs));
+  }, [featuredSlugs]);
+
+  const focusedMunicipality =
+    sortedMunicipalities.find((municipality) => municipality.slug === focusedSlug) ?? fallbackMunicipality;
+  const detailsMunicipality =
+    detailsSlug ? sortedMunicipalities.find((municipality) => municipality.slug === detailsSlug) ?? null : null;
+
+  if (!focusedMunicipality) {
     return null;
   }
 
-  const panel = (
-    <div className="rounded-[1.75rem] border border-slate-900/10 bg-white/94 p-5 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700">{copy.panelEyebrow}</p>
+  function handleMunicipalityPress(slug: string) {
+    if (focusedSlug === slug) {
+      setDetailsSlug(slug);
+      return;
+    }
+
+    setFocusedSlug(slug);
+    setDetailsSlug(null);
+  }
+
+  function handleMunicipalitySelectFromList(slug: string) {
+    setFocusedSlug(slug);
+    setDetailsSlug(slug);
+  }
+
+  function toggleFeaturedMunicipality(slug: string) {
+    setFeaturedSlugs((current) => {
+      if (current.includes(slug)) {
+        const next = current.filter((value) => value !== slug);
+        return next.length > 0 ? next : current;
+      }
+
+      return [...current, slug];
+    });
+  }
+
+  const panel = detailsMunicipality ? (
+    <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{copy.selectedEyebrow}</p>
       <div className="mt-3 flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-semibold tracking-tight text-slate-900">{selectedMunicipality.name}</h3>
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{detailsMunicipality.name}</h2>
         </div>
         <span className="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-          {formatCount(locale, selectedMunicipality.totalJobs)} {copy.jobsSuffix}
+          {formatCount(locale, detailsMunicipality.totalJobs)} {copy.jobsSuffix}
         </span>
       </div>
-
       <div className="mt-5">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.industriesTitle}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          {selectedMunicipality.topIndustries.map((industry) => (
+          {detailsMunicipality.topIndustries.map((industry) => (
             <span
-              key={selectedMunicipality.slug + "-industry-" + industry.slug}
+              key={detailsMunicipality.slug + "-industry-" + industry.slug}
               className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-white"
               style={{ backgroundColor: industry.accentColor }}
             >
@@ -112,90 +175,133 @@ export function HomeMapExplorer({
           ))}
         </div>
       </div>
-
-      <div className="mt-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.featuredShortcutsTitle}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {primaryMunicipalities.map((municipality) => {
-            const isActive = municipality.slug === selectedMunicipality.slug;
-
-            return (
-              <button
-                key={municipality.slug + "-shortcut"}
-                type="button"
-                onClick={() => setSelectedSlug(municipality.slug)}
-                className={
-                  isActive
-                    ? "rounded-full bg-slate-900 px-3 py-2 text-sm font-semibold text-white"
-                    : "rounded-full bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                }
-              >
-                {municipality.name}
-              </button>
-            );
-          })}
+    </div>
+  ) : (
+    <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{copy.focusedEyebrow}</p>
+      <div className="mt-3 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{focusedMunicipality.name}</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">{copy.focusedHint}</p>
         </div>
       </div>
-
-      <div className="mt-6">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.allMunicipalitiesTitle}</p>
-          <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
-        </div>
-        <div className="mt-3 rounded-[1rem] border border-slate-200 bg-slate-50/80 p-3">
-          <select
-            value={selectedMunicipality.slug}
-            onChange={(event) => setSelectedSlug(event.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-teal-500"
-          >
-            {sortedMunicipalities.map((municipality) => (
-              <option key={municipality.slug + "-option"} value={municipality.slug}>
-                {municipality.name}{municipality.homeMap.isPrimary ? (locale === "da" ? " - hovedkort" : " - home map") : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <Link
-        href={`/${locale}/kommuner/${selectedMunicipality.slug}`}
-        className="mt-6 inline-flex items-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+      <button
+        type="button"
+        onClick={() => setDetailsSlug(focusedMunicipality.slug)}
+        className="mt-5 inline-flex items-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
       >
-        {copy.openMunicipality}
-      </Link>
+        {copy.showData}
+      </button>
     </div>
   );
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.18fr)_minmax(320px,430px)] lg:items-start">
-      <section className="rounded-[2rem] border border-slate-900/10 bg-white/88 p-4 shadow-[0_20px_80px_rgba(15,23,42,0.06)] sm:p-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-teal-700">{copy.eyebrow}</p>
-            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">{copy.title}</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-600">{copy.body}</p>
+    <section className="mx-auto w-full max-w-6xl">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,420px)] lg:items-start">
+        <div className="rounded-[2rem] border border-slate-900/10 bg-white/88 p-3 shadow-[0_20px_80px_rgba(15,23,42,0.06)] sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">BranchesMap</p>
+              <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+                {locale === "da" ? "Kommunekort og kommunedata" : "Municipality map and municipality data"}
+              </h1>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAdminOpen((current) => !current)}
+              className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+            >
+              {copy.adminToggle}
+            </button>
           </div>
-          <span className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
-            {formatCount(locale, primaryMunicipalities.length)} {copy.featuredBadge}
-          </span>
+
+          {isAdminOpen ? (
+            <div className="mb-3 rounded-[1.4rem] border border-slate-200 bg-slate-50/90 p-3 sm:p-4">
+              <h2 className="text-sm font-semibold text-slate-900">{copy.adminTitle}</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">{copy.adminBody}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {sortedMunicipalities.map((municipality) => {
+                  const isVisible = featuredSlugs.includes(municipality.slug);
+
+                  return (
+                    <label
+                      key={municipality.slug + "-admin"}
+                      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3"
+                    >
+                      <span className="text-sm font-medium text-slate-800">{municipality.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleFeaturedMunicipality(municipality.slug)}
+                        className={
+                          isVisible
+                            ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
+                            : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                        }
+                      >
+                        {isVisible ? copy.hideOnMap : copy.showOnMap}
+                      </button>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="relative overflow-hidden rounded-[1.7rem] aspect-[9/16] bg-slate-100">
+            <SjaellandMunicipalityMap
+              municipalities={sortedMunicipalities}
+              locale={locale}
+              ariaLabel={ariaLabel}
+              focusedSlug={focusedMunicipality.slug}
+              detailsSlug={detailsMunicipality?.slug ?? null}
+              featuredSlugs={featuredSlugs}
+              onMunicipalityPress={handleMunicipalityPress}
+            />
+          </div>
+
+          <div className="relative z-10 -mt-8 px-1 lg:hidden">
+            {panel}
+            <div className="mt-3 rounded-[1.4rem] border border-slate-900/10 bg-white/94 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.allMunicipalitiesTitle}</p>
+                <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
+              </div>
+              <select
+                value={focusedMunicipality.slug}
+                onChange={(event) => handleMunicipalitySelectFromList(event.target.value)}
+                className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-teal-500"
+              >
+                {sortedMunicipalities.map((municipality) => (
+                  <option key={municipality.slug + "-option-mobile"} value={municipality.slug}>
+                    {municipality.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-[1.75rem] aspect-[9/16] sm:aspect-[4/5] lg:h-[760px] lg:aspect-auto">
-          <SjaellandMunicipalityMap
-            municipalities={sortedMunicipalities}
-            locale={locale}
-            ariaLabel={ariaLabel}
-            selectedSlug={selectedMunicipality.slug}
-            onSelect={setSelectedSlug}
-          />
-        </div>
-
-        <div className="relative z-10 -mt-8 px-1 lg:hidden">
+        <aside className="hidden lg:block lg:sticky lg:top-4">
           {panel}
-        </div>
-      </section>
-
-      <aside className="hidden lg:block lg:sticky lg:top-6">{panel}</aside>
-    </div>
+          <div className="mt-4 rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.allMunicipalitiesTitle}</p>
+              <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
+            </div>
+            <select
+              value={focusedMunicipality.slug}
+              onChange={(event) => handleMunicipalitySelectFromList(event.target.value)}
+              className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-teal-500"
+            >
+              {sortedMunicipalities.map((municipality) => (
+                <option key={municipality.slug + "-option-desktop"} value={municipality.slug}>
+                  {municipality.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </aside>
+      </div>
+    </section>
   );
 }
