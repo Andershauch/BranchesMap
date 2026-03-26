@@ -21,6 +21,7 @@ const aspectRatio = height / width;
 const initialViewBox = { x: 0, y: 0, width, height };
 const minViewWidth = width / 13;
 const zoomStep = 1.22;
+const dragActivationPx = 6;
 const mapLabelFontFamily =
   'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
@@ -137,6 +138,7 @@ type DragGesture = {
   startClientX: number;
   startClientY: number;
   startViewBox: ViewBox;
+  hasMoved: boolean;
 };
 
 type PinchGesture = {
@@ -512,8 +514,9 @@ export function SjaellandMunicipalityMap({
       startClientX: snapshot.clientX,
       startClientY: snapshot.clientY,
       startViewBox: viewBox,
+      hasMoved: false,
     };
-    setIsDragging(true);
+    setIsDragging(false);
   }
 
   function beginPinch(svg: SVGSVGElement, entries: [number, PointerSnapshot][]) {
@@ -566,13 +569,23 @@ export function SjaellandMunicipalityMap({
     }
 
     if (gesture.type === "drag") {
+      const movedX = event.clientX - gesture.startClientX;
+      const movedY = event.clientY - gesture.startClientY;
+      const movedDistance = Math.hypot(movedX, movedY);
+
+      if (!gesture.hasMoved && movedDistance < dragActivationPx) {
+        return;
+      }
+
+      if (!gesture.hasMoved) {
+        gesture.hasMoved = true;
+        movedDuringGestureRef.current = true;
+        setIsDragging(true);
+      }
+
       const rect = svg.getBoundingClientRect();
       const deltaX = ((event.clientX - gesture.startClientX) / rect.width) * gesture.startViewBox.width;
       const deltaY = ((event.clientY - gesture.startClientY) / rect.height) * gesture.startViewBox.height;
-
-      if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
-        movedDuringGestureRef.current = true;
-      }
 
       setViewBox(
         clampViewBox({

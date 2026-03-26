@@ -17,10 +17,10 @@ const explorerCopy = {
     emptyEyebrow: "Vælg kommune",
     emptyTitle: "Start i kortet",
     emptyHint:
-      "Tryk på en kommune for at fokusere den. Tryk derefter igen på den samme kommune for at vise kommunedata.",
+      "Tryk på en kommune for at fokusere den og åbne kommunedata med det samme.",
     focusedEyebrow: "Fokuseret kommune",
     focusedHint:
-      "Kommunen er nu i fokus på kortet. Tryk én gang mere på den samme kommune for at vise dens data.",
+      "Kommunen er i fokus på kortet, og dens data er åbne.",
     showData: "Vis kommunedata",
     allMunicipalitiesTitle: "Alle kommuner",
     allMunicipalitiesHint: "Brug listen til små eller skjulte kommuner.",
@@ -36,10 +36,10 @@ const explorerCopy = {
     emptyEyebrow: "Choose municipality",
     emptyTitle: "Start in the map",
     emptyHint:
-      "Tap a municipality to focus it. Then tap the same municipality again to show municipality data.",
+      "Tap a municipality to focus it and open municipality data right away.",
     focusedEyebrow: "Focused municipality",
     focusedHint:
-      "The municipality is now focused on the map. Tap the same municipality one more time to show its data.",
+      "The municipality is focused on the map, and its data is open.",
     showData: "Show municipality data",
     allMunicipalitiesTitle: "All municipalities",
     allMunicipalitiesHint: "Use the list for small or hidden municipalities.",
