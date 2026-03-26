@@ -88,12 +88,12 @@ const uiCopy: Record<
     zoomOut: "Zoom ud",
     reset: "Nulstil",
     header: "Hovedkort",
-    hint: "Brug fingre eller mus til at panorere og zoome. Tryk pÃƒÂ¥ en kommune for at fokusere den og ÃƒÂ¥bne dens data.",
+    hint: "Brug fingre eller mus til at panorere og zoome. Tryk på en kommune for at fokusere den og åbne dens data.",
     jobsSuffix: "jobs i POC",
     industriesTitle: "Brancher med flest jobs i POC'en",
     selectedEyebrow: "Kommunedata",
     close: "Luk",
-    swipeHint: "Swipe kortet vÃƒÂ¦k eller tryk pÃƒÂ¥ X for at lukke.",
+    swipeHint: "Swipe kortet væk eller tryk på X for at lukke.",
   },
   en: {
     zoomIn: "Zoom in",
@@ -766,7 +766,7 @@ export function SjaellandMunicipalityMap({
               className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
               aria-label={ui.close}
             >
-              Ãƒâ€”
+              ×
             </button>
           </div>
 

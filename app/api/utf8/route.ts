@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { utf8SmokeSamples } from "@/lib/utf8-smoke";
 

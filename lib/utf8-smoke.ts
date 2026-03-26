@@ -1,4 +1,4 @@
-﻿export const utf8SmokeSamples = {
+export const utf8SmokeSamples = {
   municipalities: [
     "Køge",
     "Næstved",

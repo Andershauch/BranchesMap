@@ -1,4 +1,4 @@
-﻿import { notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
