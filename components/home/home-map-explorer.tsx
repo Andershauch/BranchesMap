@@ -123,13 +123,8 @@ export function HomeMapExplorer({
     : null;
 
   function handleMunicipalityPress(slug: string) {
-    if (focusedSlug === slug) {
-      setDetailsSlug(slug);
-      return;
-    }
-
     setFocusedSlug(slug);
-    setDetailsSlug(null);
+    setDetailsSlug(slug);
   }
 
   function handleMunicipalitySelectFromList(slug: string) {
