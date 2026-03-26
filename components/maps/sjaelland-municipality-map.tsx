@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type MouseEvent,
   type PointerEvent,
   type TouchEvent,
   type WheelEvent,
@@ -89,12 +88,12 @@ const uiCopy: Record<
     zoomOut: "Zoom ud",
     reset: "Nulstil",
     header: "Hovedkort",
-    hint: "Brug fingre eller mus til at panorere og zoome. Tryk på en kommune for at fokusere den og åbne dens data.",
+    hint: "Brug fingre eller mus til at panorere og zoome. Tryk pÃƒÂ¥ en kommune for at fokusere den og ÃƒÂ¥bne dens data.",
     jobsSuffix: "jobs i POC",
     industriesTitle: "Brancher med flest jobs i POC'en",
     selectedEyebrow: "Kommunedata",
     close: "Luk",
-    swipeHint: "Swipe kortet væk eller tryk på X for at lukke.",
+    swipeHint: "Swipe kortet vÃƒÂ¦k eller tryk pÃƒÂ¥ X for at lukke.",
   },
   en: {
     zoomIn: "Zoom in",
@@ -456,6 +455,10 @@ export function SjaellandMunicipalityMap({
   }, [municipalities]);
 
   const featuredSlugSet = useMemo(() => new Set(featuredSlugs), [featuredSlugs]);
+  const featureMap = useMemo(
+    () => new Map(features.map((feature) => [feature.municipality.slug, feature])),
+    [features],
+  );
   const detailsFeature = detailsSlug
     ? features.find((feature) => feature.municipality.slug === detailsSlug) ?? null
     : null;
@@ -478,20 +481,26 @@ export function SjaellandMunicipalityMap({
     setViewBox(initialViewBox);
   }
 
-  function handleMunicipalityClick(event: MouseEvent<SVGGElement | SVGPathElement>, feature: MapFeature) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (movedDuringGestureRef.current) {
-      movedDuringGestureRef.current = false;
+  function activateMunicipality(slug: string) {
+    const feature = featureMap.get(slug);
+    if (!feature) {
       return;
     }
 
-    if (focusedSlug !== feature.municipality.slug) {
+    if (focusedSlug !== slug) {
       setViewBox(createFeatureViewBox(feature.bounds));
     }
 
-    onMunicipalityPress(feature.municipality.slug);
+    onMunicipalityPress(slug);
+  }
+
+  function getMunicipalitySlugAtClientPoint(clientX: number, clientY: number) {
+    const hit = document.elementFromPoint(clientX, clientY);
+    if (!(hit instanceof Element)) {
+      return null;
+    }
+
+    return hit.closest("[data-municipality-slug]")?.getAttribute("data-municipality-slug") ?? null;
   }
 
   function handleWheel(event: WheelEvent<SVGSVGElement>) {
@@ -623,7 +632,14 @@ export function SjaellandMunicipalityMap({
     );
   }
 
-  function endPointerInteraction(event: PointerEvent<SVGSVGElement>) {
+  function finishPointerInteraction(event: PointerEvent<SVGSVGElement>, shouldActivate: boolean) {
+    const gesture = gestureRef.current;
+    const didTap =
+      shouldActivate &&
+      gesture?.type === "drag" &&
+      gesture.pointerId === event.pointerId &&
+      !gesture.hasMoved;
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -634,6 +650,15 @@ export function SjaellandMunicipalityMap({
     if (remaining.length === 0) {
       gestureRef.current = null;
       setIsDragging(false);
+      movedDuringGestureRef.current = false;
+
+      if (didTap) {
+        const slug = getMunicipalitySlugAtClientPoint(event.clientX, event.clientY);
+        if (slug) {
+          activateMunicipality(slug);
+        }
+      }
+
       return;
     }
 
@@ -646,6 +671,14 @@ export function SjaellandMunicipalityMap({
     if (svg) {
       beginPinch(svg, remaining.slice(0, 2) as [number, PointerSnapshot][]);
     }
+  }
+
+  function handlePointerUp(event: PointerEvent<SVGSVGElement>) {
+    finishPointerInteraction(event, true);
+  }
+
+  function handlePointerCancel(event: PointerEvent<SVGSVGElement>) {
+    finishPointerInteraction(event, false);
   }
 
   function handleCardTouchStart(event: TouchEvent<HTMLDivElement>) {
@@ -733,7 +766,7 @@ export function SjaellandMunicipalityMap({
               className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
               aria-label={ui.close}
             >
-              ×
+              Ãƒâ€”
             </button>
           </div>
 
@@ -771,8 +804,8 @@ export function SjaellandMunicipalityMap({
         onWheel={handleWheel}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
-        onPointerUp={endPointerInteraction}
-        onPointerCancel={endPointerInteraction}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         style={{ touchAction: "none" }}
       >
         <rect width={width} height={height} fill="transparent" />
@@ -799,7 +832,7 @@ export function SjaellandMunicipalityMap({
               strokeOpacity={isHovered || isFocused ? 0.78 : 0.34}
               strokeWidth={isFocused ? 2.1 : isHovered ? 1.75 : 1.3}
               className="cursor-pointer transition"
-              onClick={(event) => handleMunicipalityClick(event, feature)}
+              data-municipality-slug={municipality.slug}
               onMouseEnter={() => setHoveredSlug(municipality.slug)}
               onMouseLeave={() =>
                 setHoveredSlug((current) => (current === municipality.slug ? null : current))
@@ -846,7 +879,7 @@ export function SjaellandMunicipalityMap({
               <g
                 key={municipality.slug + "-label"}
                 transform={`translate(${marker.x}, ${marker.y}) scale(${labelScale})`}
-                onClick={(event) => handleMunicipalityClick(event, feature)}
+                data-municipality-slug={municipality.slug}
                 onMouseEnter={() => setHoveredSlug(municipality.slug)}
                 onMouseLeave={() =>
                   setHoveredSlug((current) => (current === municipality.slug ? null : current))
