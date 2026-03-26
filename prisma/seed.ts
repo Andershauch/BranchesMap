@@ -4,6 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
 
+import { getMunicipalityHomeMapConfig } from "../lib/config/home-map-display";
 import { pocMunicipalities } from "../lib/mock/poc-data";
 
 const { Pool } = pg;
@@ -11,7 +12,7 @@ const { Pool } = pg;
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL mangler i miljøet.");
+  throw new Error("DATABASE_URL mangler i milj\u00f8et.");
 }
 
 const pool = new Pool({ connectionString });
@@ -27,18 +28,27 @@ async function main() {
   let jobCount = 0;
 
   for (const municipality of pocMunicipalities) {
+    const homeMap = getMunicipalityHomeMapConfig(municipality.slug);
     const municipalityRecord = await prisma.municipality.upsert({
       where: { slug: municipality.slug },
       update: {
         code: municipality.code,
         name: municipality.name,
         teaser: municipality.teaser,
+        homeMapVisible: homeMap.isPrimary,
+        homeMapPriority: homeMap.priority,
+        homeMapLabelMode: homeMap.labelMode,
+        homeMapRegionTag: homeMap.regionTag,
       },
       create: {
         code: municipality.code,
         name: municipality.name,
         slug: municipality.slug,
         teaser: municipality.teaser,
+        homeMapVisible: homeMap.isPrimary,
+        homeMapPriority: homeMap.priority,
+        homeMapLabelMode: homeMap.labelMode,
+        homeMapRegionTag: homeMap.regionTag,
       },
     });
 
@@ -66,9 +76,7 @@ async function main() {
           municipalityId: municipalityRecord.id,
           industryId: industryRecord.id,
           rank:
-            municipality.topIndustries.findIndex(
-              ({ slug }) => slug === entry.industry.slug,
-            ) + 1,
+            municipality.topIndustries.findIndex(({ slug }) => slug === entry.industry.slug) + 1,
           jobCount: entry.industry.jobCount,
           isMock: true,
         },
@@ -96,7 +104,7 @@ async function main() {
   }
 
   console.log(
-    `Seed fuldført: ${pocMunicipalities.length} kommuner, ${industryCount} branche-relationer, ${statCount} statistik-rækker og ${jobCount} jobs behandlet.`,
+    `Seed fuldf\u00f8rt: ${pocMunicipalities.length} kommuner, ${industryCount} branche-relationer, ${statCount} statistik-r\u00e6kker og ${jobCount} jobs behandlet.`,
   );
 }
 

@@ -1,7 +1,14 @@
+export const homeMapRegionTags = ["west", "south", "central", "north", "metro", "other"] as const;
+export const homeMapLabelModes = ["auto", "name-only", "name-icons"] as const;
+
+export type MunicipalityHomeMapRegionTag = (typeof homeMapRegionTags)[number];
+export type MunicipalityHomeMapLabelMode = (typeof homeMapLabelModes)[number];
+
 export type MunicipalityHomeMapConfig = {
   isPrimary: boolean;
   priority: number;
-  regionTag: "west" | "south" | "central" | "north" | "metro" | "other";
+  labelMode: MunicipalityHomeMapLabelMode;
+  regionTag: MunicipalityHomeMapRegionTag;
 };
 
 const primaryMunicipalityOrder = [
@@ -21,7 +28,7 @@ const primaryMunicipalityOrder = [
   "vordingborg",
 ] as const;
 
-const regionTags: Record<string, MunicipalityHomeMapConfig["regionTag"]> = {
+const regionTags: Record<string, MunicipalityHomeMapRegionTag> = {
   helsingor: "north",
   hillerod: "north",
   holbaek: "west",
@@ -44,6 +51,7 @@ const primaryConfig = new Map<string, MunicipalityHomeMapConfig>(
     {
       isPrimary: true,
       priority: index + 1,
+      labelMode: "name-icons",
       regionTag: regionTags[slug] ?? "other",
     } satisfies MunicipalityHomeMapConfig,
   ]),
@@ -56,6 +64,7 @@ export function getMunicipalityHomeMapConfig(slug: string): MunicipalityHomeMapC
     primaryConfig.get(slug) ?? {
       isPrimary: false,
       priority: 999,
+      labelMode: "auto",
       regionTag: regionTags[slug] ?? "other",
     }
   );

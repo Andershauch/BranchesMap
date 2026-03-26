@@ -28,7 +28,7 @@ export default async function LocalizedHomePage({ params }: LocalizedHomePagePro
       <HomeMapExplorer
         municipalities={municipalities}
         locale={locale as AppLocale}
-        ariaLabel={locale === "da" ? "Kort over Sjællands kommuner" : "Map of Zealand municipalities"}
+        ariaLabel={locale === "da" ? "Kort over Sj\u00e6llands kommuner" : "Map of Zealand municipalities"}
       />
     </main>
   );

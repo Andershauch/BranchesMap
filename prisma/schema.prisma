@@ -7,22 +7,27 @@ datasource db {
 }
 
 model Municipality {
-  id              String                     @id @default(cuid())
-  code            String                     @unique
-  name            String
-  slug            String                     @unique
-  mapX            Float?
-  mapY            Float?
-  teaser          String?
-  isActive        Boolean                    @default(true)
-  createdAt       DateTime                   @default(now())
-  updatedAt       DateTime                   @updatedAt
-  industryStats   MunicipalityIndustryStat[]
-  jobs            Job[]
-  savedSearches   SavedSearch[]
+  id               String                     @id @default(cuid())
+  code             String                     @unique
+  name             String
+  slug             String                     @unique
+  mapX             Float?
+  mapY             Float?
+  teaser           String?
+  isActive         Boolean                    @default(true)
+  homeMapVisible   Boolean                    @default(false)
+  homeMapPriority  Int                        @default(999)
+  homeMapLabelMode String                     @default("auto")
+  homeMapRegionTag String                     @default("other")
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  industryStats    MunicipalityIndustryStat[]
+  jobs             Job[]
+  savedSearches    SavedSearch[]
 
   @@index([slug])
   @@index([name])
+  @@index([homeMapVisible, homeMapPriority])
 }
 
 model Industry {
@@ -41,16 +46,16 @@ model Industry {
 }
 
 model MunicipalityIndustryStat {
-  id              String       @id @default(cuid())
-  municipalityId  String
-  industryId      String
-  rank            Int
-  jobCount        Int
-  isMock          Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  municipality    Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
-  industry        Industry     @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  municipalityId String
+  industryId     String
+  rank           Int
+  jobCount       Int
+  isMock         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  municipality   Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  industry       Industry     @relation(fields: [industryId], references: [id], onDelete: Cascade)
 
   @@unique([municipalityId, industryId])
   @@index([municipalityId, rank])
@@ -58,20 +63,20 @@ model MunicipalityIndustryStat {
 }
 
 model Job {
-  id              String       @id @default(cuid())
-  municipalityId  String
-  industryId      String
-  title           String
-  employerName    String
-  locationLabel   String?
-  summary         String?
-  applyUrl        String?
-  language        String       @default("da")
-  isMock          Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  municipality    Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
-  industry        Industry     @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  municipalityId String
+  industryId     String
+  title          String
+  employerName   String
+  locationLabel  String?
+  summary        String?
+  applyUrl       String?
+  language       String       @default("da")
+  isMock         Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  municipality   Municipality @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  industry       Industry     @relation(fields: [industryId], references: [id], onDelete: Cascade)
 
   @@index([municipalityId])
   @@index([industryId])
@@ -89,18 +94,18 @@ model User {
 }
 
 model SavedSearch {
-  id              String        @id @default(cuid())
-  userId          String
-  title           String
-  queryText       String?
-  filters         Json?
-  municipalityId  String?
-  industryId      String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  municipality    Municipality? @relation(fields: [municipalityId], references: [id], onDelete: SetNull)
-  industry        Industry?     @relation(fields: [industryId], references: [id], onDelete: SetNull)
+  id             String        @id @default(cuid())
+  userId         String
+  title          String
+  queryText      String?
+  filters        Json?
+  municipalityId String?
+  industryId     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  municipality   Municipality? @relation(fields: [municipalityId], references: [id], onDelete: SetNull)
+  industry       Industry?     @relation(fields: [industryId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
 }

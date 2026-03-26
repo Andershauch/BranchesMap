@@ -1,51 +1,33 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { AppLocale } from "@/lib/i18n/config";
 
-const STORAGE_KEY = "branches-map-home-featured-municipalities";
-
 const explorerCopy = {
   da: {
-    adminToggle: "Adminvisning",
-    adminTitle: "Vælg kommuner til hovedkortet",
-    adminBody:
-      "Til- og fravælg hvilke kommuner der skal have navn og brancheikoner direkte på hovedkortet.",
-    emptyEyebrow: "Vælg kommune",
+    emptyEyebrow: "V\u00e6lg kommune",
     emptyTitle: "Start i kortet",
-    emptyHint:
-      "Tryk på en kommune for at fokusere den og åbne kommunedata med det samme.",
+    emptyHint: "Tryk p\u00e5 en kommune for at fokusere den og \u00e5bne kommunedata med det samme.",
     focusedEyebrow: "Fokuseret kommune",
-    focusedHint:
-      "Kommunen er i fokus på kortet, og dens data er åbne.",
+    focusedHint: "Kommunen er i fokus p\u00e5 kortet, og dens data er \u00e5bne.",
     showData: "Vis kommunedata",
     allMunicipalitiesTitle: "Alle kommuner",
-    allMunicipalitiesHint: "Brug listen til små eller skjulte kommuner.",
-    selectPlaceholder: "Vælg kommune...",
-    hideOnMap: "Skjul på kort",
-    showOnMap: "Vis på kort",
+    allMunicipalitiesHint: "Brug listen til sm\u00e5 eller skjulte kommuner.",
+    selectPlaceholder: "V\u00e6lg kommune...",
   },
   en: {
-    adminToggle: "Admin mode",
-    adminTitle: "Choose municipalities for the home map",
-    adminBody:
-      "Toggle which municipalities should show a name and industry icons directly on the home map.",
     emptyEyebrow: "Choose municipality",
     emptyTitle: "Start in the map",
-    emptyHint:
-      "Tap a municipality to focus it and open municipality data right away.",
+    emptyHint: "Tap a municipality to focus it and open municipality data right away.",
     focusedEyebrow: "Focused municipality",
-    focusedHint:
-      "The municipality is focused on the map, and its data is open.",
+    focusedHint: "The municipality is focused on the map, and its data is open.",
     showData: "Show municipality data",
     allMunicipalitiesTitle: "All municipalities",
     allMunicipalitiesHint: "Use the list for small or hidden municipalities.",
     selectPlaceholder: "Choose municipality...",
-    hideOnMap: "Hide on map",
-    showOnMap: "Show on map",
   },
 } as const;
 
@@ -73,7 +55,7 @@ export function HomeMapExplorer({
   ariaLabel: string;
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
-  const defaultFeaturedSlugs = useMemo(
+  const featuredSlugs = useMemo(
     () =>
       sortedMunicipalities
         .filter((municipality) => municipality.homeMap.isPrimary)
@@ -81,39 +63,9 @@ export function HomeMapExplorer({
     [sortedMunicipalities],
   );
 
-  const [featuredSlugs, setFeaturedSlugs] = useState<string[]>(() => {
-    if (typeof window === "undefined") {
-      return defaultFeaturedSlugs;
-    }
-
-    try {
-      const rawValue = window.localStorage.getItem(STORAGE_KEY);
-      if (!rawValue) {
-        return defaultFeaturedSlugs;
-      }
-
-      const parsed = JSON.parse(rawValue);
-      if (!Array.isArray(parsed)) {
-        return defaultFeaturedSlugs;
-      }
-
-      const validSlugs = new Set(sortedMunicipalities.map((municipality) => municipality.slug));
-      const nextFeatured = parsed.filter(
-        (value): value is string => typeof value === "string" && validSlugs.has(value),
-      );
-      return nextFeatured.length > 0 ? nextFeatured : defaultFeaturedSlugs;
-    } catch {
-      return defaultFeaturedSlugs;
-    }
-  });
   const [focusedSlug, setFocusedSlug] = useState<string | null>(null);
   const [detailsSlug, setDetailsSlug] = useState<string | null>(null);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const copy = explorerCopy[locale];
-
-  useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(featuredSlugs));
-  }, [featuredSlugs]);
 
   const focusedMunicipality = focusedSlug
     ? sortedMunicipalities.find((municipality) => municipality.slug === focusedSlug) ?? null
@@ -134,17 +86,6 @@ export function HomeMapExplorer({
 
   function handleDismissDetails() {
     setDetailsSlug(null);
-  }
-
-  function toggleFeaturedMunicipality(slug: string) {
-    setFeaturedSlugs((current) => {
-      if (current.includes(slug)) {
-        const next = current.filter((value) => value !== slug);
-        return next.length > 0 ? next : current;
-      }
-
-      return [...current, slug];
-    });
   }
 
   const panel = focusedMunicipality ? (
@@ -180,57 +121,14 @@ export function HomeMapExplorer({
     <section className="mx-auto w-full max-w-6xl">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,420px)] lg:items-start">
         <div className="rounded-[2rem] border border-slate-900/10 bg-white/88 p-3 shadow-[0_20px_80px_rgba(15,23,42,0.06)] sm:p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
-                BranchesMap
-              </p>
-              <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-                {locale === "da" ? "Kommunekort og kommunedata" : "Municipality map and municipality data"}
-              </h1>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAdminOpen((current) => !current)}
-              className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-            >
-              {copy.adminToggle}
-            </button>
+          <div className="mb-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">BranchesMap</p>
+            <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+              {locale === "da" ? "Kommunekort og kommunedata" : "Municipality map and municipality data"}
+            </h1>
           </div>
 
-          {isAdminOpen ? (
-            <div className="mb-3 rounded-[1.4rem] border border-slate-200 bg-slate-50/90 p-3 sm:p-4">
-              <h2 className="text-sm font-semibold text-slate-900">{copy.adminTitle}</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">{copy.adminBody}</p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {sortedMunicipalities.map((municipality) => {
-                  const isVisible = featuredSlugs.includes(municipality.slug);
-
-                  return (
-                    <label
-                      key={municipality.slug + "-admin"}
-                      className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3"
-                    >
-                      <span className="text-sm font-medium text-slate-800">{municipality.name}</span>
-                      <button
-                        type="button"
-                        onClick={() => toggleFeaturedMunicipality(municipality.slug)}
-                        className={
-                          isVisible
-                            ? "rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white"
-                            : "rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700"
-                        }
-                      >
-                        {isVisible ? copy.hideOnMap : copy.showOnMap}
-                      </button>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="relative overflow-hidden rounded-[1.7rem] aspect-[9/16] bg-slate-100">
+          <div className="relative overflow-hidden rounded-[1.7rem] bg-slate-100 aspect-[9/16]">
             <SjaellandMunicipalityMap
               municipalities={sortedMunicipalities}
               locale={locale}
