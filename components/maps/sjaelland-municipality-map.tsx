@@ -234,6 +234,27 @@ function getIconFontSize(bounds: MapFeature["bounds"], isFocused: boolean) {
   return clamp(Math.min(bounds.width / 6.4, bounds.height / 4.2), 8.5, maxSize);
 }
 
+function getLabelFontSize(bounds: MapFeature["bounds"], isFocused: boolean) {
+  const maxSize = isFocused ? 24 : 16;
+  return clamp(Math.min(bounds.width / 5.7, bounds.height / 5.2), 10, maxSize);
+}
+
+function shouldShowLabel(zoomLevel: number, isFeatured: boolean, isFocused: boolean) {
+  return isFocused || isFeatured || zoomLevel >= 2.8;
+}
+
+function getLabelYOffset(iconCount: number) {
+  if (iconCount >= 3) {
+    return 16;
+  }
+
+  if (iconCount >= 1) {
+    return 12;
+  }
+
+  return 4;
+}
+
 function getVisibleIndustries(
   industries: MunicipalitySummary["topIndustries"],
   zoomLevel: number,
@@ -786,6 +807,7 @@ export function SjaellandMunicipalityMap({
             const tuning = labelTuning[municipality.slug] ?? {};
             const isFocused = municipality.slug === focusedSlug;
             const isFeatured = featuredSlugSet.has(municipality.slug);
+            const showLabel = shouldShowLabel(zoomLevel, isFeatured, isFocused);
             const visibleIndustries = getVisibleIndustries(
               municipality.topIndustries,
               zoomLevel,
@@ -793,17 +815,19 @@ export function SjaellandMunicipalityMap({
               isFocused,
             );
 
-            if (visibleIndustries.length === 0) {
+            if (!showLabel && visibleIndustries.length === 0) {
               return null;
             }
 
             const iconScale = clamp(1 / Math.pow(zoomLevel, 0.14), 0.76, 1);
             const iconFontSize = getIconFontSize(bounds, isFocused);
             const iconPositions = getIconPositions(visibleIndustries.length, bounds, tuning.iconDy ?? 0);
+            const labelFontSize = getLabelFontSize(bounds, isFocused);
+            const labelY = getLabelYOffset(visibleIndustries.length);
 
             return (
               <g
-                key={municipality.slug + "-icons"}
+                key={municipality.slug + "-overlay"}
                 transform={`translate(${marker.x}, ${marker.y}) scale(${iconScale})`}
                 data-municipality-slug={municipality.slug}
                 onMouseEnter={() => setHoveredSlug(municipality.slug)}
@@ -825,6 +849,23 @@ export function SjaellandMunicipalityMap({
                     {industry.icon}
                   </text>
                 ))}
+
+                {showLabel ? (
+                  <text
+                    y={labelY}
+                    fontSize={labelFontSize}
+                    fontWeight={isFocused ? 700 : 600}
+                    textAnchor="middle"
+                    dominantBaseline="hanging"
+                    fill="#0f172a"
+                    stroke="rgba(255,255,255,0.88)"
+                    strokeWidth={2}
+                    paintOrder="stroke fill"
+                    letterSpacing={0.1}
+                  >
+                    {municipality.name}
+                  </text>
+                ) : null}
               </g>
             );
           })}
