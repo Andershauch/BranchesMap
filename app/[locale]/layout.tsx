@@ -50,30 +50,43 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   }
 
   const activeLocale = locale as AppLocale;
-  const [dictionary, user] = await Promise.all([
-    getDictionary(locale),
-    getCurrentUser(),
-  ]);
+  const [dictionary, user] = await Promise.all([getDictionary(locale), getCurrentUser()]);
+  const displayName = user?.name?.trim() ? user.name : user?.email ?? null;
+  const supportingText =
+    activeLocale === "da"
+      ? "Mobile-first kort og kommunedata for Sj\u00e6lland"
+      : "Mobile-first map and municipality insights for Zealand";
 
   return (
-    <div lang={locale} className="flex min-h-full flex-col">
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/84 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-3 py-3 sm:px-4">
-          <Link href={`/${locale}`} className="inline-flex items-center gap-2 text-slate-950">
-            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-teal-600" />
-            <span className="text-sm font-semibold tracking-tight">{dictionary.header.appName}</span>
-          </Link>
+    <div lang={locale} className="flex min-h-screen flex-col text-[var(--md-sys-color-on-surface)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]/95 backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.5rem] sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <AppMenu
+              locale={activeLocale}
+              user={user ? { email: user.email, name: user.name } : null}
+              localeLabels={dictionary.locales}
+              localeTitle={dictionary.header.localeLabel}
+            />
+            <Link href={`/${locale}`} className="min-w-0">
+              <p className="truncate text-base font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
+                {dictionary.header.appName}
+              </p>
+              <p className="hidden truncate text-xs text-[var(--md-sys-color-on-surface-variant)] sm:block">
+                {supportingText}
+              </p>
+            </Link>
+          </div>
 
-          <AppMenu
-            locale={activeLocale}
-            user={user ? { email: user.email, name: user.name } : null}
-            localeLabels={dictionary.locales}
-            localeTitle={dictionary.header.localeLabel}
-          />
+          {displayName ? (
+            <div className="hidden max-w-[16rem] truncate rounded-full bg-[var(--md-sys-color-surface-container)] px-4 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] sm:block">
+              {displayName}
+            </div>
+          ) : null}
         </div>
       </header>
 
-      {children}
+      <div className="flex-1">{children}</div>
     </div>
   );
 }

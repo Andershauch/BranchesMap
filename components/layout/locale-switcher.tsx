@@ -31,17 +31,16 @@ function buildLocaleHref(pathname: string, nextLocale: AppLocale, queryString: s
   return queryString ? `${localizedPathname}?${queryString}` : localizedPathname;
 }
 
-export function LocaleSwitcher({
-  currentLocale,
-  labels,
-  title,
-}: LocaleSwitcherProps) {
+export function LocaleSwitcher({ currentLocale, labels, title }: LocaleSwitcherProps) {
   const pathname = usePathname() || `/${currentLocale}`;
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
 
   return (
-    <div className="flex items-center gap-2" aria-label={title}>
+    <div
+      className="inline-flex items-center gap-1 rounded-full bg-[var(--md-sys-color-surface-container)] p-1"
+      aria-label={title}
+    >
       {locales.map((locale) => {
         const href = buildLocaleHref(pathname, locale, queryString);
         const active = locale === currentLocale;
@@ -50,10 +49,10 @@ export function LocaleSwitcher({
           <Link
             key={locale}
             href={href}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               active
-                ? "bg-slate-900 text-white"
-                : "border border-slate-300 bg-white text-slate-700 hover:border-slate-900 hover:text-slate-900"
+                ? "bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-[0_1px_2px_var(--md-sys-color-shadow)]"
+                : "text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container-high)] hover:text-[var(--md-sys-color-on-surface)]"
             }`}
           >
             {labels[locale]}

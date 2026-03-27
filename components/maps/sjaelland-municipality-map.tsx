@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { geoMercator, geoPath } from "d3-geo";
 import {
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -22,6 +23,10 @@ const initialViewBox = { x: 0, y: 0, width, height };
 const minViewWidth = width / 13;
 const zoomStep = 1.22;
 const dragActivationPx = 10;
+const initialDesktopZoomLevel = 4.7;
+const initialMobileZoomLevel = 3.1;
+const initialDesktopBreakpoint = 1024;
+const initialZoomSlug = "naestved";
 
 const labelTuning: Record<
   string,
@@ -87,9 +92,9 @@ const uiCopy: Record<
     industriesTitle: "Brancher i fokus",
     selectedEyebrow: "Kommunedata",
     close: "Luk",
-    swipeHint: "Swipe kortet væk eller tryk på X for at lukke.",
-    openProfile: "Åbn kommune",
-    follow: "Følg",
+    swipeHint: "Swipe kortet v\u00e6k eller tryk p\u00e5 X for at lukke.",
+    openProfile: "\u00c5bn kommune",
+    follow: "F\u00f8lg",
   },
   en: {
     zoomIn: "Zoom in",
@@ -208,6 +213,20 @@ function createFeatureViewBox(bounds: MapFeature["bounds"]): ViewBox {
   const paddedHeight = bounds.height + padding * 2;
   const fitWidth = Math.max(paddedWidth, paddedHeight / aspectRatio) * zoomBias;
   const nextWidth = clamp(fitWidth, minViewWidth, width);
+  const nextHeight = nextWidth * aspectRatio;
+  const centerX = bounds.x + bounds.width / 2;
+  const centerY = bounds.y + bounds.height / 2;
+
+  return clampViewBox({
+    x: centerX - nextWidth / 2,
+    y: centerY - nextHeight / 2,
+    width: nextWidth,
+    height: nextHeight,
+  });
+}
+
+function createFixedZoomFeatureViewBox(bounds: MapFeature["bounds"], zoomLevel: number): ViewBox {
+  const nextWidth = clamp(width / zoomLevel, minViewWidth, width);
   const nextHeight = nextWidth * aspectRatio;
   const centerX = bounds.x + bounds.width / 2;
   const centerY = bounds.y + bounds.height / 2;
@@ -356,6 +375,7 @@ export function SjaellandMunicipalityMap({
   const pointersRef = useRef(new Map<number, PointerSnapshot>());
   const movedDuringGestureRef = useRef(false);
   const dismissTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const initialViewAppliedRef = useRef(false);
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -405,6 +425,34 @@ export function SjaellandMunicipalityMap({
     ? features.find((feature) => feature.municipality.slug === detailsSlug) ?? null
     : null;
   const detailsPlacement = detailsFeature ? getOverlayPlacement(detailsFeature.marker, viewBox) : null;
+
+  useEffect(() => {
+    if (initialViewAppliedRef.current || features.length === 0 || !focusedSlug) {
+      return;
+    }
+
+    const feature = featureMap.get(focusedSlug);
+    if (!feature) {
+      return;
+    }
+
+    const nextViewBox =
+      focusedSlug === initialZoomSlug
+        ? createFixedZoomFeatureViewBox(
+            feature.bounds,
+            window.innerWidth >= initialDesktopBreakpoint ? initialDesktopZoomLevel : initialMobileZoomLevel,
+          )
+        : createFeatureViewBox(feature.bounds);
+
+    initialViewAppliedRef.current = true;
+    const frame = window.requestAnimationFrame(() => {
+      setViewBox(nextViewBox);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [featureMap, features.length, focusedSlug]);
 
   function zoomAtCenter(factor: number) {
     setViewBox((current) =>
@@ -705,7 +753,7 @@ export function SjaellandMunicipalityMap({
               className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
               aria-label={ui.close}
             >
-              ×
+              X
             </button>
           </div>
 
