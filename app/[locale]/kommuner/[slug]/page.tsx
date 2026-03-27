@@ -14,6 +14,8 @@ import {
 } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { getCurrentUser } from "@/lib/server/auth";
+import { getMunicipalitySearchStateForUser } from "@/lib/server/search-follows";
 
 type MunicipalityPageProps = {
   params: Promise<{
@@ -45,10 +47,14 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
     notFound();
   }
 
-  const [municipality, dictionary, search] = await Promise.all([
+  const currentUser = await getCurrentUser();
+  const [municipality, dictionary, search, searchState] = await Promise.all([
     getMunicipalityBySlug(slug),
     getDictionary(locale),
     searchParams,
+    currentUser
+      ? getMunicipalitySearchStateForUser({ userId: currentUser.id, municipalitySlug: slug })
+      : Promise.resolve({ isSaved: false, isFollowing: false }),
   ]);
 
   if (!municipality) {
@@ -59,29 +65,52 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   const topIndustryNames = municipality.topIndustries.map((industry) =>
     getIndustryLabel(dictionary, industry.code, industry.name),
   );
-  const saveButtonLabel = activeLocale === "da" ? "Gem denne kommune" : "Save this municipality";
-  const savedSearchesLabel = activeLocale === "da" ? "Se gemte s\u00f8gninger" : "View saved searches";
+  const saveButtonLabel = searchState.isSaved
+    ? activeLocale === "da"
+      ? "Gemt"
+      : "Saved"
+    : activeLocale === "da"
+      ? "Gem s\u00f8gning"
+      : "Save search";
+  const followButtonLabel = searchState.isFollowing
+    ? activeLocale === "da"
+      ? "F\u00f8lger"
+      : "Following"
+    : activeLocale === "da"
+      ? "F\u00f8lg"
+      : "Follow";
+  const savedSearchesLabel = activeLocale === "da" ? "Se gemte" : "View saved";
+  const followsLabel = activeLocale === "da" ? "Se f\u00f8lger" : "View following";
   const savedState = getStringParam(search.saved);
+  const followedState = getStringParam(search.followed);
   const saveStatusMessage =
     savedState === "created"
       ? activeLocale === "da"
-        ? "Kommunen blev gemt i dine gemte s\u00f8gninger."
-        : "The municipality was saved to your saved searches."
+        ? "S\u00f8gningen blev gemt."
+        : "The search was saved."
       : savedState === "exists"
         ? activeLocale === "da"
-          ? "Kommunen ligger allerede i dine gemte s\u00f8gninger."
-          : "This municipality is already in your saved searches."
+          ? "S\u00f8gningen er allerede gemt."
+          : "This search is already saved."
         : savedState === "error"
           ? activeLocale === "da"
-            ? "Kommunen kunne ikke gemmes. Pr\u00f8v igen."
-            : "The municipality could not be saved. Please try again."
+            ? "S\u00f8gningen kunne ikke gemmes. Pr\u00f8v igen."
+            : "The search could not be saved. Please try again."
           : null;
-  const saveStatusTone =
-    savedState === "error"
-      ? "border-rose-200 bg-rose-50 text-rose-700"
-      : savedState
-        ? "border-teal-200 bg-teal-50 text-teal-800"
-        : "";
+  const followStatusMessage =
+    followedState === "created"
+      ? activeLocale === "da"
+        ? "Du f\u00f8lger nu denne s\u00f8gning."
+        : "You are now following this search."
+      : followedState === "exists"
+        ? activeLocale === "da"
+          ? "Du f\u00f8lger allerede denne s\u00f8gning."
+          : "You are already following this search."
+        : followedState === "error"
+          ? activeLocale === "da"
+            ? "S\u00f8gningen kunne ikke f\u00f8lges. Pr\u00f8v igen."
+            : "The search could not be followed. Please try again."
+          : null;
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-6 py-12 text-slate-900">
@@ -110,8 +139,13 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                 )}
               </p>
               {saveStatusMessage ? (
-                <div className={`mt-5 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${saveStatusTone}`}>
+                <div className={`mt-5 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${savedState === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-teal-200 bg-teal-50 text-teal-800"}`}>
                   {saveStatusMessage}
+                </div>
+              ) : null}
+              {followStatusMessage ? (
+                <div className={`mt-3 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${followedState === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-sky-200 bg-sky-50 text-sky-800"}`}>
+                  {followStatusMessage}
                 </div>
               ) : null}
               <div className="mt-6 flex flex-wrap gap-3">
@@ -122,9 +156,23 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                   <input type="hidden" name="returnTo" value={`/${locale}/kommuner/${municipality.slug}`} />
                   <button
                     type="submit"
-                    className="inline-flex rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+                    disabled={searchState.isSaved}
+                    className={`inline-flex rounded-full px-4 py-2.5 text-sm font-semibold transition ${searchState.isSaved ? "cursor-default bg-slate-200 text-slate-600" : "bg-slate-900 text-white hover:bg-slate-700"}`}
                   >
                     {saveButtonLabel}
+                  </button>
+                </form>
+                <form action="/api/follows" method="post">
+                  <input type="hidden" name="locale" value={locale} />
+                  <input type="hidden" name="intent" value="follow-municipality" />
+                  <input type="hidden" name="municipalitySlug" value={municipality.slug} />
+                  <input type="hidden" name="returnTo" value={`/${locale}/kommuner/${municipality.slug}`} />
+                  <button
+                    type="submit"
+                    disabled={searchState.isFollowing}
+                    className={`inline-flex rounded-full px-4 py-2.5 text-sm font-semibold transition ${searchState.isFollowing ? "cursor-default bg-sky-100 text-sky-700" : "border border-sky-300 bg-white text-sky-900 hover:border-sky-500 hover:bg-sky-50"}`}
+                  >
+                    {followButtonLabel}
                   </button>
                 </form>
                 <Link
@@ -132,6 +180,12 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                   className="inline-flex rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
                 >
                   {savedSearchesLabel}
+                </Link>
+                <Link
+                  href={`/${locale}/follows`}
+                  className="inline-flex rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                >
+                  {followsLabel}
                 </Link>
               </div>
             </div>

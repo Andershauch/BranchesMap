@@ -16,7 +16,8 @@ const menuCopy = {
     menu: "Menu",
     close: "Luk menu",
     home: "Kort",
-    savedSearches: "Gemte s\u00f8gninger",
+    savedSearches: "Gemte",
+    follows: "F\u00f8lger",
     admin: "Admin",
     login: "Log ind",
     register: "Opret bruger",
@@ -28,7 +29,8 @@ const menuCopy = {
     menu: "Menu",
     close: "Close menu",
     home: "Map",
-    savedSearches: "Saved searches",
+    savedSearches: "Saved",
+    follows: "Following",
     admin: "Admin",
     login: "Log in",
     register: "Create account",
@@ -108,6 +110,13 @@ export function AppMenu({
                 className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-900"
               >
                 {copy.savedSearches}
+              </Link>
+              <Link
+                href={`/${locale}/follows`}
+                onClick={() => setOpen(false)}
+                className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-900"
+              >
+                {copy.follows}
               </Link>
               <Link
                 href={`/${locale}/admin/home-map`}
