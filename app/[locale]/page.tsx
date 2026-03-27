@@ -4,6 +4,8 @@ import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 
+export const dynamic = "force-dynamic";
+
 type LocalizedHomePageProps = {
   params: Promise<{
     locale: string;
@@ -37,7 +39,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
       <HomeMapExplorer
         municipalities={municipalities}
         locale={locale as AppLocale}
-        ariaLabel={locale === "da" ? "Kort over Sjællands kommuner" : "Map of Zealand municipalities"}
+        ariaLabel={locale === "da" ? "Kort over Sj\u00e6llands kommuner" : "Map of Zealand municipalities"}
         initialFocusedSlug={initialFocusedSlug}
       />
     </main>

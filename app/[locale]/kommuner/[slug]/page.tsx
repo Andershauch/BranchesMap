@@ -14,6 +14,8 @@ import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getCurrentUser } from "@/lib/server/auth";
 import { getMunicipalitySearchStateForUser } from "@/lib/server/search-follows";
 
+export const dynamic = "force-dynamic";
+
 type MunicipalityPageProps = {
   params: Promise<{
     locale: string;
@@ -64,25 +66,25 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   );
   const followButtonLabel = searchState.isFollowing
     ? activeLocale === "da"
-      ? "Følger"
+      ? "F\u00f8lger"
       : "Following"
     : activeLocale === "da"
-      ? "Følg kommune"
+      ? "F\u00f8lg kommune"
       : "Follow municipality";
-  const followsLabel = activeLocale === "da" ? "Se følger" : "View following";
+  const followsLabel = activeLocale === "da" ? "Se f\u00f8lger" : "View following";
   const followedState = getStringParam(search.followed);
   const followStatusMessage =
     followedState === "created"
       ? activeLocale === "da"
-        ? "Du følger nu denne kommune. Næste skridt er notifikationer, når data ændrer sig."
+        ? "Du f\u00f8lger nu denne kommune. N\u00e6ste skridt er notifikationer, n\u00e5r data \u00e6ndrer sig."
         : "You are now following this municipality. The next step is notifications when data changes."
       : followedState === "exists"
         ? activeLocale === "da"
-          ? "Du følger allerede denne kommune."
+          ? "Du f\u00f8lger allerede denne kommune."
           : "You are already following this municipality."
         : followedState === "error"
           ? activeLocale === "da"
-            ? "Kommunen kunne ikke følges. Prøv igen."
+            ? "Kommunen kunne ikke f\u00f8lges. Pr\u00f8v igen."
             : "The municipality could not be followed. Please try again."
           : null;
 
