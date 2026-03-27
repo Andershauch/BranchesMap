@@ -26,14 +26,23 @@ export async function POST(request: NextRequest) {
   const returnTo = safeRedirectPath(locale, formData.get("returnTo"), `/${locale}/follows`);
   const sessionToken = request.cookies.get(getSessionCookieName())?.value;
   const user = await getUserFromSessionToken(sessionToken);
+  const intent = formData.get("intent");
 
   if (!user) {
+    if (intent === "follow-municipality") {
+      const municipalitySlug = formData.get("municipalitySlug");
+      const registerUrl = new URL(`/${locale}/register`, request.url);
+      registerUrl.searchParams.set("redirectTo", returnTo);
+      if (typeof municipalitySlug === "string" && municipalitySlug) {
+        registerUrl.searchParams.set("followMunicipality", municipalitySlug);
+      }
+      return redirect303(registerUrl);
+    }
+
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("redirectTo", returnTo);
     return redirect303(loginUrl);
   }
-
-  const intent = formData.get("intent");
 
   if (intent === "follow-municipality") {
     const municipalitySlug = formData.get("municipalitySlug");

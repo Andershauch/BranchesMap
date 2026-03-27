@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
 import { createSessionCookieValue, createSessionForUser } from "@/lib/server/auth";
+import { followMunicipalitySearch } from "@/lib/server/search-follows";
 import { registerUser } from "@/lib/server/users";
 
 function getLocale(value: FormDataEntryValue | null) {
@@ -27,11 +28,15 @@ export async function POST(request: NextRequest) {
   const email = formData.get("email");
   const password = formData.get("password");
   const name = formData.get("name");
+  const followMunicipality = formData.get("followMunicipality");
 
   if (typeof email !== "string" || typeof password !== "string") {
     const url = new URL(`/${locale}/register`, request.url);
     url.searchParams.set("error", "missing_fields");
     url.searchParams.set("redirectTo", redirectTo);
+    if (typeof followMunicipality === "string" && followMunicipality) {
+      url.searchParams.set("followMunicipality", followMunicipality);
+    }
     return redirect303(url);
   }
 
@@ -46,6 +51,9 @@ export async function POST(request: NextRequest) {
     const url = new URL(`/${locale}/register`, request.url);
     url.searchParams.set("error", result.reason);
     url.searchParams.set("redirectTo", redirectTo);
+    if (typeof followMunicipality === "string" && followMunicipality) {
+      url.searchParams.set("followMunicipality", followMunicipality);
+    }
     return redirect303(url);
   }
 
@@ -58,7 +66,30 @@ export async function POST(request: NextRequest) {
     metadata: { locale },
   });
 
-  const response = redirect303(new URL(redirectTo, request.url));
+  const finalRedirect = new URL(redirectTo, request.url);
+
+  if (typeof followMunicipality === "string" && followMunicipality) {
+    const followResult = await followMunicipalitySearch({
+      userId: result.user.id,
+      municipalitySlug: followMunicipality,
+      locale,
+    });
+
+    if (followResult.ok) {
+      await recordAuditEvent({
+        userId: result.user.id,
+        action: followResult.created ? "search_follow.create" : followResult.reactivated ? "search_follow.reactivate" : "search_follow.duplicate",
+        entityType: "SearchFollow",
+        entityId: followResult.follow.id,
+        metadata: { municipalitySlug: followMunicipality, via: "register" },
+      });
+      finalRedirect.searchParams.set("followed", followResult.created || followResult.reactivated ? "created" : "exists");
+    } else {
+      finalRedirect.searchParams.set("followed", "error");
+    }
+  }
+
+  const response = redirect303(finalRedirect);
   const cookie = createSessionCookieValue(sessionToken, expiresAt);
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;
