@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { locales, type AppLocale } from "@/lib/i18n/config";
 
@@ -26,24 +26,30 @@ function replaceLocaleInPathname(pathname: string, nextLocale: AppLocale) {
   return `/${nextLocale}${pathname.startsWith("/") ? pathname : `/${pathname}`}`;
 }
 
+function buildLocaleHref(pathname: string, nextLocale: AppLocale, queryString: string) {
+  const localizedPathname = replaceLocaleInPathname(pathname, nextLocale);
+  return queryString ? `${localizedPathname}?${queryString}` : localizedPathname;
+}
+
 export function LocaleSwitcher({
   currentLocale,
   labels,
   title,
 }: LocaleSwitcherProps) {
   const pathname = usePathname() || `/${currentLocale}`;
+  const searchParams = useSearchParams();
+  const queryString = searchParams.toString();
 
   return (
     <div className="flex items-center gap-2" aria-label={title}>
       {locales.map((locale) => {
-        const href = replaceLocaleInPathname(pathname, locale);
+        const href = buildLocaleHref(pathname, locale, queryString);
         const active = locale === currentLocale;
 
         return (
           <Link
             key={locale}
             href={href}
-            locale={false}
             className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
               active
                 ? "bg-slate-900 text-white"

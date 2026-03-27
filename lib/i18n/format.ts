@@ -1,4 +1,4 @@
-import type { LocalizedText } from "@/lib/mock/poc-data";
+import type { LocalizedText } from "@/lib/data/municipalities";
 import { intlLocaleMap, type AppLocale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 
