@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { geoMercator, geoPath } from "d3-geo";
 import {
   useMemo,
@@ -21,8 +22,6 @@ const initialViewBox = { x: 0, y: 0, width, height };
 const minViewWidth = width / 13;
 const zoomStep = 1.22;
 const dragActivationPx = 6;
-const mapLabelFontFamily =
-  'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const labelTuning: Record<
   string,
@@ -30,42 +29,39 @@ const labelTuning: Record<
     dx?: number;
     dy?: number;
     iconDy?: number;
-    nameDy?: number;
-    forceName?: boolean;
-    minZoomForName?: number;
   }
 > = {
-  albertslund: { dx: -12, dy: 2, minZoomForName: 2.3 },
-  ballerup: { dx: -10, dy: -8, minZoomForName: 2.2 },
-  brondby: { dx: -10, dy: 6, minZoomForName: 2.35 },
-  dragor: { dx: 12, dy: 14, nameDy: 1, minZoomForName: 2.15 },
-  frederiksberg: { dx: -2, dy: 0, minZoomForName: 2.65 },
-  gentofte: { dx: 12, dy: -8, minZoomForName: 2.7 },
-  gladsaxe: { dx: 8, dy: -10, minZoomForName: 2.55 },
-  glostrup: { dx: -6, dy: -6, minZoomForName: 2.45 },
-  herlev: { dx: -2, dy: -10, minZoomForName: 2.55 },
+  albertslund: { dx: -12, dy: 2 },
+  ballerup: { dx: -10, dy: -8 },
+  brondby: { dx: -10, dy: 6 },
+  dragor: { dx: 12, dy: 14 },
+  frederiksberg: { dx: -2, dy: 0 },
+  gentofte: { dx: 12, dy: -8 },
+  gladsaxe: { dx: 8, dy: -10 },
+  glostrup: { dx: -6, dy: -6 },
+  herlev: { dx: -2, dy: -10 },
   helsingor: { dx: 10, dy: -10 },
   hillerod: { dx: 0, dy: 4 },
   holbaek: { dx: 0, dy: 4 },
-  horsholm: { dx: 10, dy: -10, minZoomForName: 2.55 },
-  hvidovre: { dx: -8, dy: 10, minZoomForName: 2.45 },
-  ishoj: { dx: -8, dy: 10, minZoomForName: 2.45 },
-  kobenhavn: { dx: 10, dy: -4, iconDy: -1, forceName: true },
+  horsholm: { dx: 10, dy: -10 },
+  hvidovre: { dx: -8, dy: 10 },
+  ishoj: { dx: -8, dy: 10 },
+  kobenhavn: { dx: 10, dy: -4, iconDy: -1 },
   koge: { dx: 8, dy: 10 },
   kalundborg: { dx: -8, dy: 6 },
-  "lyngby-taarbaek": { dx: 8, dy: -12, minZoomForName: 2.7 },
+  "lyngby-taarbaek": { dx: 8, dy: -12 },
   naestved: { dx: 0, dy: 12 },
   greve: { dx: 10, dy: 14 },
-  "hoje-taastrup": { dx: -12, dy: 14, forceName: true },
-  rodovre: { dx: -10, dy: -4, minZoomForName: 2.45 },
+  "hoje-taastrup": { dx: -12, dy: 14 },
+  rodovre: { dx: -10, dy: -4 },
   ringsted: { dx: 0, dy: 4 },
   roskilde: { dx: -8, dy: -4 },
   soro: { dx: -8, dy: 0 },
   slagelse: { dx: -8, dy: 8 },
   stevns: { dx: 12, dy: 10 },
-  taarnby: { dx: 8, dy: 10, minZoomForName: 2.55 },
-  vallensbaek: { dx: -12, dy: 8, minZoomForName: 2.6 },
-  vordingborg: { dx: 0, dy: -10, forceName: true },
+  taarnby: { dx: 8, dy: 10 },
+  vallensbaek: { dx: -12, dy: 8 },
+  vordingborg: { dx: 0, dy: -10 },
 };
 
 const uiCopy: Record<
@@ -74,38 +70,35 @@ const uiCopy: Record<
     zoomIn: string;
     zoomOut: string;
     reset: string;
-    header: string;
-    hint: string;
     jobsSuffix: string;
     industriesTitle: string;
     selectedEyebrow: string;
     close: string;
     swipeHint: string;
+    openProfile: string;
   }
 > = {
   da: {
     zoomIn: "Zoom ind",
     zoomOut: "Zoom ud",
     reset: "Nulstil",
-    header: "Hovedkort",
-    hint: "Brug fingre eller mus til at panorere og zoome. Tryk på en kommune for at fokusere den og åbne dens data.",
     jobsSuffix: "jobs i POC",
-    industriesTitle: "Brancher med flest jobs i POC'en",
+    industriesTitle: "Brancher i fokus",
     selectedEyebrow: "Kommunedata",
     close: "Luk",
-    swipeHint: "Swipe kortet væk eller tryk på X for at lukke.",
+    swipeHint: "Swipe kortet v\u00e6k eller tryk p\u00e5 X for at lukke.",
+    openProfile: "\u00c5bn kommune",
   },
   en: {
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
     reset: "Reset",
-    header: "Home map",
-    hint: "Use touch or mouse to pan and zoom. Tap a municipality to focus it and open its data.",
     jobsSuffix: "jobs in the POC",
-    industriesTitle: "Industries with the most jobs in the POC",
+    industriesTitle: "Industries in focus",
     selectedEyebrow: "Municipality data",
     close: "Close",
     swipeHint: "Swipe the card away or tap X to close.",
+    openProfile: "Open municipality",
   },
 };
 
@@ -162,8 +155,6 @@ type MapFeature = {
     area: number;
   };
 };
-
-type LabelMode = "hidden" | "name-only" | "compact" | "full";
 
 type OverlayPlacement = {
   left: string;
@@ -234,125 +225,51 @@ function getSvgPoint(svg: SVGSVGElement, clientX: number, clientY: number, viewB
   };
 }
 
-function splitMunicipalityName(name: string) {
-  if (name.length <= 12) {
-    return [name];
-  }
-
-  if (name.includes("-")) {
-    return name.split("-");
-  }
-
-  if (name.includes(" ")) {
-    return name.split(" ");
-  }
-
-  return [name];
-}
-
-function getNameFontSize(
-  bounds: MapFeature["bounds"],
-  lines: string[],
-  reservedTopSpace: number,
-  mode: LabelMode,
-) {
-  const innerPadding = 10;
-  const longestLine = lines.reduce((longest, line) => Math.max(longest, line.length), 0);
-  const availableWidth = Math.max(bounds.width - innerPadding * 2, 18);
-  const availableHeight = Math.max(bounds.height - innerPadding * 2 - reservedTopSpace, 16);
-  const widthLimitedSize = availableWidth / Math.max(longestLine * 0.62, 1);
-  const heightLimitedSize = availableHeight / Math.max(lines.length * 0.94, 1);
-  const maxSize = mode === "full" ? 28 : mode === "compact" ? 22 : 18;
-
-  return clamp(Math.min(widthLimitedSize, heightLimitedSize), 7, maxSize);
-}
-
-function getIconFontSize(bounds: MapFeature["bounds"], mode: LabelMode) {
-  const maxSize = mode === "full" ? 13.5 : 11.5;
-  return clamp(Math.min(bounds.width / 6.8, bounds.height / 4.5), 8, maxSize);
-}
-
-function getLabelScale(zoomLevel: number) {
-  return clamp(1 / Math.pow(zoomLevel, 0.18), 0.78, 1);
-}
-
-function getLabelMode(
-  bounds: MapFeature["bounds"],
-  zoomLevel: number,
-  isFeatured: boolean,
-  isFocused: boolean,
-  tuning?: { forceName?: boolean; minZoomForName?: number },
-): LabelMode {
-  const minZoomForName = tuning?.minZoomForName ?? 2.3;
-
-  if (isFocused) {
-    if (zoomLevel >= 2.5) return "full";
-    if (zoomLevel >= 1.5) return "compact";
-    return "name-only";
-  }
-
-  if (isFeatured) {
-    if (zoomLevel >= 2.6 && bounds.area >= 2200) return "full";
-    if (zoomLevel >= 1.7 && bounds.area >= 1800) return "compact";
-    return "name-only";
-  }
-
-  if (zoomLevel >= 3.1 && bounds.area >= 2600) {
-    return "compact";
-  }
-
-  if (zoomLevel >= minZoomForName && bounds.area >= 1500) {
-    return "name-only";
-  }
-
-  return tuning?.forceName && zoomLevel >= 1.5 ? "name-only" : "hidden";
+function getIconFontSize(bounds: MapFeature["bounds"], isFocused: boolean) {
+  const maxSize = isFocused ? 14 : 12.5;
+  return clamp(Math.min(bounds.width / 6.4, bounds.height / 4.2), 8.5, maxSize);
 }
 
 function getVisibleIndustries(
   industries: MunicipalitySummary["topIndustries"],
   zoomLevel: number,
-  mode: LabelMode,
+  isFeatured: boolean,
   isFocused: boolean,
 ) {
-  if (zoomLevel < 1.7) {
-    return [];
+  if (isFocused) {
+    return industries.slice(0, 3);
   }
 
-  if (mode === "full") {
-    return industries.slice(0, zoomLevel >= 2.8 ? (isFocused ? 3 : 2) : 2);
+  if (isFeatured) {
+    return industries.slice(0, zoomLevel >= 1.8 ? 3 : 2);
   }
 
-  if (mode === "compact") {
+  if (zoomLevel >= 2.7) {
     return industries.slice(0, 1);
   }
 
   return [];
 }
 
-function getIconPositions(
-  count: number,
-  bounds: MapFeature["bounds"],
-  mode: LabelMode,
-  iconDy = 0,
-) {
-  const spreadX = clamp(bounds.width * (mode === "full" ? 0.16 : 0.12), 12, mode === "full" ? 28 : 20);
+function getIconPositions(count: number, bounds: MapFeature["bounds"], iconDy = 0) {
+  const spreadX = clamp(bounds.width * 0.16, 12, 28);
   const wideSpreadX = spreadX * 1.18;
 
   if (count <= 1) {
-    return [{ x: 0, y: -14 + iconDy }];
+    return [{ x: 0, y: -10 + iconDy }];
   }
 
   if (count === 2) {
     return [
-      { x: -spreadX, y: -12 + iconDy },
-      { x: spreadX, y: -12 + iconDy },
+      { x: -spreadX, y: -10 + iconDy },
+      { x: spreadX, y: -10 + iconDy },
     ];
   }
 
   return [
-    { x: -wideSpreadX, y: -8 + iconDy },
-    { x: 0, y: -22 + iconDy },
-    { x: wideSpreadX, y: -8 + iconDy },
+    { x: -wideSpreadX, y: -6 + iconDy },
+    { x: 0, y: -20 + iconDy },
+    { x: wideSpreadX, y: -6 + iconDy },
   ];
 }
 
@@ -709,10 +626,6 @@ export function SjaellandMunicipalityMap({
 
   return (
     <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_36%,#9abdaf_100%)]">
-      <div className="absolute left-3 top-3 z-10 rounded-full bg-white/85 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-800 shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/10 backdrop-blur sm:left-4 sm:top-4">
-        {ui.header}
-      </div>
-
       <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-full bg-white/88 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/10 backdrop-blur sm:right-4 sm:top-4">
         <button
           type="button"
@@ -742,12 +655,6 @@ export function SjaellandMunicipalityMap({
         </span>
       </div>
 
-      {!detailsMunicipality ? (
-        <div className="absolute bottom-3 left-3 right-3 z-10 rounded-[1rem] bg-white/82 px-4 py-3 text-xs leading-5 text-slate-700 shadow-[0_10px_30px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/10 backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-sm">
-          {ui.hint}
-        </div>
-      ) : null}
-
       {detailsMunicipality && detailsPlacement ? (
         <div
           className="absolute z-20 w-[min(18rem,calc(100%-1.5rem))] rounded-[1.35rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur sm:w-[20rem]"
@@ -766,7 +673,7 @@ export function SjaellandMunicipalityMap({
               className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
               aria-label={ui.close}
             >
-              ×
+              \u00d7
             </button>
           </div>
 
@@ -791,7 +698,15 @@ export function SjaellandMunicipalityMap({
             </div>
           </div>
 
-          <p className="mt-4 text-[11px] leading-5 text-slate-500">{ui.swipeHint}</p>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <Link
+              href={`/${locale}/kommuner/${detailsMunicipality.slug}`}
+              className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+            >
+              {ui.openProfile}
+            </Link>
+            <p className="text-[11px] leading-5 text-slate-500">{ui.swipeHint}</p>
+          </div>
         </div>
       ) : null}
 
@@ -847,38 +762,25 @@ export function SjaellandMunicipalityMap({
             const tuning = labelTuning[municipality.slug] ?? {};
             const isFocused = municipality.slug === focusedSlug;
             const isFeatured = featuredSlugSet.has(municipality.slug);
-            const labelMode = getLabelMode(bounds, zoomLevel, isFeatured, isFocused, tuning);
             const visibleIndustries = getVisibleIndustries(
               municipality.topIndustries,
               zoomLevel,
-              labelMode,
+              isFeatured,
               isFocused,
             );
-            const showName = labelMode !== "hidden";
-            const showIcons = visibleIndustries.length > 0;
 
-            if (!showName && !showIcons) {
+            if (visibleIndustries.length === 0) {
               return null;
             }
 
-            const nameLines = splitMunicipalityName(municipality.name);
-            const labelScale = getLabelScale(zoomLevel);
-            const iconFontSize = getIconFontSize(bounds, labelMode);
-            const iconPositions = getIconPositions(
-              visibleIndustries.length,
-              bounds,
-              labelMode,
-              tuning.iconDy ?? 0,
-            );
-            const lowestIconY = iconPositions.reduce((lowest, position) => Math.max(lowest, position.y), -12);
-            const reservedTopSpace = showIcons ? Math.max(lowestIconY + iconFontSize * 1.05 + 10, 0) : 0;
-            const nameFontSize = getNameFontSize(bounds, nameLines, reservedTopSpace, labelMode);
-            const nameBaseY = (reservedTopSpace > 0 ? reservedTopSpace : 8) + (tuning.nameDy ?? 0);
+            const iconScale = clamp(1 / Math.pow(zoomLevel, 0.14), 0.76, 1);
+            const iconFontSize = getIconFontSize(bounds, isFocused);
+            const iconPositions = getIconPositions(visibleIndustries.length, bounds, tuning.iconDy ?? 0);
 
             return (
               <g
-                key={municipality.slug + "-label"}
-                transform={`translate(${marker.x}, ${marker.y}) scale(${labelScale})`}
+                key={municipality.slug + "-icons"}
+                transform={`translate(${marker.x}, ${marker.y}) scale(${iconScale})`}
                 data-municipality-slug={municipality.slug}
                 onMouseEnter={() => setHoveredSlug(municipality.slug)}
                 onMouseLeave={() =>
@@ -886,47 +788,19 @@ export function SjaellandMunicipalityMap({
                 }
                 className="cursor-pointer"
               >
-                {showIcons
-                  ? visibleIndustries.map((industry, index) => (
-                      <text
-                        key={municipality.slug + "-" + industry.slug + "-icon"}
-                        x={iconPositions[index]?.x ?? 0}
-                        y={iconPositions[index]?.y ?? 0}
-                        fontSize={iconFontSize}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        opacity={0.95}
-                      >
-                        {industry.icon}
-                      </text>
-                    ))
-                  : null}
-                {showName ? (
+                {visibleIndustries.map((industry, index) => (
                   <text
-                    x="0"
-                    y={nameBaseY}
+                    key={municipality.slug + "-" + industry.slug + "-icon"}
+                    x={iconPositions[index]?.x ?? 0}
+                    y={iconPositions[index]?.y ?? 0}
+                    fontSize={iconFontSize}
                     textAnchor="middle"
-                    fontFamily={mapLabelFontFamily}
-                    fontSize={nameFontSize}
-                    fontWeight="600"
-                    letterSpacing="-0.08"
-                    fill={isFocused ? municipality.topIndustries[0]?.accentColor ?? "#0f766e" : "#0f172a"}
-                    stroke="rgba(255,255,255,0.88)"
-                    strokeWidth={1.35}
-                    strokeLinejoin="round"
-                    paintOrder="stroke"
+                    dominantBaseline="middle"
+                    opacity={isFocused ? 1 : 0.94}
                   >
-                    {nameLines.map((line, index) => (
-                      <tspan
-                        key={municipality.slug + "-label-" + line}
-                        x="0"
-                        dy={index === 0 ? 0 : nameFontSize * 0.96}
-                      >
-                        {line}
-                      </tspan>
-                    ))}
+                    {industry.icon}
                   </text>
-                ) : null}
+                ))}
               </g>
             );
           })}

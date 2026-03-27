@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AuthStatus } from "@/components/layout/auth-status";
-import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { AppMenu } from "@/components/layout/app-menu";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getCurrentUser } from "@/lib/server/auth";
 
 type LocaleLayoutProps = {
   children: React.ReactNode;
@@ -50,35 +50,26 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   }
 
   const activeLocale = locale as AppLocale;
-  const dictionary = await getDictionary(locale);
+  const [dictionary, user] = await Promise.all([
+    getDictionary(locale),
+    getCurrentUser(),
+  ]);
 
   return (
     <div lang={locale} className="flex min-h-full flex-col">
-      <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-6 py-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <Link
-              href={`/${locale}`}
-              className="text-lg font-semibold tracking-tight text-slate-950"
-            >
-              {dictionary.header.appName}
-            </Link>
-            <p className="mt-1 text-sm text-slate-600">{dictionary.header.appTagline}</p>
-          </div>
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/84 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-3 py-3 sm:px-4">
+          <Link href={`/${locale}`} className="inline-flex items-center gap-2 text-slate-950">
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-teal-600" />
+            <span className="text-sm font-semibold tracking-tight">{dictionary.header.appName}</span>
+          </Link>
 
-          <div className="flex flex-col items-start gap-3 md:items-end">
-            <AuthStatus locale={activeLocale} />
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-slate-600">
-                {dictionary.header.localeLabel}
-              </span>
-              <LocaleSwitcher
-                currentLocale={activeLocale}
-                labels={dictionary.locales}
-                title={dictionary.header.localeLabel}
-              />
-            </div>
-          </div>
+          <AppMenu
+            locale={activeLocale}
+            user={user ? { email: user.email, name: user.name } : null}
+            localeLabels={dictionary.locales}
+            localeTitle={dictionary.header.localeLabel}
+          />
         </div>
       </header>
 

@@ -24,7 +24,7 @@ export default async function LocalizedHomePage({ params }: LocalizedHomePagePro
   const municipalities = await getMunicipalitySummaries();
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-3 py-3 text-slate-900 sm:px-4 sm:py-4">
+    <main className="min-h-[calc(100vh-4.75rem)] bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-2 py-2 text-slate-900 sm:px-3 sm:py-3">
       <HomeMapExplorer
         municipalities={municipalities}
         locale={locale as AppLocale}

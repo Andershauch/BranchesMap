@@ -6,31 +6,6 @@ import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipali
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { AppLocale } from "@/lib/i18n/config";
 
-const explorerCopy = {
-  da: {
-    emptyEyebrow: "V\u00e6lg kommune",
-    emptyTitle: "Start i kortet",
-    emptyHint: "Tryk p\u00e5 en kommune for at fokusere den og \u00e5bne kommunedata med det samme.",
-    focusedEyebrow: "Fokuseret kommune",
-    focusedHint: "Kommunen er i fokus p\u00e5 kortet, og dens data er \u00e5bne.",
-    showData: "Vis kommunedata",
-    allMunicipalitiesTitle: "Alle kommuner",
-    allMunicipalitiesHint: "Brug listen til sm\u00e5 eller skjulte kommuner.",
-    selectPlaceholder: "V\u00e6lg kommune...",
-  },
-  en: {
-    emptyEyebrow: "Choose municipality",
-    emptyTitle: "Start in the map",
-    emptyHint: "Tap a municipality to focus it and open municipality data right away.",
-    focusedEyebrow: "Focused municipality",
-    focusedHint: "The municipality is focused on the map, and its data is open.",
-    showData: "Show municipality data",
-    allMunicipalitiesTitle: "All municipalities",
-    allMunicipalitiesHint: "Use the list for small or hidden municipalities.",
-    selectPlaceholder: "Choose municipality...",
-  },
-} as const;
-
 function sortMunicipalities(items: MunicipalitySummary[]) {
   return [...items].sort((left, right) => {
     if (left.homeMap.isPrimary !== right.homeMap.isPrimary) {
@@ -65,11 +40,7 @@ export function HomeMapExplorer({
 
   const [focusedSlug, setFocusedSlug] = useState<string | null>(null);
   const [detailsSlug, setDetailsSlug] = useState<string | null>(null);
-  const copy = explorerCopy[locale];
 
-  const focusedMunicipality = focusedSlug
-    ? sortedMunicipalities.find((municipality) => municipality.slug === focusedSlug) ?? null
-    : null;
   const detailsMunicipality = detailsSlug
     ? sortedMunicipalities.find((municipality) => municipality.slug === detailsSlug) ?? null
     : null;
@@ -79,123 +50,26 @@ export function HomeMapExplorer({
     setDetailsSlug(slug);
   }
 
-  function handleMunicipalitySelectFromList(slug: string) {
-    setFocusedSlug(slug);
-    setDetailsSlug(slug);
-  }
-
   function handleDismissDetails() {
     setDetailsSlug(null);
   }
 
-  const panel = focusedMunicipality ? (
-    <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
-        {copy.focusedEyebrow}
-      </p>
-      <div className="mt-3 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{focusedMunicipality.name}</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">{copy.focusedHint}</p>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={() => setDetailsSlug(focusedMunicipality.slug)}
-        className="mt-5 inline-flex items-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
-      >
-        {copy.showData}
-      </button>
-    </div>
-  ) : (
-    <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
-        {copy.emptyEyebrow}
-      </p>
-      <h2 className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{copy.emptyTitle}</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{copy.emptyHint}</p>
-    </div>
-  );
-
   return (
-    <section className="mx-auto w-full max-w-6xl">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,420px)] lg:items-start">
-        <div className="rounded-[2rem] border border-slate-900/10 bg-white/88 p-3 shadow-[0_20px_80px_rgba(15,23,42,0.06)] sm:p-4">
-          <div className="mb-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">BranchesMap</p>
-            <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              {locale === "da" ? "Kommunekort og kommunedata" : "Municipality map and municipality data"}
-            </h1>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[1.7rem] bg-slate-100 aspect-[9/16]">
-            <SjaellandMunicipalityMap
-              municipalities={sortedMunicipalities}
-              locale={locale}
-              ariaLabel={ariaLabel}
-              focusedSlug={focusedSlug}
-              detailsSlug={detailsSlug}
-              detailsMunicipality={detailsMunicipality}
-              featuredSlugs={featuredSlugs}
-              onMunicipalityPress={handleMunicipalityPress}
-              onDismissDetails={handleDismissDetails}
-            />
-          </div>
-
-          <div className="relative z-10 mt-3 px-1 lg:hidden">
-            {!detailsMunicipality ? panel : null}
-            <div className="mt-3 rounded-[1.4rem] border border-slate-900/10 bg-white/94 p-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  {copy.allMunicipalitiesTitle}
-                </p>
-                <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
-              </div>
-              <select
-                value={focusedSlug ?? ""}
-                onChange={(event) => handleMunicipalitySelectFromList(event.target.value)}
-                className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-teal-500"
-              >
-                <option value="" disabled>
-                  {copy.selectPlaceholder}
-                </option>
-                {sortedMunicipalities.map((municipality) => (
-                  <option key={municipality.slug + "-option-mobile"} value={municipality.slug}>
-                    {municipality.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+    <section className="mx-auto h-[calc(100vh-4.75rem)] w-full max-w-6xl">
+      <div className="h-full rounded-[2rem] border border-slate-900/10 bg-white/62 p-2 shadow-[0_20px_80px_rgba(15,23,42,0.06)] backdrop-blur sm:p-3">
+        <div className="relative h-full overflow-hidden rounded-[1.8rem] bg-slate-100">
+          <SjaellandMunicipalityMap
+            municipalities={sortedMunicipalities}
+            locale={locale}
+            ariaLabel={ariaLabel}
+            focusedSlug={focusedSlug}
+            detailsSlug={detailsSlug}
+            detailsMunicipality={detailsMunicipality}
+            featuredSlugs={featuredSlugs}
+            onMunicipalityPress={handleMunicipalityPress}
+            onDismissDetails={handleDismissDetails}
+          />
         </div>
-
-        <aside className="hidden lg:block lg:sticky lg:top-4">
-          {!detailsMunicipality ? panel : null}
-          <div
-            className={`${detailsMunicipality ? "mt-0" : "mt-4"} rounded-[1.6rem] border border-slate-900/10 bg-white/96 p-5 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur`}
-          >
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                {copy.allMunicipalitiesTitle}
-              </p>
-              <p className="text-xs text-slate-500">{copy.allMunicipalitiesHint}</p>
-            </div>
-            <select
-              value={focusedSlug ?? ""}
-              onChange={(event) => handleMunicipalitySelectFromList(event.target.value)}
-              className="mt-3 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-teal-500"
-            >
-              <option value="" disabled>
-                {copy.selectPlaceholder}
-              </option>
-              {sortedMunicipalities.map((municipality) => (
-                <option key={municipality.slug + "-option-desktop"} value={municipality.slug}>
-                  {municipality.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </aside>
       </div>
     </section>
   );
