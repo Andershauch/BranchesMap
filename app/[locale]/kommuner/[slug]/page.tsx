@@ -53,6 +53,8 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
   const topIndustryNames = municipality.topIndustries.map((industry) =>
     getIndustryLabel(dictionary, industry.code, industry.name),
   );
+  const saveButtonLabel = activeLocale === "da" ? "Gem denne kommune" : "Save this municipality";
+  const savedSearchesLabel = activeLocale === "da" ? "Se gemte s\u00f8gninger" : "View saved searches";
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-6 py-12 text-slate-900">
@@ -80,6 +82,26 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                   topIndustryNames,
                 )}
               </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <form action="/api/saved-searches" method="post">
+                  <input type="hidden" name="locale" value={locale} />
+                  <input type="hidden" name="intent" value="save-municipality" />
+                  <input type="hidden" name="municipalitySlug" value={municipality.slug} />
+                  <input type="hidden" name="returnTo" value={`/${locale}/kommuner/${municipality.slug}`} />
+                  <button
+                    type="submit"
+                    className="inline-flex rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+                  >
+                    {saveButtonLabel}
+                  </button>
+                </form>
+                <Link
+                  href={`/${locale}/saved-searches`}
+                  className="inline-flex rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                >
+                  {savedSearchesLabel}
+                </Link>
+              </div>
             </div>
             <div className="rounded-[1.5rem] bg-slate-950 px-5 py-4 text-slate-100">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">

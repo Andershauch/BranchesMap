@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AuthStatus } from "@/components/layout/auth-status";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -48,6 +49,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     notFound();
   }
 
+  const activeLocale = locale as AppLocale;
   const dictionary = await getDictionary(locale);
 
   return (
@@ -61,20 +63,21 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             >
               {dictionary.header.appName}
             </Link>
-            <p className="mt-1 text-sm text-slate-600">
-              {dictionary.header.appTagline}
-            </p>
+            <p className="mt-1 text-sm text-slate-600">{dictionary.header.appTagline}</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-slate-600">
-              {dictionary.header.localeLabel}
-            </span>
-            <LocaleSwitcher
-              currentLocale={locale as AppLocale}
-              labels={dictionary.locales}
-              title={dictionary.header.localeLabel}
-            />
+          <div className="flex flex-col items-start gap-3 md:items-end">
+            <AuthStatus locale={activeLocale} />
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-slate-600">
+                {dictionary.header.localeLabel}
+              </span>
+              <LocaleSwitcher
+                currentLocale={activeLocale}
+                labels={dictionary.locales}
+                title={dictionary.header.localeLabel}
+              />
+            </div>
           </div>
         </div>
       </header>

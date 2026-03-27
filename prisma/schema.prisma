@@ -85,12 +85,29 @@ model Job {
 model User {
   id            String        @id @default(cuid())
   email         String        @unique
+  passwordHash  String?
   name          String?
   locale        String        @default("da")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   savedSearches SavedSearch[]
+  sessions      UserSession[]
   auditEvents   AuditEvent[]
+
+  @@index([createdAt])
+}
+
+model UserSession {
+  id               String    @id @default(cuid())
+  userId           String
+  sessionTokenHash String    @unique
+  expiresAt        DateTime
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  lastSeenAt       DateTime?
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model SavedSearch {
