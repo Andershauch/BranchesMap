@@ -16,6 +16,10 @@ function safeRedirectPath(locale: string, requestedPath: FormDataEntryValue | nu
   return fallback;
 }
 
+function redirect303(url: URL) {
+  return NextResponse.redirect(url, 303);
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const locale = getLocale(formData.get("locale"));
@@ -28,7 +32,7 @@ export async function POST(request: NextRequest) {
     const url = new URL(`/${locale}/register`, request.url);
     url.searchParams.set("error", "missing_fields");
     url.searchParams.set("redirectTo", redirectTo);
-    return NextResponse.redirect(url);
+    return redirect303(url);
   }
 
   const result = await registerUser({
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
     const url = new URL(`/${locale}/register`, request.url);
     url.searchParams.set("error", result.reason);
     url.searchParams.set("redirectTo", redirectTo);
-    return NextResponse.redirect(url);
+    return redirect303(url);
   }
 
   const { sessionToken, expiresAt } = await createSessionForUser(result.user.id);
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
     metadata: { locale },
   });
 
-  const response = NextResponse.redirect(new URL(redirectTo, request.url));
+  const response = redirect303(new URL(redirectTo, request.url));
   const cookie = createSessionCookieValue(sessionToken, expiresAt);
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;

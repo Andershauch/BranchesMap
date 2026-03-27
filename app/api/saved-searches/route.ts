@@ -16,6 +16,10 @@ function safeRedirectPath(locale: string, requestedPath: FormDataEntryValue | nu
   return fallback;
 }
 
+function redirect303(url: URL) {
+  return NextResponse.redirect(url, 303);
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const locale = getLocale(formData.get("locale"));
@@ -26,13 +30,15 @@ export async function POST(request: NextRequest) {
   if (!user) {
     const loginUrl = new URL(`/${locale}/login`, request.url);
     loginUrl.searchParams.set("redirectTo", returnTo);
-    return NextResponse.redirect(loginUrl);
+    return redirect303(loginUrl);
   }
 
   const intent = formData.get("intent");
 
   if (intent === "save-municipality") {
     const municipalitySlug = formData.get("municipalitySlug");
+    const redirectUrl = new URL(returnTo, request.url);
+
     if (typeof municipalitySlug === "string" && municipalitySlug) {
       const result = await saveMunicipalitySearch({
         userId: user.id,
@@ -48,14 +54,21 @@ export async function POST(request: NextRequest) {
           entityId: result.savedSearch.id,
           metadata: { municipalitySlug },
         });
+        redirectUrl.searchParams.set("saved", result.created ? "created" : "exists");
+      } else {
+        redirectUrl.searchParams.set("saved", "error");
       }
+    } else {
+      redirectUrl.searchParams.set("saved", "error");
     }
 
-    return NextResponse.redirect(new URL(returnTo, request.url));
+    return redirect303(redirectUrl);
   }
 
   if (intent === "delete") {
     const savedSearchId = formData.get("savedSearchId");
+    const redirectUrl = new URL(returnTo, request.url);
+
     if (typeof savedSearchId === "string" && savedSearchId) {
       const deleted = await deleteSavedSearch({ userId: user.id, savedSearchId });
 
@@ -66,11 +79,12 @@ export async function POST(request: NextRequest) {
           entityType: "SavedSearch",
           entityId: savedSearchId,
         });
+        redirectUrl.searchParams.set("savedSearchDeleted", "1");
       }
     }
 
-    return NextResponse.redirect(new URL(returnTo, request.url));
+    return redirect303(redirectUrl);
   }
 
-  return NextResponse.redirect(new URL(returnTo, request.url));
+  return redirect303(new URL(returnTo, request.url));
 }

@@ -8,6 +8,10 @@ import {
   getUserFromSessionToken,
 } from "@/lib/server/auth";
 
+function redirect303(url: URL) {
+  return NextResponse.redirect(url, 303);
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const localeValue = formData.get("locale");
@@ -27,7 +31,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const response = NextResponse.redirect(new URL(`/${locale}`, request.url));
+  const response = redirect303(new URL(`/${locale}`, request.url));
   const cookie = createClearedSessionCookieValue();
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;

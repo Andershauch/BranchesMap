@@ -20,6 +20,7 @@ type MunicipalityPageProps = {
     locale: string;
     slug: string;
   }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export async function generateStaticParams() {
@@ -33,16 +34,21 @@ export async function generateStaticParams() {
   );
 }
 
-export default async function MunicipalityPage({ params }: MunicipalityPageProps) {
+function getStringParam(value: string | string[] | undefined) {
+  return typeof value === "string" && value ? value : null;
+}
+
+export default async function MunicipalityPage({ params, searchParams }: MunicipalityPageProps) {
   const { locale, slug } = await params;
 
   if (!isValidLocale(locale)) {
     notFound();
   }
 
-  const [municipality, dictionary] = await Promise.all([
+  const [municipality, dictionary, search] = await Promise.all([
     getMunicipalityBySlug(slug),
     getDictionary(locale),
+    searchParams,
   ]);
 
   if (!municipality) {
@@ -55,6 +61,27 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
   );
   const saveButtonLabel = activeLocale === "da" ? "Gem denne kommune" : "Save this municipality";
   const savedSearchesLabel = activeLocale === "da" ? "Se gemte s\u00f8gninger" : "View saved searches";
+  const savedState = getStringParam(search.saved);
+  const saveStatusMessage =
+    savedState === "created"
+      ? activeLocale === "da"
+        ? "Kommunen blev gemt i dine gemte s\u00f8gninger."
+        : "The municipality was saved to your saved searches."
+      : savedState === "exists"
+        ? activeLocale === "da"
+          ? "Kommunen ligger allerede i dine gemte s\u00f8gninger."
+          : "This municipality is already in your saved searches."
+        : savedState === "error"
+          ? activeLocale === "da"
+            ? "Kommunen kunne ikke gemmes. Pr\u00f8v igen."
+            : "The municipality could not be saved. Please try again."
+          : null;
+  const saveStatusTone =
+    savedState === "error"
+      ? "border-rose-200 bg-rose-50 text-rose-700"
+      : savedState
+        ? "border-teal-200 bg-teal-50 text-teal-800"
+        : "";
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-6 py-12 text-slate-900">
@@ -82,6 +109,11 @@ export default async function MunicipalityPage({ params }: MunicipalityPageProps
                   topIndustryNames,
                 )}
               </p>
+              {saveStatusMessage ? (
+                <div className={`mt-5 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${saveStatusTone}`}>
+                  {saveStatusMessage}
+                </div>
+              ) : null}
               <div className="mt-6 flex flex-wrap gap-3">
                 <form action="/api/saved-searches" method="post">
                   <input type="hidden" name="locale" value={locale} />
