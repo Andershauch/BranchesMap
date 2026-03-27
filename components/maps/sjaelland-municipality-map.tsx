@@ -468,7 +468,18 @@ export function SjaellandMunicipalityMap({
     pointersRef.current.clear();
     movedDuringGestureRef.current = false;
     setIsDragging(false);
-    setViewBox(initialViewBox);
+
+    const initialFeature = featureMap.get(initialZoomSlug);
+    if (!initialFeature) {
+      setViewBox(initialViewBox);
+      return;
+    }
+
+    const initialZoomLevel =
+      window.innerWidth >= initialDesktopBreakpoint ? initialDesktopZoomLevel : initialMobileZoomLevel;
+
+    setViewBox(createFixedZoomFeatureViewBox(initialFeature.bounds, initialZoomLevel));
+    onMunicipalityPress(initialZoomSlug);
   }
 
   function activateMunicipality(slug: string) {
