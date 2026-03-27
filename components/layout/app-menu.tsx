@@ -16,7 +16,6 @@ const menuCopy = {
     menu: "Menu",
     close: "Luk menu",
     home: "Kort",
-    savedSearches: "Gemte",
     follows: "F\u00f8lger",
     admin: "Admin",
     login: "Log ind",
@@ -29,7 +28,6 @@ const menuCopy = {
     menu: "Menu",
     close: "Close menu",
     home: "Map",
-    savedSearches: "Saved",
     follows: "Following",
     admin: "Admin",
     login: "Log in",
@@ -71,12 +69,16 @@ export function AppMenu({
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/60" onClick={() => setOpen(false)}>
-          <div
-            className="ml-auto flex h-full w-[min(24rem,100%)] flex-col gap-5 border-l border-slate-900/10 bg-[linear-gradient(180deg,#fffdfa_0%,#f3f6f5_100%)] p-5 shadow-[0_30px_100px_rgba(15,23,42,0.28)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="rounded-[1.6rem] border border-slate-900/10 bg-white/92 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.08)]">
+        <div className="fixed inset-0 z-[80]">
+          <button
+            type="button"
+            aria-label={copy.close}
+            onClick={() => setOpen(false)}
+            className="absolute inset-0 bg-slate-950/70"
+          />
+
+          <aside className="absolute inset-y-0 right-0 flex w-[min(24rem,100%)] flex-col gap-5 border-l border-slate-900/10 bg-[linear-gradient(180deg,#fffdfa_0%,#f3f6f5_100%)] p-5 shadow-[0_30px_100px_rgba(15,23,42,0.28)]">
+            <div className="rounded-[1.6rem] border border-slate-900/10 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.08)]">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">BranchesMap</p>
@@ -107,13 +109,6 @@ export function AppMenu({
                 {copy.home}
               </Link>
               <Link
-                href={`/${locale}/saved-searches`}
-                onClick={() => setOpen(false)}
-                className="rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-slate-900"
-              >
-                {copy.savedSearches}
-              </Link>
-              <Link
                 href={`/${locale}/follows`}
                 onClick={() => setOpen(false)}
                 className="rounded-[1.4rem] border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-900 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition hover:border-slate-900"
@@ -129,7 +124,7 @@ export function AppMenu({
               </Link>
             </nav>
 
-            <div className="rounded-[1.5rem] border border-slate-200 bg-white/92 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.language}</p>
               <div className="mt-3">
                 <LocaleSwitcher
@@ -170,7 +165,7 @@ export function AppMenu({
                 </>
               )}
             </div>
-          </div>
+          </aside>
         </div>
       ) : null}
     </>

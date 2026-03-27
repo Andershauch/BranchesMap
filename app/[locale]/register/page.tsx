@@ -15,8 +15,8 @@ const registerCopy = {
   da: {
     eyebrow: "Fase 2",
     title: "Opret bruger",
-    intro: "Lav en enkel konto, s\u00e5 du kan gemme kommuner og senere bruge personlige funktioner sikkert.",
-    followIntro: "Opret en bruger for at f\u00f8lge denne kommune. Vi sender senere opdateringer, n\u00e5r data for kommunen \u00e6ndrer sig.",
+    intro: "Lav en enkel konto, s\u00e5 du kan f\u00f8lge kommuner og senere f\u00e5 relevante opdateringer.",
+    followIntro: "Opret en bruger for at f\u00f8lge denne kommune. N\u00e6ste lag bliver notifikationer, n\u00e5r kommunen \u00e6ndrer sig.",
     name: "Navn (valgfrit)",
     email: "E-mail",
     password: "Adgangskode",
@@ -36,8 +36,8 @@ const registerCopy = {
   en: {
     eyebrow: "Phase 2",
     title: "Create account",
-    intro: "Create a simple account so you can save municipalities and later use personal features securely.",
-    followIntro: "Create an account to follow this municipality. We can later send updates when municipality data changes.",
+    intro: "Create a simple account so you can follow municipalities and later receive relevant updates.",
+    followIntro: "Create an account to follow this municipality. The next layer will be notifications when it changes.",
     name: "Name (optional)",
     email: "Email",
     password: "Password",
@@ -79,7 +79,7 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
   const copy = registerCopy[activeLocale];
   const user = await getCurrentUser();
   const search = await searchParams;
-  const redirectTo = normalizeRedirect(locale, getStringParam(search.redirectTo), `/${locale}/saved-searches`);
+  const redirectTo = normalizeRedirect(locale, getStringParam(search.redirectTo), `/${locale}/follows`);
   const followMunicipality = getStringParam(search.followMunicipality);
 
   if (user) {

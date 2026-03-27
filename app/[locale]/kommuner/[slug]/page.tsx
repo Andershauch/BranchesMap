@@ -65,51 +65,28 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   const topIndustryNames = municipality.topIndustries.map((industry) =>
     getIndustryLabel(dictionary, industry.code, industry.name),
   );
-  const saveButtonLabel = searchState.isSaved
-    ? activeLocale === "da"
-      ? "Gemt"
-      : "Saved"
-    : activeLocale === "da"
-      ? "Gem s\u00f8gning"
-      : "Save search";
   const followButtonLabel = searchState.isFollowing
     ? activeLocale === "da"
       ? "F\u00f8lger"
       : "Following"
     : activeLocale === "da"
-      ? "F\u00f8lg"
-      : "Follow";
-  const savedSearchesLabel = activeLocale === "da" ? "Se gemte" : "View saved";
+      ? "F\u00f8lg kommune"
+      : "Follow municipality";
   const followsLabel = activeLocale === "da" ? "Se f\u00f8lger" : "View following";
-  const savedState = getStringParam(search.saved);
   const followedState = getStringParam(search.followed);
-  const saveStatusMessage =
-    savedState === "created"
-      ? activeLocale === "da"
-        ? "S\u00f8gningen blev gemt."
-        : "The search was saved."
-      : savedState === "exists"
-        ? activeLocale === "da"
-          ? "S\u00f8gningen er allerede gemt."
-          : "This search is already saved."
-        : savedState === "error"
-          ? activeLocale === "da"
-            ? "S\u00f8gningen kunne ikke gemmes. Pr\u00f8v igen."
-            : "The search could not be saved. Please try again."
-          : null;
   const followStatusMessage =
     followedState === "created"
       ? activeLocale === "da"
-        ? "Du f\u00f8lger nu denne s\u00f8gning."
-        : "You are now following this search."
+        ? "Du f\u00f8lger nu denne kommune. N\u00e6ste skridt er notifikationer, n\u00e5r data \u00e6ndrer sig."
+        : "You are now following this municipality. The next step is notifications when data changes."
       : followedState === "exists"
         ? activeLocale === "da"
-          ? "Du f\u00f8lger allerede denne s\u00f8gning."
-          : "You are already following this search."
+          ? "Du f\u00f8lger allerede denne kommune."
+          : "You are already following this municipality."
         : followedState === "error"
           ? activeLocale === "da"
-            ? "S\u00f8gningen kunne ikke f\u00f8lges. Pr\u00f8v igen."
-            : "The search could not be followed. Please try again."
+            ? "Kommunen kunne ikke f\u00f8lges. Pr\u00f8v igen."
+            : "The municipality could not be followed. Please try again."
           : null;
 
   return (
@@ -138,30 +115,12 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                   topIndustryNames,
                 )}
               </p>
-              {saveStatusMessage ? (
-                <div className={`mt-5 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${savedState === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-teal-200 bg-teal-50 text-teal-800"}`}>
-                  {saveStatusMessage}
-                </div>
-              ) : null}
               {followStatusMessage ? (
-                <div className={`mt-3 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${followedState === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-sky-200 bg-sky-50 text-sky-800"}`}>
+                <div className={`mt-5 rounded-[1.2rem] border px-4 py-3 text-sm font-medium ${followedState === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-sky-200 bg-sky-50 text-sky-800"}`}>
                   {followStatusMessage}
                 </div>
               ) : null}
               <div className="mt-6 flex flex-wrap gap-3">
-                <form action="/api/saved-searches" method="post">
-                  <input type="hidden" name="locale" value={locale} />
-                  <input type="hidden" name="intent" value="save-municipality" />
-                  <input type="hidden" name="municipalitySlug" value={municipality.slug} />
-                  <input type="hidden" name="returnTo" value={`/${locale}/kommuner/${municipality.slug}`} />
-                  <button
-                    type="submit"
-                    disabled={searchState.isSaved}
-                    className={`inline-flex rounded-full px-4 py-2.5 text-sm font-semibold transition ${searchState.isSaved ? "cursor-default bg-slate-200 text-slate-600" : "bg-slate-900 text-white hover:bg-slate-700"}`}
-                  >
-                    {saveButtonLabel}
-                  </button>
-                </form>
                 <form action="/api/follows" method="post">
                   <input type="hidden" name="locale" value={locale} />
                   <input type="hidden" name="intent" value="follow-municipality" />
@@ -170,17 +129,11 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                   <button
                     type="submit"
                     disabled={searchState.isFollowing}
-                    className={`inline-flex rounded-full px-4 py-2.5 text-sm font-semibold transition ${searchState.isFollowing ? "cursor-default bg-sky-100 text-sky-700" : "border border-sky-300 bg-white text-sky-900 hover:border-sky-500 hover:bg-sky-50"}`}
+                    className={`inline-flex rounded-full px-4 py-2.5 text-sm font-semibold transition ${searchState.isFollowing ? "cursor-default bg-sky-100 text-sky-700" : "bg-slate-900 text-white hover:bg-slate-700"}`}
                   >
                     {followButtonLabel}
                   </button>
                 </form>
-                <Link
-                  href={`/${locale}/saved-searches`}
-                  className="inline-flex rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-                >
-                  {savedSearchesLabel}
-                </Link>
                 <Link
                   href={`/${locale}/follows`}
                   className="inline-flex rounded-full border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"

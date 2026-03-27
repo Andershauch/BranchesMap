@@ -21,7 +21,7 @@ const aspectRatio = height / width;
 const initialViewBox = { x: 0, y: 0, width, height };
 const minViewWidth = width / 13;
 const zoomStep = 1.22;
-const dragActivationPx = 6;
+const dragActivationPx = 10;
 
 const labelTuning: Record<
   string,
@@ -76,6 +76,7 @@ const uiCopy: Record<
     close: string;
     swipeHint: string;
     openProfile: string;
+    follow: string;
   }
 > = {
   da: {
@@ -86,8 +87,9 @@ const uiCopy: Record<
     industriesTitle: "Brancher i fokus",
     selectedEyebrow: "Kommunedata",
     close: "Luk",
-    swipeHint: "Swipe kortet v\u00e6k eller tryk p\u00e5 X for at lukke.",
-    openProfile: "\u00c5bn kommune",
+    swipeHint: "Swipe kortet væk eller tryk på X for at lukke.",
+    openProfile: "Åbn kommune",
+    follow: "Følg",
   },
   en: {
     zoomIn: "Zoom in",
@@ -99,6 +101,7 @@ const uiCopy: Record<
     close: "Close",
     swipeHint: "Swipe the card away or tap X to close.",
     openProfile: "Open municipality",
+    follow: "Follow",
   },
 };
 
@@ -131,6 +134,7 @@ type DragGesture = {
   startClientY: number;
   startViewBox: ViewBox;
   hasMoved: boolean;
+  startSlug: string | null;
 };
 
 type PinchGesture = {
@@ -433,7 +437,7 @@ export function SjaellandMunicipalityMap({
     setViewBox((current) => scaleViewBox(current, factor, center));
   }
 
-  function beginDrag(pointerId: number, snapshot: PointerSnapshot) {
+  function beginDrag(pointerId: number, snapshot: PointerSnapshot, startSlug: string | null) {
     gestureRef.current = {
       type: "drag",
       pointerId,
@@ -441,6 +445,7 @@ export function SjaellandMunicipalityMap({
       startClientY: snapshot.clientY,
       startViewBox: viewBox,
       hasMoved: false,
+      startSlug,
     };
     setIsDragging(false);
   }
@@ -465,13 +470,18 @@ export function SjaellandMunicipalityMap({
       return;
     }
 
+    const startSlug =
+      event.target instanceof Element
+        ? event.target.closest("[data-municipality-slug]")?.getAttribute("data-municipality-slug") ?? null
+        : null;
+
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
     movedDuringGestureRef.current = false;
 
     const entries = [...pointersRef.current.entries()];
     if (entries.length === 1) {
-      beginDrag(event.pointerId, entries[0][1]);
+      beginDrag(event.pointerId, entries[0][1], startSlug);
       return;
     }
 
@@ -556,6 +566,7 @@ export function SjaellandMunicipalityMap({
       gesture?.type === "drag" &&
       gesture.pointerId === event.pointerId &&
       !gesture.hasMoved;
+    const startSlug = gesture?.type === "drag" ? gesture.startSlug : null;
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -569,9 +580,9 @@ export function SjaellandMunicipalityMap({
       setIsDragging(false);
       movedDuringGestureRef.current = false;
 
-      if (didTap) {
+      if (didTap && startSlug) {
         const slug = getMunicipalitySlugAtClientPoint(event.clientX, event.clientY);
-        if (slug) {
+        if (slug && slug === startSlug) {
           activateMunicipality(slug);
         }
       }
@@ -580,7 +591,7 @@ export function SjaellandMunicipalityMap({
     }
 
     if (remaining.length === 1) {
-      beginDrag(remaining[0][0], remaining[0][1]);
+      beginDrag(remaining[0][0], remaining[0][1], null);
       return;
     }
 
@@ -673,7 +684,7 @@ export function SjaellandMunicipalityMap({
               className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
               aria-label={ui.close}
             >
-              \u00d7
+              ×
             </button>
           </div>
 
@@ -698,15 +709,28 @@ export function SjaellandMunicipalityMap({
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <form action="/api/follows" method="post">
+              <input type="hidden" name="locale" value={locale} />
+              <input type="hidden" name="intent" value="follow-municipality" />
+              <input type="hidden" name="municipalitySlug" value={detailsMunicipality.slug} />
+              <input type="hidden" name="returnTo" value={`/${locale}?focus=${detailsMunicipality.slug}`} />
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              >
+                {ui.follow}
+              </button>
+            </form>
             <Link
               href={`/${locale}/kommuner/${detailsMunicipality.slug}`}
-              className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
             >
               {ui.openProfile}
             </Link>
-            <p className="text-[11px] leading-5 text-slate-500">{ui.swipeHint}</p>
           </div>
+
+          <p className="mt-3 text-[11px] leading-5 text-slate-500">{ui.swipeHint}</p>
         </div>
       ) : null}
 

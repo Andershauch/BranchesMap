@@ -24,10 +24,12 @@ export function HomeMapExplorer({
   municipalities,
   locale,
   ariaLabel,
+  initialFocusedSlug,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
+  initialFocusedSlug?: string | null;
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
   const featuredSlugs = useMemo(
@@ -38,8 +40,13 @@ export function HomeMapExplorer({
     [sortedMunicipalities],
   );
 
-  const [focusedSlug, setFocusedSlug] = useState<string | null>(null);
-  const [detailsSlug, setDetailsSlug] = useState<string | null>(null);
+  const safeInitialFocusedSlug =
+    initialFocusedSlug && sortedMunicipalities.some((municipality) => municipality.slug === initialFocusedSlug)
+      ? initialFocusedSlug
+      : null;
+
+  const [focusedSlug, setFocusedSlug] = useState<string | null>(safeInitialFocusedSlug);
+  const [detailsSlug, setDetailsSlug] = useState<string | null>(safeInitialFocusedSlug);
 
   const detailsMunicipality = detailsSlug
     ? sortedMunicipalities.find((municipality) => municipality.slug === detailsSlug) ?? null

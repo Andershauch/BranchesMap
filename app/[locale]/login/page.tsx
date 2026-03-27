@@ -15,8 +15,8 @@ const loginCopy = {
   da: {
     eyebrow: "Fase 2",
     title: "Log ind",
-    intro: "Log ind for at gemme kommuner og senere holde styr p\u00e5 dine s\u00f8gninger sikkert.",
-    followIntro: "Log ind for at f\u00f8lge denne kommune og f\u00e5 fremtidige opdateringer i appen.",
+    intro: "Log ind for at bruge dine f\u00f8lger og holde styr p\u00e5 kommuner sikkert.",
+    followIntro: "Log ind for at f\u00f8lge denne kommune. Vi bruger din konto til senere at kunne vise opdateringer.",
     email: "E-mail",
     password: "Adgangskode",
     submit: "Log ind",
@@ -32,8 +32,8 @@ const loginCopy = {
   en: {
     eyebrow: "Phase 2",
     title: "Log in",
-    intro: "Log in to save municipalities and later manage your searches securely.",
-    followIntro: "Log in to follow this municipality and get future updates inside the app.",
+    intro: "Log in to use your follows and keep track of municipalities securely.",
+    followIntro: "Log in to follow this municipality. Your account lets us show updates later.",
     email: "Email",
     password: "Password",
     submit: "Log in",
@@ -71,7 +71,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   const copy = loginCopy[activeLocale];
   const user = await getCurrentUser();
   const search = await searchParams;
-  const redirectTo = normalizeRedirect(locale, getStringParam(search.redirectTo), `/${locale}/saved-searches`);
+  const redirectTo = normalizeRedirect(locale, getStringParam(search.redirectTo), `/${locale}/follows`);
   const followMunicipality = getStringParam(search.followMunicipality);
 
   if (user) {
