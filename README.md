@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BranchesMap
 
-## Getting Started
+Mobil-first POC for et interaktivt kort over Sjællands kommuner, brancher og jobestimater.
 
-First, run the development server:
+## Status
+
+- full-screen kortoplevelse optimeret til mobil
+- bottom sheet for kommune-preview og expanded state
+- PWA-baseline med manifest, app-ikoner og service worker
+- installerbar på Android
+- roadmap og sprintstatus vedligeholdes i `roadmap.md`
+
+## Lokalt
+
+Kør udviklingsserver:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Kør på lokalnet til telefon-test:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev -- --hostname 0.0.0.0
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Kør production-build lokalt:
 
-## Learn More
+```bash
+npm run build
+npm run start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## PWA-noter
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+PWA-sporet er bevidst konservativt lige nu:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `sw.js` hentes uden cache for at gøre opdateringer mere forudsigelige
+- navigation går netværk-først med offline-fallback
+- statiske PWA-assets caches eksplicit
+- appen viser in-app besked ved offline-tilstand og når en ny version er klar
 
-## Deploy on Vercel
+### Hvad der virker offline i øjeblikket
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- offline fallback-side
+- manifest og app-ikoner
+- installeret app-shell kan stadig åbne fallback, hvis netværket mangler
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Hvad der ikke er endeligt afklaret endnu
+
+- om selve kortskallen skal kunne åbne offline i POC'en
+- endelig iPhone standalone-QA
+- fuld dokumentation af opdateringsflow mellem builds
+
+## Kvalitetschecks
+
+```bash
+npm run check:encoding
+npm run lint
+npm run build
+```
