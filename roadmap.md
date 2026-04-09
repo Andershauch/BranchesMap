@@ -1057,6 +1057,23 @@ Hvis vi skulle starte i dag, ville jeg gøre dette i præcis denne rækkefølge:
 
 Projektets næste praktiske milepæl er stadig **Fase 2**, men nu som et stabiliseringsspor: gøre den installerede PWA mere robust, mere forudsigelig ved opdateringer og færdigvalideret på rigtige devices.
 
+## Release-checkpoint - Første app-version
+
+**Checkpoint:** `v0.1.0-app`
+
+Dette checkpoint markerer den første version, hvor projektet reelt opfører sig som en mobilapp og ikke kun som en mobiltilpasset webside.
+
+Det er konkret opnået i denne version:
+
+- forsiden er nu et full-screen kort med kortet som primært interface
+- topbar, menu og kortkontroller er samlet i en app-lignende shell
+- kommuneoplevelsen er bygget som et bottom sheet med preview og expanded state
+- mobilinteraktion på rigtig Android-enhed er verificeret
+- appen kan installeres som PWA på Android
+- roadmap og projektstatus er opdateret til at afspejle overgangen til første app-version
+
+Det næste arbejde efter dette checkpoint er at gøre PWA-opdateringer og standalone-adfærd mere robuste, så app-versionen også bliver stabil som installeret produkt.
+
 ### Fokus i næste sprint
 
 1. Stabiliser opdateringsflow for installeret app og service worker.
