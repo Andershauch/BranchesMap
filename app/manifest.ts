@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     name: "BranchesMap",
     short_name: "BranchesMap",
-    description: "Mobilvenligt kort over Sj\u00e6llands kommuner, brancher og jobestimater.",
+    description: "Mobilvenligt kort over Sjællands kommuner, brancher og jobestimater.",
     start_url: "/da",
     scope: "/",
     display: "standalone",

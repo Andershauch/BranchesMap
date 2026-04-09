@@ -1074,6 +1074,26 @@ Det er konkret opnået i denne version:
 
 Det næste arbejde efter dette checkpoint er at gøre PWA-opdateringer og standalone-adfærd mere robuste, så app-versionen også bliver stabil som installeret produkt.
 
+### Statusopdatering - PWA stabilisering
+
+Fase 2 er nu rykket fra "installérbar baseline" til "robust app-adfærd".
+
+Det, der er leveret i dette stabiliseringspass:
+
+- service worker er gjort smallere og mere bevidst, så den ikke længere forsøger at cache hele appen bredt
+- navigationsrequests går nu netværks-først med offline-fallback i stedet for aggressiv runtime-cache
+- statiske PWA-assets som manifest, offline-side og app-ikoner caches fortsat eksplicit
+- klienten checker nu løbende efter nye service worker-versioner ved fokus, visibility og interval
+- appen viser nu en tydelig in-app besked, når en ny version er klar til opdatering
+- appen viser nu en enkel offline-besked, når device mister forbindelse
+
+Det, der stadig er næste arbejde i Fase 2:
+
+- verificere update-flow på rigtig Android-enhed fra én build til den næste
+- teste standalone-adfærd bredere på iPhone
+- beslutte om POC'en kun skal have offline-side eller om selve kortskallen også skal kunne åbne offline
+- dokumentere forventet brugeroplevelse ved opdatering og offline-brug
+
 ### Fokus i næste sprint
 
 1. Stabiliser opdateringsflow for installeret app og service worker.

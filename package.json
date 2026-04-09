@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "npm run check:encoding && next build",
     "start": "next start",
-    "lint": "npm run check:encoding && eslint",
+    "lint": "npm run check:encoding && npx eslint .",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",

@@ -1,4 +1,4 @@
-const CACHE_VERSION = "branches-map-v2";
+const STATIC_CACHE = "branches-map-static-v3";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,
@@ -8,11 +8,10 @@ const STATIC_ASSETS = [
   "/icons/app-icon-512.png",
   "/icons/apple-touch-icon.png",
 ];
+const STATIC_ASSET_PATHS = new Set(STATIC_ASSETS);
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting()),
-  );
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)));
 });
 
 self.addEventListener("activate", (event) => {
@@ -20,10 +19,16 @@ self.addEventListener("activate", (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key))),
+        Promise.all(keys.filter((key) => key !== STATIC_CACHE).map((key) => caches.delete(key))),
       )
       .then(() => self.clients.claim()),
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -44,36 +49,28 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          void caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(async () => {
-          const cachedPage = await caches.match(request);
-          if (cachedPage) {
-            return cachedPage;
-          }
-
-          const offlinePage = await caches.match(OFFLINE_URL);
-          return offlinePage || Response.error();
-        }),
+      fetch(request).catch(async () => {
+        const offlinePage = await caches.match(OFFLINE_URL);
+        return offlinePage || Response.error();
+      }),
     );
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      const networkFetch = fetch(request)
-        .then((response) => {
-          const copy = response.clone();
-          void caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => cachedResponse);
+  if (!STATIC_ASSET_PATHS.has(url.pathname)) {
+    return;
+  }
 
-      return cachedResponse || networkFetch;
+  event.respondWith(
+    caches.match(request).then(async (cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      const response = await fetch(request);
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, response.clone());
+      return response;
     }),
   );
 });
