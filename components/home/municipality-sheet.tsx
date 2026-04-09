@@ -1,0 +1,279 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
+
+import type { MunicipalitySummary } from "@/lib/data/municipalities";
+import type { AppLocale } from "@/lib/i18n/config";
+
+type SheetMode = "closed" | "preview" | "expanded";
+const sheetEnterDelayMs = 16;
+
+const sheetCopy = {
+  da: {
+    jobsSuffix: "jobs i POC",
+    teaserLabel: "Profil",
+    openProfile: "\u00c5bn kommune",
+    follow: "F\u00f8lg",
+    expand: "Udvid",
+    collapse: "Minim\u00e9r",
+    close: "Luk",
+    swipeHint: "Swipe op for mere",
+  },
+  en: {
+    jobsSuffix: "jobs in the POC",
+    teaserLabel: "Profile",
+    openProfile: "Open municipality",
+    follow: "Follow",
+    expand: "Expand",
+    collapse: "Collapse",
+    close: "Close",
+    swipeHint: "Swipe up for more",
+  },
+} as const;
+
+function formatCount(locale: AppLocale, value: number) {
+  return new Intl.NumberFormat(locale).format(value);
+}
+
+export function MunicipalitySheet({
+  locale,
+  municipality,
+  mode,
+  onExpand,
+  onCollapse,
+  onClose,
+}: {
+  locale: AppLocale;
+  municipality: MunicipalitySummary;
+  mode: SheetMode;
+  onExpand: () => void;
+  onCollapse: () => void;
+  onClose: () => void;
+}) {
+  const copy = sheetCopy[locale];
+  const touchStartYRef = useRef<number | null>(null);
+  const [isEntered, setIsEntered] = useState(false);
+  const isExpanded = mode === "expanded";
+  const visualMode = mode === "closed" ? "closed" : isEntered ? mode : "closed";
+  const isVisible = visualMode !== "closed";
+  const accentColor = municipality.topIndustries[0]?.accentColor ?? "#0f766e";
+  const visibleIndustries = isExpanded
+    ? municipality.topIndustries
+    : municipality.topIndustries.slice(0, 3);
+  const panelHeight = "min(30.5rem, calc(100dvh - var(--app-header-height) - var(--sheet-panel-gap)))";
+  const previewPeek = "var(--sheet-preview-peek)";
+
+  useEffect(() => {
+    if (mode === "closed") {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setIsEntered(true);
+    }, sheetEnterDelayMs);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [mode, municipality.slug]);
+
+  function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
+    touchStartYRef.current = event.touches[0]?.clientY ?? null;
+  }
+
+  function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
+    const startY = touchStartYRef.current;
+    const endY = event.changedTouches[0]?.clientY ?? null;
+    touchStartYRef.current = null;
+
+    if (startY === null || endY === null) {
+      return;
+    }
+
+    const deltaY = endY - startY;
+
+    if (deltaY <= -48 && !isExpanded) {
+      onExpand();
+      return;
+    }
+
+    if (deltaY >= 70) {
+      if (isExpanded) {
+        onCollapse();
+      } else {
+        onClose();
+      }
+    }
+  }
+
+  const translateY =
+    visualMode === "expanded"
+      ? "0%"
+      : visualMode === "preview"
+        ? `calc(100% - ${previewPeek})`
+        : "calc(100% - 0.35rem)";
+
+  return (
+    <>
+      {isVisible ? (
+        <button
+          type="button"
+          aria-label={copy.close}
+          onClick={onClose}
+          className={`absolute inset-0 z-20 transition duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            isExpanded ? "pointer-events-auto bg-slate-950/18 opacity-100" : "pointer-events-none bg-slate-950/0 opacity-0"
+          }`}
+        />
+      ) : null}
+
+      <section className="pointer-events-none absolute inset-x-0 bottom-0 z-30">
+        <div
+          className={`pointer-events-auto w-full overflow-hidden rounded-t-[1.8rem] rounded-b-none border-x-0 border-b-0 border-t border-white/72 bg-[color:rgba(255,255,255,0.88)] backdrop-blur-2xl transition-[transform,box-shadow,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
+            isExpanded
+              ? "shadow-[0_-22px_72px_rgba(15,23,42,0.18),0_-2px_0_rgba(255,255,255,0.44)]"
+              : "shadow-[0_-12px_40px_rgba(15,23,42,0.12),0_-2px_0_rgba(255,255,255,0.36)]"
+          }`}
+          style={{
+            height: panelHeight,
+            transform: `translateY(${translateY})`,
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="relative flex h-full flex-col overscroll-contain pb-[max(var(--safe-bottom),0px)]">
+            <div
+              className="absolute inset-x-0 top-0 h-24 opacity-90"
+              style={{
+                background: `linear-gradient(180deg, color-mix(in srgb, ${accentColor} 18%, white) 0%, rgba(255,255,255,0.16) 64%, rgba(255,255,255,0) 100%)`,
+              }}
+            />
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={isExpanded ? onCollapse : onExpand}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  if (isExpanded) {
+                    onCollapse();
+                  } else {
+                    onExpand();
+                  }
+                }
+              }}
+              className="relative flex cursor-pointer flex-col px-5 pb-2 pt-2.5 outline-none"
+              aria-label={isExpanded ? copy.collapse : copy.expand}
+            >
+              <div className="mx-auto flex flex-col items-center">
+                <div
+                  className={`h-2 w-16 rounded-full bg-slate-400/95 shadow-[0_4px_10px_rgba(15,23,42,0.16)] ring-1 ring-white/75 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    isExpanded ? "scale-110" : "scale-100"
+                  }`}
+                />
+                {!isExpanded ? (
+                  <div className="mt-1 h-1 w-7 rounded-full bg-slate-300/90" />
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="truncate text-[1.45rem] font-semibold tracking-tight text-slate-950">
+                      {municipality.name}
+                    </h2>
+                    <span className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-900/6">
+                      {formatCount(locale, municipality.totalJobs)} {copy.jobsSuffix}
+                    </span>
+                  </div>
+
+                  {!isExpanded ? (
+                    <p className="mt-1.5 text-[8px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                      {copy.swipeHint}
+                    </p>
+                  ) : null}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (isExpanded) {
+                      onCollapse();
+                    } else {
+                      onClose();
+                    }
+                  }}
+                  className="inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full bg-white/90 text-[12px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/8 transition hover:bg-white"
+                  aria-label={isExpanded ? copy.collapse : copy.close}
+                >
+                  {isExpanded ? "\u2212" : "\u00d7"}
+                </button>
+              </div>
+            </div>
+
+            <div className={isExpanded ? "flex-1 overflow-y-auto px-5 pb-2" : "px-5 pb-2.5"}>
+              <div className="grid grid-cols-3 gap-1.5">
+                {visibleIndustries.map((industry) => (
+                  <span
+                    key={municipality.slug + "-sheet-" + industry.slug}
+                    className={`inline-flex items-center gap-1.5 rounded-full font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${
+                      isExpanded
+                        ? "w-full justify-center px-2 py-1.75 text-[10px]"
+                        : "w-full justify-center px-2 py-1.5 text-[9px]"
+                    }`}
+                    style={{ backgroundColor: industry.accentColor }}
+                  >
+                    <span className={isExpanded ? "text-[10px]" : "text-[9px]"}>{industry.icon}</span>
+                    <span className={isExpanded ? "max-w-[4.6rem] truncate" : "max-w-[4.2rem] truncate"}>
+                      {industry.name}
+                    </span>
+                    <span className="text-white/85">{formatCount(locale, industry.jobCount)}</span>
+                  </span>
+                ))}
+              </div>
+
+              {isExpanded ? (
+                <>
+                  <div className="mt-4 rounded-[1.35rem] bg-white/60 px-4 py-4 ring-1 ring-slate-900/5">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                      {copy.teaserLabel}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{municipality.teaser}</p>
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            <div className={`px-5 ${isExpanded ? "pb-2.5" : "pb-1"}`}>
+              <div className={`grid gap-2 ${isExpanded ? "" : ""}`}>
+                {isExpanded ? (
+                  <Link
+                    href={`/${locale}/kommuner/${municipality.slug}`}
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/88 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-white hover:text-slate-950"
+                  >
+                    {copy.openProfile}
+                  </Link>
+                ) : null}
+
+                <form action="/api/follows" method="post">
+                  <input type="hidden" name="locale" value={locale} />
+                  <input type="hidden" name="intent" value="follow-municipality" />
+                  <input type="hidden" name="municipalitySlug" value={municipality.slug} />
+                  <input type="hidden" name="returnTo" value={`/${locale}?focus=${municipality.slug}`} />
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-10 w-full items-center justify-center rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
+                  >
+                    {copy.follow}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppMenu } from "@/components/layout/app-menu";
+import { MapTopBarControls } from "@/components/layout/map-topbar-controls";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/server/auth";
@@ -59,9 +60,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <div lang={locale} className="flex min-h-screen flex-col text-[var(--md-sys-color-on-surface)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]/95 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:h-[4.5rem] sm:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+      <header
+        className="sticky top-0 z-50 h-[var(--app-header-height)] pt-[var(--safe-top)]"
+      >
+        <div className="flex h-[var(--app-header-bar-height)] w-full items-center justify-between gap-2.5 border-b border-white/45 bg-[color:rgba(248,250,247,0.62)] px-[calc(var(--safe-left)+0.8rem)] pr-[calc(var(--safe-right)+0.8rem)] shadow-[0_8px_20px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:px-[calc(var(--safe-left)+1rem)] sm:pr-[calc(var(--safe-right)+1rem)]">
+          <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <AppMenu
               locale={activeLocale}
               user={user ? { email: user.email, name: user.name } : null}
@@ -69,7 +72,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               localeTitle={dictionary.header.localeLabel}
             />
             <Link href={`/${locale}`} className="min-w-0">
-              <p className="truncate text-base font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
+              <p className="truncate text-[0.94rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
                 {dictionary.header.appName}
               </p>
               <p className="hidden truncate text-xs text-[var(--md-sys-color-on-surface-variant)] sm:block">
@@ -78,11 +81,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             </Link>
           </div>
 
-          {displayName ? (
-            <div className="hidden max-w-[16rem] truncate rounded-full bg-[var(--md-sys-color-surface-container)] px-4 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] sm:block">
-              {displayName}
-            </div>
-          ) : null}
+          <MapTopBarControls locale={activeLocale} displayName={displayName} />
         </div>
       </header>
 

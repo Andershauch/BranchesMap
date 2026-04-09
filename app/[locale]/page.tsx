@@ -35,7 +35,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
     : null;
 
   return (
-    <main className="min-h-[calc(100dvh-4rem)] px-4 py-4 text-[var(--md-sys-color-on-surface)] sm:px-6 sm:py-6">
+    <main className="-mt-[var(--app-header-height)] min-h-[100dvh] text-[var(--md-sys-color-on-surface)]">
       <HomeMapExplorer
         municipalities={municipalities}
         locale={locale as AppLocale}

@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { MunicipalitySheet } from "@/components/home/municipality-sheet";
 import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { AppLocale } from "@/lib/i18n/config";
 
 const defaultInitialFocusedSlug = "naestved";
+type SheetMode = "closed" | "preview" | "expanded";
 
 function sortMunicipalities(items: MunicipalitySummary[]) {
   return [...items].sort((left, right) => {
@@ -21,21 +23,6 @@ function sortMunicipalities(items: MunicipalitySummary[]) {
     return left.name.localeCompare(right.name, "da");
   });
 }
-
-const uiCopy = {
-  da: {
-    title: "Kort over kommuner",
-    body: "Fokuser p\u00e5 en kommune for at se brancher, jobestimat og den aktuelle profil uden at forlade kortet.",
-    municipalities: "kommuner",
-    focus: "Fokus",
-  },
-  en: {
-    title: "Municipality map",
-    body: "Focus a municipality to preview industries, job estimates, and the latest profile details without leaving the map.",
-    municipalities: "municipalities",
-    focus: "Focus",
-  },
-} as const;
 
 export function HomeMapExplorer({
   municipalities,
@@ -66,67 +53,82 @@ export function HomeMapExplorer({
 
   const [focusedSlug, setFocusedSlug] = useState<string | null>(safeInitialFocusedSlug);
   const [detailsSlug, setDetailsSlug] = useState<string | null>(safeInitialFocusedSlug);
-  const copy = uiCopy[locale];
-
-  const detailsMunicipality = detailsSlug
-    ? sortedMunicipalities.find((municipality) => municipality.slug === detailsSlug) ?? null
+  const [renderedDetailsSlug, setRenderedDetailsSlug] = useState<string | null>(safeInitialFocusedSlug);
+  const [sheetSession, setSheetSession] = useState(0);
+  const [sheetMode, setSheetMode] = useState<SheetMode>(safeInitialFocusedSlug ? "preview" : "closed");
+  const closeTimeoutRef = useRef<number | null>(null);
+  const detailsMunicipality = renderedDetailsSlug
+    ? sortedMunicipalities.find((municipality) => municipality.slug === renderedDetailsSlug) ?? null
     : null;
 
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current);
+      }
+    };
+  }, []);
+
   function handleMunicipalityPress(slug: string) {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+
+    if (sheetMode === "closed") {
+      setSheetSession((current) => current + 1);
+    }
+
     setFocusedSlug(slug);
     setDetailsSlug(slug);
+    setRenderedDetailsSlug(slug);
+
+    if (detailsSlug === slug) {
+      setSheetMode((current) => (current === "preview" ? "expanded" : current === "closed" ? "preview" : current));
+      return;
+    }
+
+    setSheetMode("preview");
   }
 
   function handleDismissDetails() {
-    setDetailsSlug(null);
+    setSheetMode("closed");
+
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+    }
+
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setDetailsSlug(null);
+      setRenderedDetailsSlug(null);
+      closeTimeoutRef.current = null;
+    }, 460);
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl">
-      <div className="grid gap-4">
-        <div className="rounded-[1.75rem] bg-[var(--md-sys-color-surface-container)] px-5 py-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--md-sys-color-primary)]">
-                BranchesMap
-              </p>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-[2rem]">
-                {copy.title}
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)] sm:text-base">
-                {copy.body}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-[var(--md-sys-color-primary-container)] px-4 py-2 text-sm font-medium text-[var(--md-sys-color-on-primary-container)]">
-                {sortedMunicipalities.length} {copy.municipalities}
-              </span>
-              {detailsMunicipality ? (
-                <span className="rounded-full bg-[var(--md-sys-color-surface-container-high)] px-4 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface)]">
-                  {copy.focus}: {detailsMunicipality.name}
-                </span>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container)] p-2 shadow-[0_8px_24px_var(--md-sys-color-shadow)] sm:p-3">
-          <div className="relative h-[calc(100dvh-12rem)] min-h-[34rem] overflow-hidden rounded-[1.7rem] bg-[var(--md-sys-color-surface-container-lowest)] sm:h-[calc(100dvh-10.5rem)]">
-            <SjaellandMunicipalityMap
-              municipalities={sortedMunicipalities}
-              locale={locale}
-              ariaLabel={ariaLabel}
-              focusedSlug={focusedSlug}
-              detailsSlug={detailsSlug}
-              detailsMunicipality={detailsMunicipality}
-              featuredSlugs={featuredSlugs}
-              onMunicipalityPress={handleMunicipalityPress}
-              onDismissDetails={handleDismissDetails}
-            />
-          </div>
-        </div>
+    <section className="relative isolate h-[100dvh] overflow-hidden bg-[var(--md-sys-color-surface-container-lowest)]">
+      <div className="absolute inset-0">
+        <SjaellandMunicipalityMap
+          municipalities={sortedMunicipalities}
+          ariaLabel={ariaLabel}
+          focusedSlug={focusedSlug}
+          detailsSlug={detailsSlug}
+          featuredSlugs={featuredSlugs}
+          onMunicipalityPress={handleMunicipalityPress}
+        />
       </div>
+
+      {detailsMunicipality ? (
+        <MunicipalitySheet
+          key={`${renderedDetailsSlug ?? "sheet"}-${sheetSession}`}
+          locale={locale}
+          municipality={detailsMunicipality}
+          mode={sheetMode === "expanded" ? "expanded" : sheetMode === "preview" ? "preview" : "closed"}
+          onExpand={() => setSheetMode("expanded")}
+          onCollapse={() => setSheetMode("preview")}
+          onClose={handleDismissDetails}
+        />
+      ) : null}
     </section>
   );
 }

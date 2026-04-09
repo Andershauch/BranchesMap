@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { geoMercator, geoPath } from "d3-geo";
 import {
   useEffect,
@@ -8,13 +7,11 @@ import {
   useRef,
   useState,
   type PointerEvent,
-  type TouchEvent,
   type WheelEvent,
 } from "react";
 
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
-import type { AppLocale } from "@/lib/i18n/config";
 
 const width = 900;
 const height = 1600;
@@ -27,6 +24,9 @@ const initialDesktopZoomLevel = 4.7;
 const initialMobileZoomLevel = 3.1;
 const initialDesktopBreakpoint = 1024;
 const initialZoomSlug = "naestved";
+const zoomInEvent = "branches-map:zoom-in";
+const zoomOutEvent = "branches-map:zoom-out";
+const resetEvent = "branches-map:reset";
 
 const labelTuning: Record<
   string,
@@ -67,47 +67,6 @@ const labelTuning: Record<
   taarnby: { dx: 8, dy: 10 },
   vallensbaek: { dx: -12, dy: 8 },
   vordingborg: { dx: 0, dy: -10 },
-};
-
-const uiCopy: Record<
-  AppLocale,
-  {
-    zoomIn: string;
-    zoomOut: string;
-    reset: string;
-    jobsSuffix: string;
-    industriesTitle: string;
-    selectedEyebrow: string;
-    close: string;
-    swipeHint: string;
-    openProfile: string;
-    follow: string;
-  }
-> = {
-  da: {
-    zoomIn: "Zoom ind",
-    zoomOut: "Zoom ud",
-    reset: "Nulstil",
-    jobsSuffix: "jobs i POC",
-    industriesTitle: "Brancher i fokus",
-    selectedEyebrow: "Kommunedata",
-    close: "Luk",
-    swipeHint: "Swipe kortet v\u00e6k eller tryk p\u00e5 X for at lukke.",
-    openProfile: "\u00c5bn kommune",
-    follow: "F\u00f8lg",
-  },
-  en: {
-    zoomIn: "Zoom in",
-    zoomOut: "Zoom out",
-    reset: "Reset",
-    jobsSuffix: "jobs in the POC",
-    industriesTitle: "Industries in focus",
-    selectedEyebrow: "Municipality data",
-    close: "Close",
-    swipeHint: "Swipe the card away or tap X to close.",
-    openProfile: "Open municipality",
-    follow: "Follow",
-  },
 };
 
 const projection = geoMercator().fitExtent(
@@ -163,12 +122,6 @@ type MapFeature = {
     height: number;
     area: number;
   };
-};
-
-type OverlayPlacement = {
-  left: string;
-  top: string;
-  transform: string;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -328,53 +281,26 @@ function getCenter(left: PointerSnapshot, right: PointerSnapshot) {
   };
 }
 
-function formatCount(locale: AppLocale, value: number) {
-  return new Intl.NumberFormat(locale).format(value);
-}
-
-function getOverlayPlacement(marker: Point, viewBox: ViewBox): OverlayPlacement {
-  const markerX = ((marker.x - viewBox.x) / viewBox.width) * 100;
-  const markerY = ((marker.y - viewBox.y) / viewBox.height) * 100;
-  const clampedLeft = clamp(markerX, 18, 82);
-  const placeBelow = markerY < 46;
-  const clampedTop = clamp(markerY + (placeBelow ? 11 : -11), 16, 84);
-  const horizontalTransform = markerX > 60 ? "-100%" : markerX < 40 ? "0" : "-50%";
-  const verticalTransform = placeBelow ? "0" : "-100%";
-
-  return {
-    left: `${clampedLeft}%`,
-    top: `${clampedTop}%`,
-    transform: `translate(${horizontalTransform}, ${verticalTransform})`,
-  };
-}
-
 export function SjaellandMunicipalityMap({
   municipalities,
-  locale,
   ariaLabel,
   focusedSlug,
   detailsSlug,
-  detailsMunicipality,
   featuredSlugs,
   onMunicipalityPress,
-  onDismissDetails,
 }: {
   municipalities: MunicipalitySummary[];
-  locale: AppLocale;
   ariaLabel: string;
   focusedSlug: string | null;
   detailsSlug: string | null;
-  detailsMunicipality: MunicipalitySummary | null;
   featuredSlugs: string[];
   onMunicipalityPress: (slug: string) => void;
-  onDismissDetails: () => void;
 }) {
-  const ui = uiCopy[locale];
   const svgRef = useRef<SVGSVGElement | null>(null);
   const gestureRef = useRef<GestureState | null>(null);
   const pointersRef = useRef(new Map<number, PointerSnapshot>());
   const movedDuringGestureRef = useRef(false);
-  const dismissTouchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const suppressClickRef = useRef(false);
   const initialViewAppliedRef = useRef(false);
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
@@ -421,10 +347,6 @@ export function SjaellandMunicipalityMap({
     () => new Map(features.map((feature) => [feature.municipality.slug, feature])),
     [features],
   );
-  const detailsFeature = detailsSlug
-    ? features.find((feature) => feature.municipality.slug === detailsSlug) ?? null
-    : null;
-  const detailsPlacement = detailsFeature ? getOverlayPlacement(detailsFeature.marker, viewBox) : null;
 
   useEffect(() => {
     if (initialViewAppliedRef.current || features.length === 0 || !focusedSlug) {
@@ -482,6 +404,30 @@ export function SjaellandMunicipalityMap({
     onMunicipalityPress(initialZoomSlug);
   }
 
+  useEffect(() => {
+    function handleZoomIn() {
+      zoomAtCenter(zoomStep);
+    }
+
+    function handleZoomOut() {
+      zoomAtCenter(1 / zoomStep);
+    }
+
+    function handleReset() {
+      resetView();
+    }
+
+    window.addEventListener(zoomInEvent, handleZoomIn);
+    window.addEventListener(zoomOutEvent, handleZoomOut);
+    window.addEventListener(resetEvent, handleReset);
+
+    return () => {
+      window.removeEventListener(zoomInEvent, handleZoomIn);
+      window.removeEventListener(zoomOutEvent, handleZoomOut);
+      window.removeEventListener(resetEvent, handleReset);
+    };
+  });
+
   function activateMunicipality(slug: string) {
     const feature = featureMap.get(slug);
     if (!feature) {
@@ -493,15 +439,6 @@ export function SjaellandMunicipalityMap({
     }
 
     onMunicipalityPress(slug);
-  }
-
-  function getMunicipalitySlugAtClientPoint(clientX: number, clientY: number) {
-    const hit = document.elementFromPoint(clientX, clientY);
-    if (!(hit instanceof Element)) {
-      return null;
-    }
-
-    return hit.closest("[data-municipality-slug]")?.getAttribute("data-municipality-slug") ?? null;
   }
 
   function handleWheel(event: WheelEvent<SVGSVGElement>) {
@@ -558,6 +495,7 @@ export function SjaellandMunicipalityMap({
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
     movedDuringGestureRef.current = false;
+    suppressClickRef.current = false;
 
     const entries = [...pointersRef.current.entries()];
     if (entries.length === 1) {
@@ -596,6 +534,7 @@ export function SjaellandMunicipalityMap({
       if (!gesture.hasMoved) {
         gesture.hasMoved = true;
         movedDuringGestureRef.current = true;
+        suppressClickRef.current = true;
         setIsDragging(true);
       }
 
@@ -628,6 +567,7 @@ export function SjaellandMunicipalityMap({
     const relativeY = (currentCenter.y - rect.top) / rect.height;
 
     movedDuringGestureRef.current = true;
+    suppressClickRef.current = true;
 
     setViewBox(
       clampViewBox({
@@ -639,15 +579,7 @@ export function SjaellandMunicipalityMap({
     );
   }
 
-  function finishPointerInteraction(event: PointerEvent<SVGSVGElement>, shouldActivate: boolean) {
-    const gesture = gestureRef.current;
-    const didTap =
-      shouldActivate &&
-      gesture?.type === "drag" &&
-      gesture.pointerId === event.pointerId &&
-      !gesture.hasMoved;
-    const startSlug = gesture?.type === "drag" ? gesture.startSlug : null;
-
+  function finishPointerInteraction(event: PointerEvent<SVGSVGElement>) {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -659,13 +591,6 @@ export function SjaellandMunicipalityMap({
       gestureRef.current = null;
       setIsDragging(false);
       movedDuringGestureRef.current = false;
-
-      if (didTap && startSlug) {
-        const slug = getMunicipalitySlugAtClientPoint(event.clientX, event.clientY);
-        if (slug && slug === startSlug) {
-          activateMunicipality(slug);
-        }
-      }
 
       return;
     }
@@ -682,142 +607,28 @@ export function SjaellandMunicipalityMap({
   }
 
   function handlePointerUp(event: PointerEvent<SVGSVGElement>) {
-    finishPointerInteraction(event, true);
+    finishPointerInteraction(event);
   }
 
   function handlePointerCancel(event: PointerEvent<SVGSVGElement>) {
-    finishPointerInteraction(event, false);
+    finishPointerInteraction(event);
   }
 
-  function handleCardTouchStart(event: TouchEvent<HTMLDivElement>) {
-    const touch = event.touches[0];
-    if (!touch) {
+  function handleMunicipalityClick(slug: string) {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
       return;
     }
 
-    dismissTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
-  }
-
-  function handleCardTouchEnd(event: TouchEvent<HTMLDivElement>) {
-    const start = dismissTouchStartRef.current;
-    const touch = event.changedTouches[0];
-    dismissTouchStartRef.current = null;
-
-    if (!start || !touch) {
-      return;
-    }
-
-    const deltaX = touch.clientX - start.x;
-    const deltaY = touch.clientY - start.y;
-
-    if (Math.abs(deltaX) > 70 || deltaY > 70) {
-      onDismissDetails();
-    }
+    activateMunicipality(slug);
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_36%,#9abdaf_100%)]">
-      <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-full bg-white/88 px-2 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/10 backdrop-blur sm:right-4 sm:top-4">
-        <button
-          type="button"
-          onClick={() => zoomAtCenter(zoomStep)}
-          className="rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700"
-          aria-label={ui.zoomIn}
-        >
-          +
-        </button>
-        <button
-          type="button"
-          onClick={() => zoomAtCenter(1 / zoomStep)}
-          className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 transition hover:bg-slate-200"
-          aria-label={ui.zoomOut}
-        >
-          -
-        </button>
-        <button
-          type="button"
-          onClick={resetView}
-          className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-900 transition hover:bg-slate-200"
-        >
-          {ui.reset}
-        </button>
-        <span className="rounded-full bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-800">
-          x{zoomLevel.toFixed(1)}
-        </span>
-      </div>
-
-      {detailsMunicipality && detailsPlacement ? (
-        <div
-          className="absolute z-20 w-[min(18rem,calc(100%-1.5rem))] rounded-[1.35rem] border border-slate-900/10 bg-white/96 p-4 shadow-[0_24px_70px_rgba(15,23,42,0.18)] backdrop-blur sm:w-[20rem]"
-          style={detailsPlacement}
-          onTouchStart={handleCardTouchStart}
-          onTouchEnd={handleCardTouchEnd}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">{ui.selectedEyebrow}</p>
-              <h3 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">{detailsMunicipality.name}</h3>
-            </div>
-            <button
-              type="button"
-              onClick={onDismissDetails}
-              className="rounded-full bg-slate-100 px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-              aria-label={ui.close}
-            >
-              X
-            </button>
-          </div>
-
-          <div className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-            {formatCount(locale, detailsMunicipality.totalJobs)} {ui.jobsSuffix}
-          </div>
-
-          <div className="mt-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{ui.industriesTitle}</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {detailsMunicipality.topIndustries.map((industry) => (
-                <span
-                  key={detailsMunicipality.slug + "-map-industry-" + industry.slug}
-                  className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium text-white sm:text-sm"
-                  style={{ backgroundColor: industry.accentColor }}
-                >
-                  <span>{industry.icon}</span>
-                  <span>{industry.name}</span>
-                  <span className="text-white/80">{formatCount(locale, industry.jobCount)}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            <form action="/api/follows" method="post">
-              <input type="hidden" name="locale" value={locale} />
-              <input type="hidden" name="intent" value="follow-municipality" />
-              <input type="hidden" name="municipalitySlug" value={detailsMunicipality.slug} />
-              <input type="hidden" name="returnTo" value={`/${locale}?focus=${detailsMunicipality.slug}`} />
-              <button
-                type="submit"
-                className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-              >
-                {ui.follow}
-              </button>
-            </form>
-            <Link
-              href={`/${locale}/kommuner/${detailsMunicipality.slug}`}
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
-            >
-              {ui.openProfile}
-            </Link>
-          </div>
-
-          <p className="mt-3 text-[11px] leading-5 text-slate-500">{ui.swipeHint}</p>
-        </div>
-      ) : null}
-
+    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_36%,#9abdaf_100%)]">
       <svg
         ref={svgRef}
         viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
-        className={`absolute inset-0 h-full w-full ${isDragging ? "cursor-grabbing" : zoomLevel > 1.02 ? "cursor-grab" : "cursor-default"}`}
+        className={`absolute inset-0 z-0 h-full w-full ${isDragging ? "cursor-grabbing" : zoomLevel > 1.02 ? "cursor-grab" : "cursor-default"}`}
         aria-label={ariaLabel}
         role="img"
         onWheel={handleWheel}
@@ -846,12 +657,13 @@ export function SjaellandMunicipalityMap({
               key={municipality.slug}
               d={pathData}
               fill={fillColor}
-              fillOpacity={isDetailed ? 0.34 : isFocused ? 0.26 : isFeatured ? 0.16 : 0.1}
+              fillOpacity={isDetailed ? 0.38 : isFocused ? 0.3 : isFeatured ? 0.12 : 0.08}
               stroke={isFocused ? "#0f172a" : "#475569"}
-              strokeOpacity={isHovered || isFocused ? 0.78 : 0.34}
-              strokeWidth={isFocused ? 2.1 : isHovered ? 1.75 : 1.3}
+              strokeOpacity={isHovered || isFocused ? 0.82 : 0.28}
+              strokeWidth={isFocused ? 2.2 : isHovered ? 1.65 : 1.2}
               className="cursor-pointer transition"
               data-municipality-slug={municipality.slug}
+              onClick={() => handleMunicipalityClick(municipality.slug)}
               onMouseEnter={() => setHoveredSlug(municipality.slug)}
               onMouseLeave={() =>
                 setHoveredSlug((current) => (current === municipality.slug ? null : current))
@@ -889,6 +701,7 @@ export function SjaellandMunicipalityMap({
                 key={municipality.slug + "-overlay"}
                 transform={`translate(${marker.x}, ${marker.y}) scale(${iconScale})`}
                 data-municipality-slug={municipality.slug}
+                onClick={() => handleMunicipalityClick(municipality.slug)}
                 onMouseEnter={() => setHoveredSlug(municipality.slug)}
                 onMouseLeave={() =>
                   setHoveredSlug((current) => (current === municipality.slug ? null : current))
@@ -916,11 +729,12 @@ export function SjaellandMunicipalityMap({
                     fontWeight={isFocused ? 700 : 600}
                     textAnchor="middle"
                     dominantBaseline="hanging"
-                    fill="#0f172a"
-                    stroke="rgba(255,255,255,0.88)"
-                    strokeWidth={2}
+                    fill={isFocused ? "#0f172a" : "rgba(15,23,42,0.86)"}
+                    stroke={isFocused ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.82)"}
+                    strokeWidth={isFocused ? 2.2 : 1.75}
                     paintOrder="stroke fill"
                     letterSpacing={0.1}
+                    opacity={isFocused ? 1 : isFeatured ? 0.96 : 0.84}
                   >
                     {municipality.name}
                   </text>

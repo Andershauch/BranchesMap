@@ -11,13 +11,17 @@ const includeExtensions = new Set([
   ".json",
   ".md",
   ".css",
+  ".scss",
   ".prisma",
   ".yml",
   ".yaml",
+  ".toml",
+  ".sql",
   ".txt",
   ".html",
 ]);
-const ignoreDirectories = new Set([".git", ".next", "node_modules"]);
+const includeBasenames = new Set([".editorconfig", ".gitattributes", ".gitignore"]);
+const ignoreDirectories = new Set([".git", ".next", ".vercel", "node_modules"]);
 const suspiciousPattern = /(\u00C3.|\u00C2.|\uFFFD)/;
 const failures = [];
 
@@ -33,7 +37,8 @@ function walk(currentPath) {
     }
 
     const extension = path.extname(entry.name);
-    if (!includeExtensions.has(extension)) {
+    const isEnvFile = entry.name === ".env" || entry.name.startsWith(".env.");
+    if (!includeExtensions.has(extension) && !includeBasenames.has(entry.name) && !isEnvFile) {
       continue;
     }
 

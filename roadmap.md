@@ -319,9 +319,309 @@ En bruger kan åbne appen på mobil, trykke på en kommune og se brancher og job
 ### Exit-kriterium
 
 Kortet fungerer stabilt på mobil og desktop, hovedkortets kommunevisning kan styres struktureret, og vi har fjernet behovet for kodeændringer hver gang udvalget af kommuner skal justeres.
+
+## Fase 1B - Mobilapp-shell og overlay-kort-UI
+
+**Mål:** Gør forsiden til en ægte mobiloplevelse, hvor kortet er hele interfacet, navigationen ligger ovenpå kortet, og kommune-information vises i et lækkert, hurtigt og funktionelt overlay i stedet for som en traditionel kort-modal midt på skærmen.
+
+### Designretning
+
+- forsiden skal opleves som et full-screen kort, ikke som en side med et kort i et kort
+- menu, status og handlinger skal være lette overlays oven på kortet
+- kommune-information skal åbne som et app-lignende bottom sheet med klare snap states
+- interfacet skal kunne bruges med én hånd på en iPhone i portrait
+- al visuel støj uden for kortoplevelsen skal fjernes eller nedtones kraftigt
+
+### Anbefalet UI-koncept
+
+- hovedskærmen bliver ét kort-canvas fra top til bund
+- topbaren bliver en flydende overlay-bar med menu-knap, appnavn og evt. aktiv fokus-chip
+- zoom-kontroller og reset bliver små flydende map-controls i kanten af kortet
+- den valgte kommune åbner ikke som centreret kort, men som et bottom sheet fra bunden
+- bottom sheet har mindst tre tilstande:
+  - lukket
+  - preview med navn, jobtal og topbrancher
+  - udvidet med handlinger og mere indhold
+- primary CTA skal være tydelig og tommelfingervenlig
+- secondary CTA og link til fuld kommuneprofil skal ligge i samme sheet, ikke konkurrere med kortet
+
+### Leverancer
+
+- full-screen mobilforside hvor kortet fylder hele viewporten
+- overlay-navigation tilpasset mobil
+- nyt municipality bottom-sheet system
+- tydelig informationsarkitektur for focus, preview og expanded state
+- motion- og gesture-regler for sheet, map og menu
+
+### Konkrete opgaver - Mobil shell
+
+- fjern page-card layoutet omkring kortet på mobil
+- gør headeren til et overlay i stedet for en traditionel topsektion
+- definér safe-area håndtering for iPhone top og bund
+- placér menu, fokus-status og map-kontroller som flydende overlays
+- sikr at kortet stadig er læsbart under overlays
+
+### Konkrete opgaver - Kommune-sheet
+
+- erstat den nuværende centrerede kommune-card med et bottom sheet
+- design mindst tre sheet-states: preview, half, full
+- byg sheet-header med grab handle, kommunenavn og hurtig status
+- vis topbrancher som kompakte chips eller horisontal liste
+- prioriter handlinger i rækkefølgen: følg, åbn kommune, luk
+- definér swipe-op, swipe-ned og tap-udenfor adfærd
+- sikre at sheet og kort ikke kæmper om samme gestures
+
+### Konkrete opgaver - Visuel retning
+
+- brug tydelig dybde mellem kortlag og overlay-lag
+- gør overlay-paneler lettere og mere premium med færre hårde bokse
+- brug mere app-agtig spacing, større radius og tydeligere hierarki
+- hold typografi og labels korte nok til små mobiler
+- gør brancher, jobtal og CTA’er hurtige at afkode på under 2 sekunder
+
+### Design- og produktregler
+
+- kortet skal være synligt hele tiden, også når en kommune er valgt
+- menuen må aldrig skubbe kortet ned i layoutet
+- kommune-sheet skal føles som en del af kortoplevelsen, ikke som en ekstern modal
+- preview-state skal kunne aflæses uden at dække for meget af kortet
+- alle primære handlinger skal kunne nås med tommelfingeren
+- lukning og tilbagegang skal føles naturlig med swipe og tap
+
+### Forslag til kommune-overlay som både lækkert og funktionelt
+
+**Anbefalet løsning:** et bundforankret sheet med glasagtig top, solid læsbar indholdsflade og klare snap-points.
+
+Indhold i preview-state:
+
+- kommunenavn
+- estimeret jobtal
+- 3 branchechips med ikon og count
+- én stærk CTA: `Følg`
+
+Indhold i expanded-state:
+
+- større resume af kommunen
+- `Følg` og `Åbn kommune`
+- evt. lille statuslinje som “sidst opdateret” eller “live estimat”
+- mulighed for senere at udvide med gemt søgning eller notifikation
+
+Hvorfor denne løsning er bedre end den nuværende:
+
+- den bevarer mere af kortet synligt
+- den føles langt mere mobil-native
+- den giver tydelig hierarki mellem preview og fordybelse
+- den er nemmere at bruge med én hånd
+
+### Implementeringstrin - anbefalet rækkefølge
+
+1. Lås mobil-layoutkontrakten
+   - definér at forsiden på mobil er full-screen map first
+   - beslut hvilke overlays der må være synlige i default state
+2. Byg app-shell oven på kortet
+   - gør header/menu til overlay-lag
+   - placér zoom, reset og status som flydende controls
+3. Indfør bottom-sheet systemet
+   - erstat eksisterende municipality card
+   - implementér preview, half og full state
+4. Lås gesture-regler
+   - adskil map-pan, map-zoom og sheet-drag
+   - test særligt konflikter mellem swipe og tap
+5. Polish visuel retning
+   - justér spacing, elevation, blur, radius og animationer
+   - trim copy, labels og chip-størrelser til mobil
+6. Verificér med mobil-smoke tests
+   - iPhone portrait først
+   - derefter små Android-skærme og større mobiler
+
+### Teknisk nedbrydning - foreslået filopdeling
+
+**1. Side-shell og viewport**
+
+Ansvarlige filer:
+
+- `app/[locale]/page.tsx`
+- `app/[locale]/layout.tsx`
+- `app/globals.css`
+
+Opgaver:
+
+- fjern side-layout som giver følelsen af et kort inde i en side
+- gør hovedsiden til en ren mobilviewport med kortet som første lag
+- flyt header-logik fra traditionel topbar til overlay-host
+- indfør safe-area spacing for top og bund på iPhone
+- definer globale overlay-tokens for blur, elevation, radius og spacing
+
+**2. Home screen shell**
+
+Ansvarlige filer:
+
+- `components/home/home-map-explorer.tsx`
+
+Opgaver:
+
+- gør komponenten til screen-controller i stedet for card-layout wrapper
+- flyt overskrift, metadata og status over i flydende overlays
+- håndtér UI-state for:
+  - ingen valgt kommune
+  - fokuseret kommune
+  - åbent sheet i preview
+  - åbent sheet i expanded state
+- beslut hvilke chips der altid vises øverst, og hvilke der kun vises ved fokus
+
+**3. Menu og navigation**
+
+Ansvarlige filer:
+
+- `components/layout/app-menu.tsx`
+- evt. `components/layout/auth-status.tsx`
+
+Opgaver:
+
+- gør menu-knappen til en flydende mobilknap med lav visuel vægt
+- trim drawer-indhold til mobilkritiske destinationer først
+- gør menu-overlayet mere app-agtigt med blur og mørk backdrop
+- sikr at åbning af menu ikke skubber eller reflow’er kortet
+
+**4. Kortlag og controls**
+
+Ansvarlige filer:
+
+- `components/maps/sjaelland-municipality-map.tsx`
+
+Opgaver:
+
+- flyt zoom og reset til mere kompakte corner-controls
+- sikre at controls ikke kolliderer med top overlay eller bottom sheet
+- finjustér standard framing til portrait-first iPhone-visning
+- tydeliggør valgt kommune med mere premium highlight og mindre visuel støj
+- forbered kortet til at arbejde sammen med sheet-snap states
+
+**5. Nyt municipality bottom sheet**
+
+Ansvarlige filer:
+
+- ny komponent, anbefalet: `components/home/municipality-sheet.tsx`
+- integration i `components/home/home-map-explorer.tsx`
+
+Opgaver:
+
+- udtræk nuværende municipality overlay fra kortkomponenten
+- byg sheet med tre tilstande:
+  - preview
+  - half
+  - full
+- definér snap-points og animationer
+- byg header med grab-handle, navn og kort statuslinje
+- byg kompakt branchevisning med læsbare chips
+- placer `Følg` som primary CTA og `Åbn kommune` som secondary CTA
+- håndtér swipe, tap udenfor og close action konsekvent
+
+**6. Gesture-kontrakt**
+
+Ansvarlige filer:
+
+- `components/maps/sjaelland-municipality-map.tsx`
+- `components/home/municipality-sheet.tsx`
+- `components/home/home-map-explorer.tsx`
+
+Opgaver:
+
+- fastlås hvilke bevægelser der tilhører kortet, og hvilke der tilhører sheetet
+- undgå konflikt mellem vertikal sheet-drag og kort-pan
+- definér hvornår tap vælger kommune, og hvornår tap åbner preview
+- test særligt i overgangene mellem focus, preview og expanded state
+
+**7. Visuel polish og mobil QA**
+
+Ansvarlige filer:
+
+- `app/globals.css`
+- berørte UI-komponenter i home/layout/maps
+
+Opgaver:
+
+- justér typografi, spacing og chips til små skærme
+- tilføj få men tydelige overgangsanimationer
+- test på iPhone portrait som primær reference
+- lav manuel smoke-testliste for:
+  - default view
+  - vælg kommune
+  - åbn/luk sheet
+  - åbn menu
+  - skift kommune mens sheet er åbent
+
+### Foreslået eksekvering i små overskuelige tasks
+
+**Task A - Full-screen map shell**
+
+- opdatér `app/[locale]/page.tsx`
+- opdatér `app/[locale]/layout.tsx`
+- opdatér `components/home/home-map-explorer.tsx`
+- mål: kortet fylder hele mobilviewporten, og headeren er overlay
+
+**Task B - Overlay menu og map controls**
+
+- opdatér `components/layout/app-menu.tsx`
+- opdatér `components/maps/sjaelland-municipality-map.tsx`
+- mål: menu og controls er flydende og kolliderer ikke med kortoplevelsen
+
+**Task C - Municipality bottom sheet v1**
+
+- opret `components/home/municipality-sheet.tsx`
+- integrér i `components/home/home-map-explorer.tsx`
+- forenkle overlay-logik i `components/maps/sjaelland-municipality-map.tsx`
+- mål: den nuværende centrerede kort-modal er væk og erstattet af preview/expanded sheet
+
+**Task D - Gestures og polish**
+
+- finjustér samspil mellem sheet og kort
+- opdatér `app/globals.css`
+- mål: oplevelsen føles mobil-native og stabil på iPhone portrait
+
+### Definition of Done - Fase 1B
+
+- forsiden fungerer som full-screen mobilkort uden card-wrapper
+- menu og topnavigation ligger som overlay oven på kortet
+- kommune-information åbner som et bottom sheet, ikke som en centreret modal
+- preview-state er hurtig at aflæse og dækker ikke unødigt for kortet
+- expanded-state giver klare handlinger uden at virke tung
+- gesture-konflikter mellem kort og sheet er løst på mobil
+- UI føles bevidst designet til mobil først, ikke desktop nedskaleret
+
+### Exit-kriterium
+
+På en iPhone føles forsiden som en moderne mobilapp, hvor kortet er selve produktet, navigationen flyder ovenpå, og kommune-overlayet er hurtigt, lækkert og funktionelt.
+
+### Status nu - Fase 1B
+
+Fase 1B er i praksis gennemført som UI-sprint.
+
+Det, der er leveret:
+
+- forsiden er gjort til et ægte full-screen kort i stedet for en side med kort-wrapper
+- headeren er lavet om til en let app-shell i topbaren
+- menuen ligger som overlay og opfører sig som mobil navigation
+- den gamle centrerede kommune-modal er erstattet af et bundforankret bottom sheet
+- preview og expanded state er designet og implementeret som separate mobiltilstande
+- topbrancher vises som faste chips, og preview-state prioriterer brancher før CTA
+- `Følg` ligger som stabil bundhandling i expanded state
+- map-kontroller er flyttet op i topbaren som en samlet pill med `-`, `+` og `Nulstil`
+- gestures mellem kort og sheet er stabiliseret nok til brug på rigtig telefon
+- oplevelsen er testet og itereret på Pixel i installeret app-visning
+
+Det, der bevidst er accepteret som “godt nok” i denne fase:
+
+- expanded state kan stadig finpoleres yderligere, men er ikke længere strukturelt forkert
+- nogle typografiske og spacing-mæssige mikrojusteringer kan stadig laves senere
+- iPhone-specifik finjustering bør tages igen efter næste større produktiteration
+
+Konklusion:
+
+Fase 1B er klar til at blive lukket som design- og UI-sprint, og næste arbejde bør flytte fokus til PWA-stabilitet og derefter produktfunktioner.
 ## Fase 2 - PWA og app-oplevelse
 
-**Mål:** Gør webappen installérbar og mere native i følelsen.
+**Mål:** Gør webappen installérbar og mere native i følelsen, så den kan åbnes som en rigtig appoplevelse uden browserchrome som primær ramme.
 
 ### Leverancer
 
@@ -330,23 +630,123 @@ Kortet fungerer stabilt på mobil og desktop, hovedkortets kommunevisning kan st
 - standalone launch mode
 - service worker
 - offline fallback for basisvisning
+- fullscreen-nær mobiloplevelse via PWA-installation
+- installérbar app-shell testet på Android og iPhone
 
 ### Konkrete opgaver
 
 - konfigurer `app/manifest.ts`
 - lav ikonsæt i relevante størrelser
 - implementer service worker med enkel cache-strategi
+- definér `display`, `theme_color`, `background_color` og appnavn for installeret oplevelse
+- tilføj viewport- og metadataopsætning som understøtter edge-to-edge app-shell
+- afklar hvilke skærme der skal fungere godt i `standalone` som første prioritet
 - definér hvad der skal virke offline i POC:
   - senest sete kommune
   - statiske sider
   - ikke live-søgning
 - test installation på iPhone og Android
 
+### Konkrete opgaver - Fullscreen og installation
+
+- dokumentér at ægte fullscreen ikke kan tvinges ved almindelig browser-load
+- brug PWA-installation som primær vej til fullscreen-lignende oplevelse
+- vælg `display: standalone` som anbefalet v1 og vurder `fullscreen` kun hvis navigationen stadig fungerer godt
+- test hvordan topbar, bottom sheet og safe areas opfører sig som installeret app
+- verificér at launch fra hjemmeskærm giver en ren appoplevelse uden uønsket browser-UI
+- design installationsflow og mikrocopy, så brugeren forstår forskellen mellem browser og installeret app
+
+### Sprintplan - PWA og fullscreen-spor
+
+1. Manifest og app-identitet  
+   Opret manifest med navn, short name, ikoner, farver og `display`-strategi, så appen kan installeres og åbne i standalone.
+2. Fullscreen app-shell  
+   Justér viewport, safe areas og shell-opførsel, så home-screen, topbar og bottom sheet føles rigtige som installeret app.
+3. Offline baseline  
+   Tilføj en enkel service worker og definér en sikker cache-strategi for offentlige og stabile ressourcer.
+4. Installationsoplevelse  
+   Test og dokumentér installation på Android og iPhone samt afklar hvordan vi guider brugeren til “Add to Home Screen”.
+5. Stabilisering og QA  
+   Verificér launch, refresh, offline fallback og genåbning i standalone uden UI-brud eller cachefejl.
+
+### Foreslået eksekvering i små overskuelige tasks
+
+**Task E - Manifest og ikoner**
+
+- opret `app/manifest.ts`
+- tilføj appikoner i nødvendige størrelser
+- mål: appen kan genkendes og installeres korrekt på Android og iPhone
+
+**Task F - Standalone app-shell**
+
+- opdatér global metadata og viewport
+- verificér safe-area og top/bund-opførsel i installeret visning
+- mål: home-screen åbner rent som app-shell uden forkert spacing eller browserfølelse
+
+**Task G - Service worker og offline baseline**
+
+- implementér enkel cache af sikre offentlige assets
+- definér fallback for offline eller svag forbindelse
+- mål: installeret app føles robust og bryder ikke ved genåbning uden net
+
+**Task H - Installationsflow og QA**
+
+- test “Add to Home Screen” på Pixel og iPhone
+- dokumentér forskel på browser-mode og installeret mode
+- mål: PWA-sporet kan demonstreres og bruges konsekvent på rigtige devices
+
+### Status nu - Fase 2
+
+Fase 2 er påbegyndt og delvist gennemført.
+
+Færdigt:
+
+- `app/manifest.ts` er oprettet
+- app-metadata og viewport er opdateret til PWA/standalone
+- app-ikoner er genereret og lagt i `public/icons`
+- `apple-touch-icon` er på plads
+- service worker-registration er implementeret i production
+- en første konservativ offline-baseline er oprettet
+- appen er installeret og verificeret i praksis på Android
+- standalone shell er begyndt at få egne spacing- og layoutjusteringer
+
+Delvist færdigt:
+
+- standalone shell er forbedret, men bør stadig verificeres bredere på iPhone og ved flere refresh/update-scenarier
+- cache/update-adfærd fungerer, men bør stadig gøres mere robust og mindre afhængig af manuelle refreshes under test
+- installationsflow er fungerende, men ikke endnu dokumenteret eller guidet tydeligt i produktet
+
+Ikke færdigt endnu:
+
+- endelig QA for iPhone “Add to Home Screen”
+- mere robust opdateringsstrategi for installeret app
+- endelig beslutning om hvor meget offline der skal virke i praksis
+- eventuel in-app installationsvejledning eller onboarding
+
+Konklusion:
+
+Task E er gennemført.  
+Task F er i gang og funktionel.  
+Task G er påbegyndt med en basal service worker.  
+Task H mangler egentlig afslutning og dokumenteret device-QA.
+
 ### Sikkerhedskrav
 
 - kun HTTPS
 - service worker må kun cache sikre, offentlige ressourcer
 - ingen cache af fremtidige brugerdata uden klar strategi
+- offline-cache må ikke gøre auth- eller privat data offentligt tilgængeligt
+- launch-oplevelsen må ikke afhænge af klienthemmeligheder eller usikre runtime-flags
+
+### Definition of Done
+
+- appen har et gyldigt manifest og installérbare ikoner
+- Android kan installere appen og åbne den i `standalone`
+- iPhone kan gemme appen på hjemmeskærmen med korrekt shell-opførsel
+- home-screen fungerer visuelt i installeret tilstand med korrekt safe-area håndtering
+- service worker cacher kun sikre offentlige ressourcer
+- mindst én meningsfuld offline fallback virker uden at bryde UI
+- `lint` og `build` er grønne efter implementering
 
 ### Exit-kriterium
 
@@ -422,6 +822,66 @@ Appen kan skifte sprog uden layoutbrud eller tekstkaos.
 
 En bruger kan logge ind sikkert og gemme private søgninger uden at se andres data.
 
+## Fase 4A - Følg kommune og in-app notifikationer
+
+**Mål:** Gør "Følg kommune" til et reelt overvågningsflow, hvor brugeren kan se, når en fulgt kommune har ændret sig siden sidst.
+
+### Leverancer
+
+- change detection for fulgte kommuner
+- snapshot- og hash-baseret sammenligning af kommune-data
+- server-side check flow for aktive follows
+- in-app notifikationsstatus på follows-siden
+- simpelt flow til at markere opdateringer som set
+
+### Konkrete opgaver
+
+- definér hvad der tæller som en opdatering i v1
+- fastlæg et stabilt snapshot-format for kommune-data
+- byg server-side funktion til at oprette snapshot og hash
+- sammenlign nyt snapshot med `SearchFollow.lastResultHash`
+- opdatér `lastCheckedAt`, `lastResultHash` og `lastNotifiedAt`
+- byg service til at checke et enkelt follow
+- byg service til at checke alle aktive follows
+- opret et manuelt og cron-kompatibelt entry point til checks
+- vis "Ny opdatering", "sidst tjekket" og relevant status i follows-UI
+- afklar read-state når brugeren åbner kommuneprofilen eller markerer opdateringen som set
+- test første kørsel, ingen ændring, ny ændring og fejl i live datakilde
+
+### Sprintplan for dette step
+
+1. Scope og regler
+   Definér hvilke felter der skal udløse en opdatering i v1. Anbefalet start er total jobestimat, top-3 brancher og jobtal pr. topbranche.
+2. Compare-lag
+   Implementér snapshot-builder, normalisering og hashing, så vi kan afgøre om en follow har ændret sig siden sidste check.
+3. Execution-lag
+   Implementér server-side check af et follow og batch-check af alle aktive follows samt et entry point, der senere kan kobles på cron.
+4. UI og read-state
+   Udvid follows-siden med badge, status og datoer, og beslut hvordan en notifikation markeres som set i v1.
+5. Stabilisering
+   Tilføj tests, audit hvor relevant og robust fallback-adfærd, hvis live data ikke kan hentes.
+
+### Sikkerhedskrav
+
+- alle checks kører server-side
+- klienten må ikke være sandhedskilde for notifikationsstatus
+- endpoints til checks skal kunne afgrænses og beskyttes
+- follow-data må kun vises og opdateres for den rette bruger
+- fejl i datakilden må ikke lække intern struktur eller bryde brugerflowet
+
+### Definition of Done
+
+- en aktiv follow kan tjekkes server-side
+- systemet kan opdage reelle ændringer i kommune-data
+- `lastCheckedAt`, `lastResultHash` og `lastNotifiedAt` bruges konsekvent
+- brugeren kan se i UI, at en fulgt kommune har en ny opdatering
+- flowet er robust ved fejl i live datakilden
+- `lint` og `build` er grønne efter implementering
+
+### Exit-kriterium
+
+En bruger kan følge en kommune og senere se i appen, at der er sket en opdatering siden sidst.
+
 ## Fase 5 - Rigtige datakilder
 
 **Mål:** Skift fra mock-data til driftsegnede kilder uden at ændre UX-fundamentet.
@@ -490,11 +950,13 @@ Appen kan drives med synlighed på fejl, performance og sikkerhed.
 1. Fase 0
 2. Fase 1
 3. Fase 1A
-4. Fase 2
-5. Fase 3
-6. Fase 4
-7. Fase 5
-8. Fase 6
+4. Fase 1B
+5. Fase 2
+6. Fase 3
+7. Fase 4
+8. Fase 4A
+9. Fase 5
+10. Fase 6
 
 ## Hvad der bevidst ikke skal med i POC v1
 
@@ -591,6 +1053,18 @@ Hvis vi skulle starte i dag, ville jeg gøre dette i præcis denne rækkefølge:
 11. Forbered auth-modeller og saved searches.
 12. Først derefter tilslut rigtige datakilder.
 
+## Aktuel næste milepæl
+
+Projektets næste praktiske milepæl er stadig **Fase 2**, men nu som et stabiliseringsspor: gøre den installerede PWA mere robust, mere forudsigelig ved opdateringer og færdigvalideret på rigtige devices.
+
+### Fokus i næste sprint
+
+1. Stabiliser opdateringsflow for installeret app og service worker.
+2. Afslut standalone shell QA på Android og iPhone.
+3. Beslut endelig offline-scope for POC.
+4. Dokumentér installation og forventet adfærd i browser vs. installeret app.
+5. Luk Fase 2 som teknisk fundament, så fokus kan flyttes tilbage til produktfunktioner.
+
 ## Definition of Done for POC
 
 POC'en er færdig, når:
@@ -607,4 +1081,4 @@ POC'en er færdig, når:
 
 ## Næste konkrete skridt
 
-Næste praktiske milepæl er at bygge **Fase 0 og Fase 1** sammen: projektopsætning, mock-datamodel, kommunegeometri og det første klikbare kort.
+Næste praktiske milepæl er at afslutte **Fase 2**: service worker-stabilisering, standalone-QA og en mere robust opdateringsoplevelse for den installerede app.

@@ -12,6 +12,25 @@ type MenuUser = {
   name: string | null;
 };
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+};
+
+function detectStandaloneMode() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
 const menuCopy = {
   da: {
     menu: "Menu",
@@ -25,6 +44,10 @@ const menuCopy = {
     signedInAs: "Logget ind som",
     language: "Sprog",
     navigation: "Navigation",
+    install: "Installer app",
+    installReady: "Appen kan installeres direkte herfra.",
+    installHint: "Hvis installation ikke vises endnu, så genindlæs HTTPS-linket én gang og åbn menuen igen.",
+    installed: "Appen er allerede installeret eller kører i standalone.",
   },
   en: {
     menu: "Menu",
@@ -38,6 +61,10 @@ const menuCopy = {
     signedInAs: "Signed in as",
     language: "Language",
     navigation: "Navigation",
+    install: "Install app",
+    installReady: "The app can be installed directly from here.",
+    installHint: "If install is not available yet, reload the HTTPS link once and open the menu again.",
+    installed: "The app is already installed or running in standalone.",
   },
 } as const;
 
@@ -65,6 +92,8 @@ export function AppMenu({
   localeTitle: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [isStandalone, setIsStandalone] = useState(detectStandaloneMode);
   const copy = menuCopy[locale];
   const displayName = user?.name?.trim() ? user.name : user?.email ?? "";
 
@@ -90,7 +119,43 @@ export function AppMenu({
     };
   }, [open]);
 
+  useEffect(() => {
+    function handleBeforeInstallPrompt(event: Event) {
+      event.preventDefault();
+      setInstallPromptEvent(event as BeforeInstallPromptEvent);
+    }
+
+    function handleAppInstalled() {
+      setIsStandalone(true);
+      setInstallPromptEvent(null);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
   function closeMenu() {
+    setOpen(false);
+  }
+
+  async function handleInstall() {
+    if (!installPromptEvent) {
+      return;
+    }
+
+    await installPromptEvent.prompt();
+    const choice = await installPromptEvent.userChoice;
+
+    if (choice.outcome !== "accepted") {
+      return;
+    }
+
+    setInstallPromptEvent(null);
     setOpen(false);
   }
 
@@ -100,10 +165,10 @@ export function AppMenu({
         type="button"
         aria-label={copy.close}
         onClick={closeMenu}
-        className="absolute inset-0 bg-slate-950/42"
+        className="absolute inset-0 bg-slate-950/48 backdrop-blur-[2px]"
       />
 
-      <aside className="absolute inset-y-0 left-0 z-[101] flex h-full w-[min(18.5rem,calc(100vw-1.5rem))] flex-col overflow-y-auto border-r border-[var(--md-sys-color-outline-variant)] bg-white px-4 py-5 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+      <aside className="absolute inset-y-0 left-0 z-[101] flex h-full w-[min(18.5rem,calc(100vw-1.5rem))] flex-col overflow-y-auto border-r border-white/65 bg-[color:rgba(255,255,255,0.86)] px-4 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.22)] backdrop-blur-2xl">
         <div className="flex items-center justify-between gap-4 pb-4">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--md-sys-color-primary)]">
@@ -119,7 +184,7 @@ export function AppMenu({
           <button
             type="button"
             onClick={closeMenu}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[var(--md-sys-color-surface-container-low)] text-base font-semibold text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container)]"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/88 text-base font-semibold text-[var(--md-sys-color-on-surface)] shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition hover:bg-white"
             aria-label={copy.close}
           >
             X
@@ -143,6 +208,36 @@ export function AppMenu({
           </p>
           <div className="mt-3 px-1">
             <LocaleSwitcher currentLocale={locale} labels={localeLabels} title={localeTitle} />
+          </div>
+        </div>
+
+        <div className="mt-6 border-t border-[var(--md-sys-color-outline-variant)] pt-4">
+          <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
+            PWA
+          </p>
+          <div className="mt-3 px-1">
+            {isStandalone ? (
+              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-sm text-[var(--md-sys-color-on-surface-variant)]">
+                {copy.installed}
+              </p>
+            ) : installPromptEvent ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={handleInstall}
+                  className="w-full rounded-full bg-[var(--md-sys-color-primary)] px-4 py-3 text-sm font-semibold text-[var(--md-sys-color-on-primary)] transition hover:opacity-95"
+                >
+                  {copy.install}
+                </button>
+                <p className="px-3 text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                  {copy.installReady}
+                </p>
+              </div>
+            ) : (
+              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+                {copy.installHint}
+              </p>
+            )}
           </div>
         </div>
 
@@ -179,13 +274,13 @@ export function AppMenu({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--md-sys-color-surface-container-high)] text-[var(--md-sys-color-on-surface)] shadow-[0_1px_3px_var(--md-sys-color-shadow)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/70 text-[var(--md-sys-color-on-surface)] shadow-[0_10px_22px_rgba(15,23,42,0.1)] backdrop-blur-xl transition hover:bg-white/84 sm:h-11 sm:w-11"
         aria-label={copy.menu}
       >
-        <span className="flex flex-col gap-1.5">
-          <span className="block h-0.5 w-5 rounded-full bg-current" />
-          <span className="block h-0.5 w-5 rounded-full bg-current" />
-          <span className="block h-0.5 w-5 rounded-full bg-current" />
+        <span className="flex flex-col gap-[0.3rem]">
+          <span className="block h-0.5 w-[1.05rem] rounded-full bg-current" />
+          <span className="block h-0.5 w-[1.05rem] rounded-full bg-current" />
+          <span className="block h-0.5 w-[1.05rem] rounded-full bg-current" />
         </span>
       </button>
 
