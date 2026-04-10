@@ -861,6 +861,54 @@ En bruger kan logge ind sikkert og gemme private søgninger uden at se andres da
 5. Stabilisering
    Tilføj tests, audit hvor relevant og robust fallback-adfærd, hvis live data ikke kan hentes.
 
+### Status nu - Fase 4A
+
+Fase 4A er nu påbegyndt og har fået sin første vertikale slice.
+
+Færdigt:
+
+- kommuneindhold kan nu omsættes til et stabilt follow-snapshot med hash
+- snapshotlaget er gjort generisk nok til både DST nu og STAR senere
+- server-side check af ét follow er implementeret
+- batch-check af aktive follows er implementeret
+- manuelt og cron-kompatibelt check-endpoint er oprettet
+- follows-siden kan nu vise "Ny opdatering" og "Sidst tjekket"
+- brugeren kan markere en opdatering som set
+- åbning af en kommuneprofil kan nulstille ulæst status i v1
+- baseline-flow, "ingen ændring" og "ændret snapshot" er verificeret lokalt
+
+Mangler stadig:
+
+- egentlig device- og data-QA på tværs af første baseline, ingen ændring og ny ændring
+- afklaring af præcist hvilke felter der skal tælle som ændring i v1 versus senere STAR-udvidelser
+- mere eksplicit dokumentation af hvordan check-endpointet skal køres i drift
+
+### V1-regler for ændringsdetektion
+
+Det, der aktuelt tæller som ændring i v1, er:
+
+- teaser/profiltekst for kommunen
+- `totalJobs`
+- topbrancher, deres rækkefølge og jobtal
+- jobkortene under kommunen fordelt på branche
+
+Det er et bevidst valg, så follow-laget reagerer på det samlede kommuneindhold og ikke kun på Danmarks Statistik. Dermed kan STAR senere kobles på jobdelen uden at ændre selve follow-modellen.
+
+### Drift og QA
+
+`POST /api/follows/check` er nu den forventede entry route for både manuel QA og senere cron-kørsel.
+
+Forventet brug:
+
+- batch-check af alle aktive follows
+- optionalt limit under test
+- single-follow check ved målrettet fejlsøgning
+
+Autorisation:
+
+- production: `x-follows-check-secret` eller admin-session
+- lokal udvikling på `localhost`: åben for at gøre QA nemmere
+
 ### Sikkerhedskrav
 
 - alle checks kører server-side

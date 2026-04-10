@@ -15,6 +15,7 @@ const sheetCopy = {
     teaserLabel: "Profil",
     openProfile: "\u00c5bn kommune",
     follow: "F\u00f8lg",
+    following: "F\u00f8lger allerede",
     expand: "Udvid",
     collapse: "Minim\u00e9r",
     close: "Luk",
@@ -25,6 +26,7 @@ const sheetCopy = {
     teaserLabel: "Profile",
     openProfile: "Open municipality",
     follow: "Follow",
+    following: "Already following",
     expand: "Expand",
     collapse: "Collapse",
     close: "Close",
@@ -39,6 +41,7 @@ function formatCount(locale: AppLocale, value: number) {
 export function MunicipalitySheet({
   locale,
   municipality,
+  isFollowing,
   mode,
   onExpand,
   onCollapse,
@@ -46,6 +49,7 @@ export function MunicipalitySheet({
 }: {
   locale: AppLocale;
   municipality: MunicipalitySummary;
+  isFollowing: boolean;
   mode: SheetMode;
   onExpand: () => void;
   onCollapse: () => void;
@@ -264,9 +268,14 @@ export function MunicipalitySheet({
                   <input type="hidden" name="returnTo" value={`/${locale}?focus=${municipality.slug}`} />
                   <button
                     type="submit"
-                    className="inline-flex min-h-10 w-full items-center justify-center rounded-full bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
+                    disabled={isFollowing}
+                    className={`inline-flex min-h-10 w-full items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_14px_24px_rgba(15,23,42,0.16)] transition ${
+                      isFollowing
+                        ? "cursor-default bg-slate-200 text-slate-700 shadow-none"
+                        : "bg-slate-950 text-white hover:bg-slate-800"
+                    }`}
                   >
-                    {copy.follow}
+                    {isFollowing ? copy.following : copy.follow}
                   </button>
                 </form>
               </div>

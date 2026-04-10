@@ -151,6 +151,10 @@ const rotateIndustryIndexes = (index: number) => [
   (index + 4) % industryCatalog.length,
 ];
 
+function buildMunicipalityTeaser(seed: (typeof municipalitySeeds)[number], topIndustries: IndustrySummary[]) {
+  return `${seed.name} er i denne POC stærkest repræsenteret inden for ${topIndustries[0].name.toLowerCase()}, ${topIndustries[1].name.toLowerCase()} og ${topIndustries[2].name.toLowerCase()}.`;
+}
+
 const buildMunicipality = (
   seed: (typeof municipalitySeeds)[number],
   municipalityIndex: number,
@@ -202,7 +206,7 @@ const buildMunicipality = (
 
   return {
     ...seed,
-    teaser: `${seed.name} er i denne POC stærkest repræsenteret inden for ${topIndustries[0].name.toLowerCase()}, ${topIndustries[1].name.toLowerCase()} og ${topIndustries[2].name.toLowerCase()}.`,
+    teaser: buildMunicipalityTeaser(seed, topIndustries),
     topIndustries,
     jobsByIndustry,
   };

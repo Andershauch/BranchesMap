@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { getCurrentUser } from "@/lib/server/auth";
+import { listFollowedMunicipalitySlugsForUser } from "@/lib/server/search-follows";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,12 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
     notFound();
   }
 
-  const [municipalities, search] = await Promise.all([getMunicipalitySummaries(), searchParams]);
+  const currentUser = await getCurrentUser();
+  const [municipalities, search, followedMunicipalitySlugs] = await Promise.all([
+    getMunicipalitySummaries(),
+    searchParams,
+    currentUser ? listFollowedMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
+  ]);
   const requestedFocusSlug = getStringParam(search.focus);
   const initialFocusedSlug = municipalities.some((municipality) => municipality.slug === requestedFocusSlug)
     ? requestedFocusSlug
@@ -41,6 +48,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
         locale={locale as AppLocale}
         ariaLabel={locale === "da" ? "Kort over Sj\u00e6llands kommuner" : "Map of Zealand municipalities"}
         initialFocusedSlug={initialFocusedSlug}
+        followedMunicipalitySlugs={followedMunicipalitySlugs}
       />
     </main>
   );

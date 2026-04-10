@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getSessionCookieName, getUserFromSessionToken } from "@/lib/server/auth";
+import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
 import { deleteSavedSearch, saveMunicipalitySearch } from "@/lib/server/saved-searches";
 
 function getLocale(value: FormDataEntryValue | null) {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
   const user = await getUserFromSessionToken(sessionToken);
 
   if (!user) {
-    const loginUrl = new URL(`/${locale}/login`, request.url);
+    const loginUrl = buildAppUrl(request, `/${locale}/login`);
     loginUrl.searchParams.set("redirectTo", returnTo);
     return redirect303(loginUrl);
   }
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   if (intent === "save-municipality") {
     const municipalitySlug = formData.get("municipalitySlug");
-    const redirectUrl = new URL(returnTo, request.url);
+    const redirectUrl = buildAppRedirectUrl(request, returnTo);
 
     if (typeof municipalitySlug === "string" && municipalitySlug) {
       const result = await saveMunicipalitySearch({
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
 
   if (intent === "delete") {
     const savedSearchId = formData.get("savedSearchId");
-    const redirectUrl = new URL(returnTo, request.url);
+    const redirectUrl = buildAppRedirectUrl(request, returnTo);
 
     if (typeof savedSearchId === "string" && savedSearchId) {
       const deleted = await deleteSavedSearch({ userId: user.id, savedSearchId });
@@ -86,5 +87,5 @@ export async function POST(request: NextRequest) {
     return redirect303(redirectUrl);
   }
 
-  return redirect303(new URL(returnTo, request.url));
+  return redirect303(buildAppRedirectUrl(request, returnTo));
 }

@@ -12,7 +12,7 @@ import {
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getCurrentUser } from "@/lib/server/auth";
-import { getMunicipalitySearchStateForUser } from "@/lib/server/search-follows";
+import { getMunicipalitySearchStateForUser, markMunicipalityFollowUpdatesSeen } from "@/lib/server/search-follows";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +47,10 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   }
 
   const currentUser = await getCurrentUser();
+  if (currentUser) {
+    await markMunicipalityFollowUpdatesSeen({ userId: currentUser.id, municipalitySlug: slug });
+  }
+
   const [municipality, dictionary, search, searchState] = await Promise.all([
     getMunicipalityBySlug(slug),
     getDictionary(locale),

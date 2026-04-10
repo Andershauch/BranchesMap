@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
 import { createSessionCookieValue, createSessionForUser } from "@/lib/server/auth";
+import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
 import { followMunicipalitySearch } from "@/lib/server/search-follows";
 import { authenticateUser } from "@/lib/server/users";
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
   const followMunicipality = formData.get("followMunicipality");
 
   if (typeof email !== "string" || typeof password !== "string") {
-    const url = new URL(`/${locale}/login`, request.url);
+    const url = buildAppUrl(request, `/${locale}/login`);
     url.searchParams.set("error", "missing_fields");
     url.searchParams.set("redirectTo", redirectTo);
     if (typeof followMunicipality === "string" && followMunicipality) {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
   const user = await authenticateUser({ email, password });
 
   if (!user) {
-    const url = new URL(`/${locale}/login`, request.url);
+    const url = buildAppUrl(request, `/${locale}/login`);
     url.searchParams.set("error", "invalid_credentials");
     url.searchParams.set("redirectTo", redirectTo);
     if (typeof followMunicipality === "string" && followMunicipality) {
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
     metadata: { locale },
   });
 
-  const finalRedirect = new URL(redirectTo, request.url);
+  const finalRedirect = buildAppRedirectUrl(request, redirectTo);
 
   if (typeof followMunicipality === "string" && followMunicipality) {
     const followResult = await followMunicipalitySearch({

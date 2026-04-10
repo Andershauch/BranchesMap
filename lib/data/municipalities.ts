@@ -43,6 +43,7 @@ export type MunicipalityRecord = {
   slug: string;
   name: string;
   teaser: string;
+  totalJobs: number;
   topIndustries: MunicipalityIndustrySummary[];
   jobsByIndustry: Array<{
     industry: MunicipalityIndustrySummary;
@@ -206,6 +207,7 @@ function createDetailFromMock(municipality: MockMunicipalityRecord): Municipalit
     slug: municipality.slug,
     name: municipality.name,
     teaser: municipality.teaser,
+    totalJobs: countMockJobs(municipality),
     topIndustries: municipality.topIndustries,
     jobsByIndustry: municipality.jobsByIndustry,
   };
@@ -413,6 +415,7 @@ function createDetailFromDatabase(
     slug: row.slug,
     name: row.name,
     teaser: row.teaser?.trim() || fallback?.teaser || buildFallbackTeaser(row.name, topIndustries),
+    totalJobs: mergeLiveTotalJobs(row.jobs.length || (fallback ? countMockJobs(fallback) : 0), liveEstimate),
     topIndustries,
     jobsByIndustry: mergeLiveJobsByIndustry(jobsByIndustry, liveEstimate),
   };
@@ -664,6 +667,7 @@ export async function getMunicipalityBySlug(slug: string) {
   const liveEstimate = await getLiveEstimateSafely(fallback.code);
   return {
     ...createDetailFromMock(fallback),
+    totalJobs: mergeLiveTotalJobs(countMockJobs(fallback), liveEstimate),
     topIndustries: mergeLiveTopIndustries(fallback.topIndustries, liveEstimate),
     jobsByIndustry: mergeLiveJobsByIndustry(fallback.jobsByIndustry, liveEstimate),
   } satisfies MunicipalityRecord;

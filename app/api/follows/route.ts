@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getSessionCookieName, getUserFromSessionToken } from "@/lib/server/auth";
-import { deleteSearchFollow, followMunicipalitySearch } from "@/lib/server/search-follows";
+import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
+import {
+  deleteSearchFollow,
+  followMunicipalitySearch,
+  markSearchFollowNotificationSeen,
+} from "@/lib/server/search-follows";
 
 function getLocale(value: FormDataEntryValue | null) {
   return typeof value === "string" && value ? value : "da";
@@ -31,7 +36,7 @@ export async function POST(request: NextRequest) {
   if (!user) {
     if (intent === "follow-municipality") {
       const municipalitySlug = formData.get("municipalitySlug");
-      const registerUrl = new URL(`/${locale}/register`, request.url);
+      const registerUrl = buildAppUrl(request, `/${locale}/register`);
       registerUrl.searchParams.set("redirectTo", returnTo);
       if (typeof municipalitySlug === "string" && municipalitySlug) {
         registerUrl.searchParams.set("followMunicipality", municipalitySlug);
@@ -39,14 +44,14 @@ export async function POST(request: NextRequest) {
       return redirect303(registerUrl);
     }
 
-    const loginUrl = new URL(`/${locale}/login`, request.url);
+    const loginUrl = buildAppUrl(request, `/${locale}/login`);
     loginUrl.searchParams.set("redirectTo", returnTo);
     return redirect303(loginUrl);
   }
 
   if (intent === "follow-municipality") {
     const municipalitySlug = formData.get("municipalitySlug");
-    const redirectUrl = new URL(returnTo, request.url);
+    const redirectUrl = buildAppRedirectUrl(request, returnTo);
 
     if (typeof municipalitySlug === "string" && municipalitySlug) {
       const result = await followMunicipalitySearch({
@@ -76,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   if (intent === "delete") {
     const followId = formData.get("followId");
-    const redirectUrl = new URL(returnTo, request.url);
+    const redirectUrl = buildAppRedirectUrl(request, returnTo);
 
     if (typeof followId === "string" && followId) {
       const deleted = await deleteSearchFollow({ userId: user.id, followId });
@@ -95,5 +100,26 @@ export async function POST(request: NextRequest) {
     return redirect303(redirectUrl);
   }
 
-  return redirect303(new URL(returnTo, request.url));
+  if (intent === "mark-seen") {
+    const followId = formData.get("followId");
+    const redirectUrl = buildAppRedirectUrl(request, returnTo);
+
+    if (typeof followId === "string" && followId) {
+      const marked = await markSearchFollowNotificationSeen({ userId: user.id, followId });
+
+      if (marked) {
+        await recordAuditEvent({
+          userId: user.id,
+          action: "search_follow.mark_seen",
+          entityType: "SearchFollow",
+          entityId: followId,
+        });
+        redirectUrl.searchParams.set("followMarkedSeen", "1");
+      }
+    }
+
+    return redirect303(redirectUrl);
+  }
+
+  return redirect303(buildAppRedirectUrl(request, returnTo));
 }

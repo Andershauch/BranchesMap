@@ -9,19 +9,26 @@ type FollowsPageProps = {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 const followsCopy = {
   da: {
     eyebrow: "Min konto",
     title: "F\u00f8lger",
-    intro: "Her ligger de s\u00f8gninger, du aktivt f\u00f8lger. Notifikationer kan bygges ovenp\u00e5 dette lag senere.",
+    intro: "Her ligger de kommuner, du aktivt f\u00f8lger. Nye \u00e6ndringer markeres her, n\u00e5r follow-checks finder opdateret indhold.",
     emptyTitle: "Du f\u00f8lger ikke noget endnu",
     emptyBody: "V\u00e6lg en kommune og tryk F\u00f8lg, hvis du vil holde \u00f8je med udviklingen der.",
     goToMap: "G\u00e5 til kortet",
     openMunicipality: "\u00c5bn kommune",
     remove: "Stop med at f\u00f8lge",
+    markSeen: "Mark\u00e9r som set",
     created: "F\u00f8lger siden",
+    checked: "Sidst tjekket",
+    notChecked: "Ikke tjekket endnu",
+    newUpdate: "Ny opdatering",
+    updateFound: "Der er fundet en \u00e6ndring siden sidst.",
+    updateSeen: "Opdateringen er markeret som set.",
     signedInAs: "Logget ind som",
     active: "Aktiv",
     inactive: "Inaktiv",
@@ -36,7 +43,13 @@ const followsCopy = {
     goToMap: "Go to map",
     openMunicipality: "Open municipality",
     remove: "Unfollow",
+    markSeen: "Mark as seen",
     created: "Following since",
+    checked: "Last checked",
+    notChecked: "Not checked yet",
+    newUpdate: "New update",
+    updateFound: "A change has been detected since the last view.",
+    updateSeen: "The update has been marked as seen.",
     signedInAs: "Signed in as",
     active: "Active",
     inactive: "Inactive",
@@ -50,7 +63,18 @@ function formatDate(date: Date, locale: AppLocale) {
   }).format(date);
 }
 
-export default async function FollowsPage({ params }: FollowsPageProps) {
+function formatDateTime(date: Date, locale: AppLocale) {
+  return new Intl.DateTimeFormat(locale === "da" ? "da-DK" : "en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
+function getStringParam(value: string | string[] | undefined) {
+  return typeof value === "string" && value ? value : null;
+}
+
+export default async function FollowsPage({ params, searchParams }: FollowsPageProps) {
   const { locale } = await params;
 
   if (!isValidLocale(locale)) {
@@ -60,8 +84,10 @@ export default async function FollowsPage({ params }: FollowsPageProps) {
   const activeLocale = locale as AppLocale;
   const copy = followsCopy[activeLocale];
   const user = await requireCurrentUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/follows`)}`);
+  const query = await searchParams;
   const follows = await listSearchFollowsForUser(user.id);
   const displayName = user.name?.trim() ? user.name : user.email;
+  const followMarkedSeen = getStringParam(query.followMarkedSeen) === "1";
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-4 py-8 text-slate-900 sm:px-6 sm:py-12">
@@ -72,6 +98,11 @@ export default async function FollowsPage({ params }: FollowsPageProps) {
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">{copy.eyebrow}</p>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">{copy.title}</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">{copy.intro}</p>
+              {followMarkedSeen ? (
+                <div className="mt-4 inline-flex rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+                  {copy.updateSeen}
+                </div>
+              ) : null}
             </div>
             <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{copy.signedInAs}</p>
@@ -110,10 +141,21 @@ export default async function FollowsPage({ params }: FollowsPageProps) {
                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${item.isActive ? 'bg-teal-50 text-teal-800' : 'bg-slate-100 text-slate-600'}`}>
                           {item.isActive ? copy.active : copy.inactive}
                         </span>
+                        {item.hasUnreadUpdate ? (
+                          <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                            {copy.newUpdate}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="mt-2 text-sm text-slate-600">
                         {copy.created}: {formatDate(item.createdAt, activeLocale)}
                       </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {copy.checked}: {item.lastCheckedAt ? formatDateTime(item.lastCheckedAt, activeLocale) : copy.notChecked}
+                      </p>
+                      {item.lastNotifiedAt ? (
+                        <p className="mt-3 text-sm font-medium text-amber-700">{copy.updateFound}</p>
+                      ) : null}
                       <p className="mt-3 text-sm leading-6 text-slate-700">
                         {item.municipality?.name ?? copy.municipalityFallback}
                       </p>
@@ -125,6 +167,20 @@ export default async function FollowsPage({ params }: FollowsPageProps) {
                       >
                         {copy.openMunicipality}
                       </Link>
+                      {item.hasUnreadUpdate ? (
+                        <form action="/api/follows" method="post">
+                          <input type="hidden" name="locale" value={locale} />
+                          <input type="hidden" name="intent" value="mark-seen" />
+                          <input type="hidden" name="followId" value={item.id} />
+                          <input type="hidden" name="returnTo" value={`/${locale}/follows`} />
+                          <button
+                            type="submit"
+                            className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 transition hover:border-amber-400 hover:bg-amber-100"
+                          >
+                            {copy.markSeen}
+                          </button>
+                        </form>
+                      ) : null}
                       <form action="/api/follows" method="post">
                         <input type="hidden" name="locale" value={locale} />
                         <input type="hidden" name="intent" value="delete" />

@@ -29,11 +29,13 @@ export function HomeMapExplorer({
   locale,
   ariaLabel,
   initialFocusedSlug,
+  followedMunicipalitySlugs,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
   initialFocusedSlug?: string | null;
+  followedMunicipalitySlugs: string[];
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
   const featuredSlugs = useMemo(
@@ -123,6 +125,7 @@ export function HomeMapExplorer({
           key={`${renderedDetailsSlug ?? "sheet"}-${sheetSession}`}
           locale={locale}
           municipality={detailsMunicipality}
+          isFollowing={followedMunicipalitySlugs.includes(detailsMunicipality.slug)}
           mode={sheetMode === "expanded" ? "expanded" : sheetMode === "preview" ? "preview" : "closed"}
           onExpand={() => setSheetMode("expanded")}
           onCollapse={() => setSheetMode("preview")}

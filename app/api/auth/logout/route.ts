@@ -7,6 +7,7 @@ import {
   getSessionCookieName,
   getUserFromSessionToken,
 } from "@/lib/server/auth";
+import { buildAppUrl } from "@/lib/server/request-origin";
 
 function redirect303(url: URL) {
   return NextResponse.redirect(url, 303);
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const response = redirect303(new URL(`/${locale}`, request.url));
+  const response = redirect303(buildAppUrl(request, `/${locale}`));
   const cookie = createClearedSessionCookieValue();
   response.cookies.set(cookie.name, cookie.value, cookie.options);
   return response;
