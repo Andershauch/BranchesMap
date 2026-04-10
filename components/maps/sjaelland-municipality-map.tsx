@@ -312,6 +312,7 @@ export function SjaellandMunicipalityMap({
   focusedSlug,
   detailsSlug,
   featuredSlugs,
+  followedMunicipalitySlugs,
   updatedMunicipalitySlugs,
   onMunicipalityPress,
 }: {
@@ -320,6 +321,7 @@ export function SjaellandMunicipalityMap({
   focusedSlug: string | null;
   detailsSlug: string | null;
   featuredSlugs: string[];
+  followedMunicipalitySlugs: string[];
   updatedMunicipalitySlugs: string[];
   onMunicipalityPress: (slug: string) => void;
 }) {
@@ -371,6 +373,7 @@ export function SjaellandMunicipalityMap({
   }, [municipalities]);
 
   const featuredSlugSet = useMemo(() => new Set(featuredSlugs), [featuredSlugs]);
+  const followedSlugSet = useMemo(() => new Set(followedMunicipalitySlugs), [followedMunicipalitySlugs]);
   const updatedSlugSet = useMemo(() => new Set(updatedMunicipalitySlugs), [updatedMunicipalitySlugs]);
   const shouldAnimateUpdateMarkers = updatedMunicipalitySlugs.length > 0 && updatedMunicipalitySlugs.length <= 6;
   const featureMap = useMemo(
@@ -663,7 +666,7 @@ export function SjaellandMunicipalityMap({
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_top,#d9efe8_0%,#bfd8ce_36%,#9abdaf_100%)]">
+    <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_24%_12%,#eef7fb_0%,#d8eaf0_34%,#b9d0d8_68%,#93adb9_100%)]">
       <svg
         ref={svgRef}
         viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
@@ -684,22 +687,27 @@ export function SjaellandMunicipalityMap({
           const isFocused = municipality.slug === focusedSlug;
           const isDetailed = municipality.slug === detailsSlug;
           const isFeatured = featuredSlugSet.has(municipality.slug);
+          const isFollowed = followedSlugSet.has(municipality.slug);
           const isHovered = municipality.slug === hoveredSlug;
           const fillColor = isFocused
             ? municipality.topIndustries[0]?.accentColor ?? "#0f766e"
+            : isFollowed
+              ? "#bdebd4"
             : isFeatured
               ? municipality.topIndustries[0]?.accentColor ?? "#94a3b8"
               : "#d7dfdc";
+          const strokeColor = isFocused ? "#0f172a" : isFollowed ? "#087f5b" : "#475569";
+          const strokeOpacity = isHovered || isFocused ? 0.82 : isFollowed ? 0.52 : 0.28;
 
           return (
             <path
               key={municipality.slug}
               d={pathData}
               fill={fillColor}
-              fillOpacity={isDetailed ? 0.38 : isFocused ? 0.3 : isFeatured ? 0.12 : 0.08}
-              stroke={isFocused ? "#0f172a" : "#475569"}
-              strokeOpacity={isHovered || isFocused ? 0.82 : 0.28}
-              strokeWidth={isFocused ? 2.2 : isHovered ? 1.65 : 1.2}
+              fillOpacity={isDetailed ? 0.38 : isFocused ? 0.3 : isFollowed ? 0.36 : isFeatured ? 0.12 : 0.08}
+              stroke={strokeColor}
+              strokeOpacity={strokeOpacity}
+              strokeWidth={isFocused ? 2.2 : isHovered ? 1.65 : isFollowed ? 1.45 : 1.2}
               className="cursor-pointer transition"
               data-municipality-slug={municipality.slug}
               onMouseEnter={() => setHoveredSlug(municipality.slug)}

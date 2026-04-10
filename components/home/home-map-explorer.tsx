@@ -119,6 +119,7 @@ export function HomeMapExplorer({
           focusedSlug={focusedSlug}
           detailsSlug={detailsSlug}
           featuredSlugs={featuredSlugs}
+          followedMunicipalitySlugs={followedMunicipalitySlugs}
           updatedMunicipalitySlugs={updatedMunicipalitySlugs}
           onMunicipalityPress={handleMunicipalityPress}
         />
