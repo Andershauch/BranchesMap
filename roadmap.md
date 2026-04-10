@@ -1150,6 +1150,40 @@ Det, der stadig er næste arbejde i Fase 2:
 4. Dokumentér installation og forventet adfærd i browser vs. installeret app.
 5. Luk Fase 2 som teknisk fundament, så fokus kan flyttes tilbage til produktfunktioner.
 
+## Feature-spor - Cirka rejsetid fra brugerens placering
+
+**Mål:** Give brugeren et hurtigt, opt-in estimat af hvor lang tid det cirka tager at komme fra nuværende lokation til den valgte kommune.
+
+### V1-beslutning
+
+Første version er bevidst et cirka-estimat:
+
+- brugeren trykker selv på `Beregn fra mig`
+- browserens Geolocation API henter lokation lokalt i klienten
+- præcis GPS-position gemmes ikke i databasen
+- destinationen er kommunens geografiske center udledt fra GeoJSON
+- estimatet er et simpelt bil-estimat baseret på afstand, rute-bias og gennemsnitshastighed
+- UI markerer tydeligt at det er et v1-estimat til kommuneområde
+
+### Hvorfor denne løsning
+
+Det giver hurtig produktværdi uden at binde os til en routing-leverandør for tidligt. Det er ikke præcist nok til endelig pendlerbeslutning, men godt nok til at hjælpe brugeren med at vurdere relevans på kommuneniveau.
+
+### Næste version
+
+Når STAR/jobdata senere giver konkrete jobplaceringer, skal samme UI-komponent kunne bruge jobdestinationer i stedet for kommune-center:
+
+- `municipality-center-v1` bruges nu
+- `job-location` er reserveret som næste destinationstype
+- senere kan vi koble routing/matrix-API på for mere præcis bil, cykel eller offentlig transport
+- ved mange jobs bør beregning ske som matrix/batch, ikke ét kald per job
+
+### Tekniske noter
+
+- På mobil kræver GPS i browseren normalt HTTPS eller installeret/sikker kontekst. Lokal LAN-test via `http://192.168.x.x` kan derfor vise at GPS ikke understøttes, selvom funktionen virker i korrekt sikker kontekst.
+- V1 må ikke sende brugerens GPS til serveren.
+- V1 må ikke cache præcis brugerposition permanent.
+
 ## Definition of Done for POC
 
 POC'en er færdig, når:

@@ -77,3 +77,29 @@ body {
 ::selection {
   background: rgba(13, 103, 109, 0.18);
 }
+
+@keyframes branches-map-update-pulse {
+  0%,
+  100% {
+    opacity: 0.68;
+    transform: scale(0.72);
+  }
+
+  60% {
+    opacity: 0;
+    transform: scale(1.85);
+  }
+}
+
+.branches-map-update-pulse {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: branches-map-update-pulse 1.85s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .branches-map-update-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}

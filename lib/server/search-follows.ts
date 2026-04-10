@@ -209,6 +209,31 @@ export async function listFollowedMunicipalitySlugsForUser(userId: string) {
     .filter((slug): slug is string => Boolean(slug));
 }
 
+export async function listUnreadFollowMunicipalitySlugsForUser(userId: string) {
+  const follows = await prisma.searchFollow.findMany({
+    where: {
+      userId,
+      isActive: true,
+      queryText: "municipality-profile",
+      municipalityId: {
+        not: null,
+      },
+      lastNotifiedAt: {
+        not: null,
+      },
+    },
+    select: {
+      municipality: {
+        select: {
+          slug: true,
+        },
+      },
+    },
+  });
+
+  return [...new Set(follows.map((follow) => follow.municipality?.slug).filter((slug): slug is string => Boolean(slug)))];
+}
+
 export async function checkSearchFollow({
   followId,
   userId,

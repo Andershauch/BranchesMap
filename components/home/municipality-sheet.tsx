@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type TouchEvent } from "react";
 
+import { MunicipalityTravelEstimate } from "@/components/home/municipality-travel-estimate";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
+import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
 
 type SheetMode = "closed" | "preview" | "expanded";
@@ -42,6 +44,7 @@ export function MunicipalitySheet({
   locale,
   municipality,
   isFollowing,
+  travelDestination,
   mode,
   onExpand,
   onCollapse,
@@ -50,6 +53,7 @@ export function MunicipalitySheet({
   locale: AppLocale;
   municipality: MunicipalitySummary;
   isFollowing: boolean;
+  travelDestination: TravelDestination | null;
   mode: SheetMode;
   onExpand: () => void;
   onCollapse: () => void;
@@ -240,6 +244,8 @@ export function MunicipalitySheet({
 
               {isExpanded ? (
                 <>
+                  <MunicipalityTravelEstimate locale={locale} destination={travelDestination} />
+
                   <div className="mt-4 rounded-[1.35rem] bg-white/60 px-4 py-4 ring-1 ring-slate-900/5">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                       {copy.teaserLabel}

@@ -207,8 +207,8 @@ function getIconFontSize(bounds: MapFeature["bounds"], isFocused: boolean) {
 }
 
 function getLabelFontSize(bounds: MapFeature["bounds"], isFocused: boolean) {
-  const maxSize = isFocused ? 24 : 16;
-  return clamp(Math.min(bounds.width / 5.7, bounds.height / 5.2), 10, maxSize);
+  const maxSize = isFocused ? 22 : 14;
+  return clamp(Math.min(bounds.width / 6.4, bounds.height / 5.6), 9, maxSize);
 }
 
 function shouldShowLabel(zoomLevel: number, isFeatured: boolean, isFocused: boolean) {
@@ -217,11 +217,11 @@ function shouldShowLabel(zoomLevel: number, isFeatured: boolean, isFocused: bool
 
 function getLabelYOffset(iconCount: number) {
   if (iconCount >= 3) {
-    return 16;
+    return 14;
   }
 
   if (iconCount >= 1) {
-    return 12;
+    return 10;
   }
 
   return 4;
@@ -249,25 +249,44 @@ function getVisibleIndustries(
 }
 
 function getIconPositions(count: number, bounds: MapFeature["bounds"], iconDy = 0) {
-  const spreadX = clamp(bounds.width * 0.16, 12, 28);
-  const wideSpreadX = spreadX * 1.18;
+  const compact = bounds.width < 52 || bounds.height < 46;
+  const spreadX = clamp(bounds.width * (compact ? 0.13 : 0.16), compact ? 9 : 12, compact ? 20 : 28);
+  const wideSpreadX = spreadX * (compact ? 1.08 : 1.18);
+  const topY = compact ? -14 : -20;
+  const sideY = compact ? -5 : -6;
+  const singleY = compact ? -7 : -10;
 
   if (count <= 1) {
-    return [{ x: 0, y: -10 + iconDy }];
+    return [{ x: 0, y: singleY + iconDy }];
   }
 
   if (count === 2) {
     return [
-      { x: -spreadX, y: -10 + iconDy },
-      { x: spreadX, y: -10 + iconDy },
+      { x: -spreadX, y: singleY + iconDy },
+      { x: spreadX, y: singleY + iconDy },
     ];
   }
 
   return [
-    { x: -wideSpreadX, y: -6 + iconDy },
-    { x: 0, y: -20 + iconDy },
-    { x: wideSpreadX, y: -6 + iconDy },
+    { x: -wideSpreadX, y: sideY + iconDy },
+    { x: 0, y: topY + iconDy },
+    { x: wideSpreadX, y: sideY + iconDy },
   ];
+}
+
+function getUpdateMarkerPosition(bounds: MapFeature["bounds"], iconCount: number) {
+  const compact = bounds.width < 52 || bounds.height < 46;
+  const x = clamp(bounds.width * (compact ? 0.1 : 0.16), compact ? 12 : 18, compact ? 22 : 34);
+
+  if (iconCount >= 2) {
+    return { x, y: compact ? -24 : -31 };
+  }
+
+  if (iconCount === 1) {
+    return { x, y: compact ? -19 : -23 };
+  }
+
+  return { x, y: compact ? -10 : -12 };
 }
 
 function getDistance(left: PointerSnapshot, right: PointerSnapshot) {
@@ -281,12 +300,19 @@ function getCenter(left: PointerSnapshot, right: PointerSnapshot) {
   };
 }
 
+function getEventMunicipalitySlug(target: EventTarget | null) {
+  return target instanceof Element
+    ? target.closest("[data-municipality-slug]")?.getAttribute("data-municipality-slug") ?? null
+    : null;
+}
+
 export function SjaellandMunicipalityMap({
   municipalities,
   ariaLabel,
   focusedSlug,
   detailsSlug,
   featuredSlugs,
+  updatedMunicipalitySlugs,
   onMunicipalityPress,
 }: {
   municipalities: MunicipalitySummary[];
@@ -294,6 +320,7 @@ export function SjaellandMunicipalityMap({
   focusedSlug: string | null;
   detailsSlug: string | null;
   featuredSlugs: string[];
+  updatedMunicipalitySlugs: string[];
   onMunicipalityPress: (slug: string) => void;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -305,6 +332,7 @@ export function SjaellandMunicipalityMap({
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const zoomLevel = width / viewBox.width;
 
   const features = useMemo(() => {
@@ -343,10 +371,27 @@ export function SjaellandMunicipalityMap({
   }, [municipalities]);
 
   const featuredSlugSet = useMemo(() => new Set(featuredSlugs), [featuredSlugs]);
+  const updatedSlugSet = useMemo(() => new Set(updatedMunicipalitySlugs), [updatedMunicipalitySlugs]);
+  const shouldAnimateUpdateMarkers = updatedMunicipalitySlugs.length > 0 && updatedMunicipalitySlugs.length <= 6;
   const featureMap = useMemo(
     () => new Map(features.map((feature) => [feature.municipality.slug, feature])),
     [features],
   );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(min-width: ${initialDesktopBreakpoint}px)`);
+
+    function updateViewportMode() {
+      setIsDesktopViewport(mediaQuery.matches);
+    }
+
+    updateViewportMode();
+    mediaQuery.addEventListener("change", updateViewportMode);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateViewportMode);
+    };
+  }, []);
 
   useEffect(() => {
     if (initialViewAppliedRef.current || features.length === 0 || !focusedSlug) {
@@ -487,10 +532,7 @@ export function SjaellandMunicipalityMap({
       return;
     }
 
-    const startSlug =
-      event.target instanceof Element
-        ? event.target.closest("[data-municipality-slug]")?.getAttribute("data-municipality-slug") ?? null
-        : null;
+    const startSlug = getEventMunicipalitySlug(event.target);
 
     event.currentTarget.setPointerCapture(event.pointerId);
     pointersRef.current.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
@@ -580,6 +622,12 @@ export function SjaellandMunicipalityMap({
   }
 
   function finishPointerInteraction(event: PointerEvent<SVGSVGElement>) {
+    const gesture = gestureRef.current;
+
+    if (gesture?.type === "drag" && !gesture.hasMoved && gesture.startSlug) {
+      activateMunicipality(gesture.startSlug);
+    }
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
@@ -612,15 +660,6 @@ export function SjaellandMunicipalityMap({
 
   function handlePointerCancel(event: PointerEvent<SVGSVGElement>) {
     finishPointerInteraction(event);
-  }
-
-  function handleMunicipalityClick(slug: string) {
-    if (suppressClickRef.current) {
-      suppressClickRef.current = false;
-      return;
-    }
-
-    activateMunicipality(slug);
   }
 
   return (
@@ -663,7 +702,6 @@ export function SjaellandMunicipalityMap({
               strokeWidth={isFocused ? 2.2 : isHovered ? 1.65 : 1.2}
               className="cursor-pointer transition"
               data-municipality-slug={municipality.slug}
-              onClick={() => handleMunicipalityClick(municipality.slug)}
               onMouseEnter={() => setHoveredSlug(municipality.slug)}
               onMouseLeave={() =>
                 setHoveredSlug((current) => (current === municipality.slug ? null : current))
@@ -672,12 +710,13 @@ export function SjaellandMunicipalityMap({
           );
         })}
 
-        <g>
-          {features.map((feature) => {
+        <g pointerEvents="none">
+          {features.map((feature, overlayIndex) => {
             const { municipality, marker, bounds } = feature;
             const tuning = labelTuning[municipality.slug] ?? {};
             const isFocused = municipality.slug === focusedSlug;
             const isFeatured = featuredSlugSet.has(municipality.slug);
+            const hasUnreadUpdate = updatedSlugSet.has(municipality.slug);
             const showLabel = shouldShowLabel(zoomLevel, isFeatured, isFocused);
             const visibleIndustries = getVisibleIndustries(
               municipality.topIndustries,
@@ -686,28 +725,53 @@ export function SjaellandMunicipalityMap({
               isFocused,
             );
 
-            if (!showLabel && visibleIndustries.length === 0) {
+            if (!showLabel && visibleIndustries.length === 0 && !hasUnreadUpdate) {
               return null;
             }
 
-            const iconScale = clamp(1 / Math.pow(zoomLevel, 0.14), 0.76, 1);
+            const iconScale = isDesktopViewport
+              ? clamp(1 / Math.pow(zoomLevel, 0.58), 0.36, 0.72)
+              : clamp(1 / Math.pow(zoomLevel, 0.14), 0.76, 1);
             const iconFontSize = getIconFontSize(bounds, isFocused);
             const iconPositions = getIconPositions(visibleIndustries.length, bounds, tuning.iconDy ?? 0);
             const labelFontSize = getLabelFontSize(bounds, isFocused);
             const labelY = getLabelYOffset(visibleIndustries.length);
+            const updateMarkerPosition = getUpdateMarkerPosition(bounds, visibleIndustries.length);
 
             return (
               <g
                 key={municipality.slug + "-overlay"}
                 transform={`translate(${marker.x}, ${marker.y}) scale(${iconScale})`}
-                data-municipality-slug={municipality.slug}
-                onClick={() => handleMunicipalityClick(municipality.slug)}
-                onMouseEnter={() => setHoveredSlug(municipality.slug)}
-                onMouseLeave={() =>
-                  setHoveredSlug((current) => (current === municipality.slug ? null : current))
-                }
-                className="cursor-pointer"
+                aria-hidden="true"
               >
+                {hasUnreadUpdate ? (
+                  <g
+                    transform={`translate(${updateMarkerPosition.x}, ${updateMarkerPosition.y})`}
+                  >
+                    {shouldAnimateUpdateMarkers ? (
+                      <circle
+                        r={11}
+                        fill="none"
+                        stroke="rgba(249, 115, 22, 0.72)"
+                        strokeWidth={2.4}
+                        className="branches-map-update-pulse"
+                        style={{ animationDelay: `${overlayIndex * 90}ms` }}
+                      />
+                    ) : null}
+                    <circle r={8.2} fill="#f97316" stroke="rgba(255,255,255,0.96)" strokeWidth={2.3} />
+                    <text
+                      y={0.7}
+                      fontSize={11}
+                      fontWeight={900}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                    >
+                      !
+                    </text>
+                  </g>
+                ) : null}
+
                 {visibleIndustries.map((industry, index) => (
                   <text
                     key={municipality.slug + "-" + industry.slug + "-icon"}
@@ -736,7 +800,7 @@ export function SjaellandMunicipalityMap({
                     letterSpacing={0.1}
                     opacity={isFocused ? 1 : isFeatured ? 0.96 : 0.84}
                   >
-                    {municipality.name}
+                    {municipality.name.toLocaleUpperCase("da-DK")}
                   </text>
                 ) : null}
               </g>

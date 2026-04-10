@@ -4,7 +4,10 @@ import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getCurrentUser } from "@/lib/server/auth";
-import { listFollowedMunicipalitySlugsForUser } from "@/lib/server/search-follows";
+import {
+  listFollowedMunicipalitySlugsForUser,
+  listUnreadFollowMunicipalitySlugsForUser,
+} from "@/lib/server/search-follows";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +34,11 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
   }
 
   const currentUser = await getCurrentUser();
-  const [municipalities, search, followedMunicipalitySlugs] = await Promise.all([
+  const [municipalities, search, followedMunicipalitySlugs, updatedMunicipalitySlugs] = await Promise.all([
     getMunicipalitySummaries(),
     searchParams,
     currentUser ? listFollowedMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
+    currentUser ? listUnreadFollowMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
   ]);
   const requestedFocusSlug = getStringParam(search.focus);
   const initialFocusedSlug = municipalities.some((municipality) => municipality.slug === requestedFocusSlug)
@@ -49,6 +53,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
         ariaLabel={locale === "da" ? "Kort over Sj\u00e6llands kommuner" : "Map of Zealand municipalities"}
         initialFocusedSlug={initialFocusedSlug}
         followedMunicipalitySlugs={followedMunicipalitySlugs}
+        updatedMunicipalitySlugs={updatedMunicipalitySlugs}
       />
     </main>
   );

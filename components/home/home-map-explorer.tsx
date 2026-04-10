@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MunicipalitySheet } from "@/components/home/municipality-sheet";
 import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
+import { municipalityTravelDestinations } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
 
 const defaultInitialFocusedSlug = "naestved";
@@ -30,12 +31,14 @@ export function HomeMapExplorer({
   ariaLabel,
   initialFocusedSlug,
   followedMunicipalitySlugs,
+  updatedMunicipalitySlugs,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
   initialFocusedSlug?: string | null;
   followedMunicipalitySlugs: string[];
+  updatedMunicipalitySlugs: string[];
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
   const featuredSlugs = useMemo(
@@ -116,6 +119,7 @@ export function HomeMapExplorer({
           focusedSlug={focusedSlug}
           detailsSlug={detailsSlug}
           featuredSlugs={featuredSlugs}
+          updatedMunicipalitySlugs={updatedMunicipalitySlugs}
           onMunicipalityPress={handleMunicipalityPress}
         />
       </div>
@@ -126,6 +130,7 @@ export function HomeMapExplorer({
           locale={locale}
           municipality={detailsMunicipality}
           isFollowing={followedMunicipalitySlugs.includes(detailsMunicipality.slug)}
+          travelDestination={municipalityTravelDestinations.get(detailsMunicipality.slug) ?? null}
           mode={sheetMode === "expanded" ? "expanded" : sheetMode === "preview" ? "preview" : "closed"}
           onExpand={() => setSheetMode("expanded")}
           onCollapse={() => setSheetMode("preview")}
