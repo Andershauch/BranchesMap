@@ -26,6 +26,11 @@ function Get-EnvValue {
     [string]$Name
   )
 
+  $envValue = [System.Environment]::GetEnvironmentVariable($Name)
+  if (-not [string]::IsNullOrWhiteSpace($envValue)) {
+    return $envValue.Trim()
+  }
+
   $envFile = Join-Path (Get-Location) ".env"
 
   if (-not (Test-Path $envFile)) {
