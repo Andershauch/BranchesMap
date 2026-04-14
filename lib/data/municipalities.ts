@@ -13,6 +13,12 @@ import {
   isLiveJobEstimatesEnabled,
   type MunicipalityJobEstimateResponse,
 } from "@/lib/server/statbank-jobs";
+import {
+  JOBINDSATS_OPEN_POSITIONS_TABLE,
+  JOBINDSATS_SOURCE,
+  type MunicipalityTopIndustriesSource,
+  type MunicipalityTotalJobsSource,
+} from "@/lib/server/jobindsats-imports";
 import { prisma } from "@/lib/server/prisma";
 
 export type LocalizedText = {
@@ -49,6 +55,7 @@ export type MunicipalityRecord = {
     industry: MunicipalityIndustrySummary;
     jobs: MunicipalityJobSummary[];
   }>;
+  sources: MunicipalityDataSources;
 };
 
 export type MunicipalitySummary = {
@@ -59,6 +66,7 @@ export type MunicipalitySummary = {
   topIndustries: MunicipalityIndustrySummary[];
   totalJobs: number;
   homeMap: MunicipalityHomeMapConfig;
+  sources: MunicipalityDataSources;
 };
 
 export type MunicipalityHomeMapAdminRow = {
@@ -101,6 +109,24 @@ type DatabaseJobRow = {
   industry: DatabaseIndustryRow;
 };
 
+type DatabaseImportedTopTitleRow = {
+  rank: number;
+  titleKey: string;
+  titleLabel: string;
+  openPositions: number;
+};
+
+type DatabaseImportedJobSnapshotRow = {
+  source: string;
+  sourceTable: string;
+  period: string;
+  totalOpenPositions: number;
+  dailyAverageOpenPositions: number;
+  newlyPostedPositions: number;
+  fetchedAt: Date;
+  topTitles: DatabaseImportedTopTitleRow[];
+};
+
 type DatabaseMunicipalitySummaryRow = DatabaseHomeMapRow & {
   code: string;
   name: string;
@@ -109,6 +135,7 @@ type DatabaseMunicipalitySummaryRow = DatabaseHomeMapRow & {
     jobs: number;
   };
   industryStats: DatabaseIndustryStatRow[];
+  jobSourceSnapshots: DatabaseImportedJobSnapshotRow[];
 };
 
 type DatabaseMunicipalityDetailRow = {
@@ -119,6 +146,13 @@ type DatabaseMunicipalityDetailRow = {
   isActive: boolean;
   industryStats: DatabaseIndustryStatRow[];
   jobs: DatabaseJobRow[];
+  jobSourceSnapshots: DatabaseImportedJobSnapshotRow[];
+};
+
+export type MunicipalityDataSources = {
+  totalJobs: MunicipalityTotalJobsSource;
+  topIndustries: MunicipalityTopIndustriesSource;
+  jobCards: "mock_or_db_for_now_extend_with_star_later";
 };
 
 const defaultIndustryIcon = "*";
@@ -189,6 +223,62 @@ function countMockJobs(municipality: MockMunicipalityRecord) {
   return municipality.jobsByIndustry.reduce((sum, entry) => sum + entry.jobs.length, 0);
 }
 
+function createDefaultSources(): MunicipalityDataSources {
+  return {
+    totalJobs: "mock_or_db",
+    topIndustries: "mock_or_db",
+    jobCards: "mock_or_db_for_now_extend_with_star_later",
+  };
+}
+
+function resolveTopIndustries(
+  current: MunicipalityIndustrySummary[],
+  liveEstimate?: MunicipalityJobEstimateResponse | null,
+) {
+  if (!liveEstimate) {
+    return {
+      topIndustries: current,
+      source: "mock_or_db" as const,
+    };
+  }
+
+  const liveTopIndustries = liveEstimate.municipalityEstimate.topIndustries.map(createIndustrySummaryFromLiveEstimate);
+
+  return {
+    topIndustries: liveTopIndustries.length > 0 ? liveTopIndustries : current,
+    source: "mock_or_db_plus_live_estimate" as const,
+  };
+}
+
+function getLatestImportedJobSnapshot(snapshots: DatabaseImportedJobSnapshotRow[]) {
+  return snapshots[0] ?? null;
+}
+
+function resolveTotalJobs(
+  currentTotal: number,
+  importedSnapshot?: DatabaseImportedJobSnapshotRow | null,
+  liveEstimate?: MunicipalityJobEstimateResponse | null,
+) {
+  if (importedSnapshot) {
+    return {
+      totalJobs: importedSnapshot.totalOpenPositions,
+      source: "jobindsats_y25i07_import" as const,
+    };
+  }
+
+  if (!liveEstimate) {
+    return {
+      totalJobs: currentTotal,
+      source: "mock_or_db" as const,
+    };
+  }
+
+  return {
+    totalJobs: liveEstimate.municipalityEstimate.totalEstimatedJobCount || currentTotal,
+    source: "mock_or_db_plus_live_estimate" as const,
+  };
+}
+
 function createSummaryFromMock(municipality: MockMunicipalityRecord, dbRow?: DatabaseHomeMapRow): MunicipalitySummary {
   return {
     code: municipality.code,
@@ -198,6 +288,7 @@ function createSummaryFromMock(municipality: MockMunicipalityRecord, dbRow?: Dat
     topIndustries: municipality.topIndustries,
     totalJobs: countMockJobs(municipality),
     homeMap: createHomeMapConfig(municipality.slug, dbRow),
+    sources: createDefaultSources(),
   };
 }
 
@@ -210,6 +301,7 @@ function createDetailFromMock(municipality: MockMunicipalityRecord): Municipalit
     totalJobs: countMockJobs(municipality),
     topIndustries: municipality.topIndustries,
     jobsByIndustry: municipality.jobsByIndustry,
+    sources: createDefaultSources(),
   };
 }
 
@@ -295,26 +387,6 @@ function createIndustrySummaryFromLiveEstimate(
   };
 }
 
-function mergeLiveTopIndustries(
-  current: MunicipalityIndustrySummary[],
-  liveEstimate?: MunicipalityJobEstimateResponse | null,
-) {
-  if (!liveEstimate) {
-    return current;
-  }
-
-  const liveTopIndustries = liveEstimate.municipalityEstimate.topIndustries.map(createIndustrySummaryFromLiveEstimate);
-  return liveTopIndustries.length > 0 ? liveTopIndustries : current;
-}
-
-function mergeLiveTotalJobs(currentTotal: number, liveEstimate?: MunicipalityJobEstimateResponse | null) {
-  if (!liveEstimate) {
-    return currentTotal;
-  }
-
-  return liveEstimate.municipalityEstimate.totalEstimatedJobCount || currentTotal;
-}
-
 function mergeLiveJobsByIndustry(
   current: MunicipalityRecord["jobsByIndustry"],
   liveEstimate?: MunicipalityJobEstimateResponse | null,
@@ -375,20 +447,32 @@ function createSummaryFromDatabase(
   fallback?: MockMunicipalityRecord,
   liveEstimate?: MunicipalityJobEstimateResponse | null,
 ): MunicipalitySummary {
+  const importedSnapshot = getLatestImportedJobSnapshot(row.jobSourceSnapshots);
   const baseTopIndustries =
     row.industryStats.length > 0
       ? row.industryStats.map((stat) => createIndustrySummaryFromDatabase(stat.industry, stat.jobCount))
       : fallback?.topIndustries ?? [];
-  const topIndustries = mergeLiveTopIndustries(baseTopIndustries, liveEstimate);
+  const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, liveEstimate);
+  const resolvedTotalJobs = resolveTotalJobs(
+    row._count.jobs || (fallback ? countMockJobs(fallback) : 0),
+    importedSnapshot,
+    liveEstimate,
+  );
 
   return {
     code: row.code,
     slug: row.slug,
     name: row.name,
-    teaser: row.teaser?.trim() || fallback?.teaser || buildFallbackTeaser(row.name, topIndustries),
-    topIndustries,
-    totalJobs: mergeLiveTotalJobs(row._count.jobs || (fallback ? countMockJobs(fallback) : 0), liveEstimate),
+    teaser:
+      row.teaser?.trim() || fallback?.teaser || buildFallbackTeaser(row.name, resolvedTopIndustries.topIndustries),
+    topIndustries: resolvedTopIndustries.topIndustries,
+    totalJobs: resolvedTotalJobs.totalJobs,
     homeMap: createHomeMapConfig(row.slug, row),
+    sources: {
+      totalJobs: resolvedTotalJobs.source,
+      topIndustries: resolvedTopIndustries.source,
+      jobCards: "mock_or_db_for_now_extend_with_star_later",
+    },
   };
 }
 
@@ -397,6 +481,7 @@ function createDetailFromDatabase(
   fallback?: MockMunicipalityRecord,
   liveEstimate?: MunicipalityJobEstimateResponse | null,
 ): MunicipalityRecord {
+  const importedSnapshot = getLatestImportedJobSnapshot(row.jobSourceSnapshots);
   const statsByIndustrySlug = new Map<string, MunicipalityIndustrySummary>(
     row.industryStats.map((stat) => [stat.industry.slug, createIndustrySummaryFromDatabase(stat.industry, stat.jobCount)]),
   );
@@ -408,16 +493,27 @@ function createDetailFromDatabase(
       : jobsByIndustry.length > 0
         ? createTopIndustriesFromJobGroups(jobsByIndustry)
         : fallback?.topIndustries ?? [];
-  const topIndustries = mergeLiveTopIndustries(baseTopIndustries, liveEstimate);
+  const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, liveEstimate);
+  const resolvedTotalJobs = resolveTotalJobs(
+    row.jobs.length || (fallback ? countMockJobs(fallback) : 0),
+    importedSnapshot,
+    liveEstimate,
+  );
 
   return {
     code: row.code,
     slug: row.slug,
     name: row.name,
-    teaser: row.teaser?.trim() || fallback?.teaser || buildFallbackTeaser(row.name, topIndustries),
-    totalJobs: mergeLiveTotalJobs(row.jobs.length || (fallback ? countMockJobs(fallback) : 0), liveEstimate),
-    topIndustries,
+    teaser:
+      row.teaser?.trim() || fallback?.teaser || buildFallbackTeaser(row.name, resolvedTopIndustries.topIndustries),
+    totalJobs: resolvedTotalJobs.totalJobs,
+    topIndustries: resolvedTopIndustries.topIndustries,
     jobsByIndustry: mergeLiveJobsByIndustry(jobsByIndustry, liveEstimate),
+    sources: {
+      totalJobs: resolvedTotalJobs.source,
+      topIndustries: resolvedTopIndustries.source,
+      jobCards: "mock_or_db_for_now_extend_with_star_later",
+    },
   };
 }
 
@@ -504,6 +600,33 @@ async function getDatabaseMunicipalitySummaryRows() {
             },
           },
         },
+        jobSourceSnapshots: {
+          where: {
+            source: JOBINDSATS_SOURCE,
+            sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
+          },
+          orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
+          take: 1,
+          select: {
+            source: true,
+            sourceTable: true,
+            period: true,
+            totalOpenPositions: true,
+            dailyAverageOpenPositions: true,
+            newlyPostedPositions: true,
+            fetchedAt: true,
+            topTitles: {
+              orderBy: [{ rank: "asc" }],
+              take: 5,
+              select: {
+                rank: true,
+                titleKey: true,
+                titleLabel: true,
+                openPositions: true,
+              },
+            },
+          },
+        },
       },
     })) satisfies DatabaseMunicipalitySummaryRow[];
   } catch (error) {
@@ -557,6 +680,33 @@ async function getDatabaseMunicipalityDetailRow(slug: string) {
             },
           },
         },
+        jobSourceSnapshots: {
+          where: {
+            source: JOBINDSATS_SOURCE,
+            sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
+          },
+          orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
+          take: 1,
+          select: {
+            source: true,
+            sourceTable: true,
+            period: true,
+            totalOpenPositions: true,
+            dailyAverageOpenPositions: true,
+            newlyPostedPositions: true,
+            fetchedAt: true,
+            topTitles: {
+              orderBy: [{ rank: "asc" }],
+              take: 10,
+              select: {
+                rank: true,
+                titleKey: true,
+                titleLabel: true,
+                openPositions: true,
+              },
+            },
+          },
+        },
       },
     })) satisfies DatabaseMunicipalityDetailRow | null;
   } catch (error) {
@@ -589,10 +739,17 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
     return sortSummaries(
       pocMunicipalities.map((municipality) => {
         const liveEstimate = liveEstimateMap.get(municipality.slug);
+        const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, liveEstimate);
+        const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, liveEstimate);
         return {
           ...createSummaryFromMock(municipality),
-          topIndustries: mergeLiveTopIndustries(municipality.topIndustries, liveEstimate),
-          totalJobs: mergeLiveTotalJobs(countMockJobs(municipality), liveEstimate),
+          topIndustries: resolvedTopIndustries.topIndustries,
+          totalJobs: resolvedTotalJobs.totalJobs,
+          sources: {
+            totalJobs: resolvedTotalJobs.source,
+            topIndustries: resolvedTopIndustries.source,
+            jobCards: "mock_or_db_for_now_extend_with_star_later",
+          },
         } satisfies MunicipalitySummary;
       }),
     );
@@ -610,11 +767,21 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
       const liveEstimate = liveEstimateMap.get(municipality.slug);
       return databaseRow
         ? createSummaryFromDatabase(databaseRow, municipality, liveEstimate)
-        : {
-            ...createSummaryFromMock(municipality),
-            topIndustries: mergeLiveTopIndustries(municipality.topIndustries, liveEstimate),
-            totalJobs: mergeLiveTotalJobs(countMockJobs(municipality), liveEstimate),
-          };
+        : (() => {
+            const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, liveEstimate);
+            const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, liveEstimate);
+
+            return {
+              ...createSummaryFromMock(municipality),
+              topIndustries: resolvedTopIndustries.topIndustries,
+              totalJobs: resolvedTotalJobs.totalJobs,
+              sources: {
+                totalJobs: resolvedTotalJobs.source,
+                topIndustries: resolvedTopIndustries.source,
+                jobCards: "mock_or_db_for_now_extend_with_star_later",
+              },
+            } satisfies MunicipalitySummary;
+          })();
     }),
   );
 }
@@ -665,10 +832,17 @@ export async function getMunicipalityBySlug(slug: string) {
   }
 
   const liveEstimate = await getLiveEstimateSafely(fallback.code);
+  const resolvedTopIndustries = resolveTopIndustries(fallback.topIndustries, liveEstimate);
+  const resolvedTotalJobs = resolveTotalJobs(countMockJobs(fallback), null, liveEstimate);
   return {
     ...createDetailFromMock(fallback),
-    totalJobs: mergeLiveTotalJobs(countMockJobs(fallback), liveEstimate),
-    topIndustries: mergeLiveTopIndustries(fallback.topIndustries, liveEstimate),
+    totalJobs: resolvedTotalJobs.totalJobs,
+    topIndustries: resolvedTopIndustries.topIndustries,
     jobsByIndustry: mergeLiveJobsByIndustry(fallback.jobsByIndustry, liveEstimate),
+    sources: {
+      totalJobs: resolvedTotalJobs.source,
+      topIndustries: resolvedTopIndustries.source,
+      jobCards: "mock_or_db_for_now_extend_with_star_later",
+    },
   } satisfies MunicipalityRecord;
 }

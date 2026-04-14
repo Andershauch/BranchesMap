@@ -28,7 +28,7 @@ const failures = [];
 function walk(currentPath) {
   for (const entry of readdirSync(currentPath, { withFileTypes: true })) {
     if (entry.isDirectory()) {
-      if (ignoreDirectories.has(entry.name)) {
+      if (ignoreDirectories.has(entry.name) || entry.name.startsWith("_tmp")) {
         continue;
       }
 

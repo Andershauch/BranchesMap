@@ -23,6 +23,7 @@ model Municipality {
   updatedAt        DateTime                   @updatedAt
   industryStats    MunicipalityIndustryStat[]
   jobs             Job[]
+  jobSourceSnapshots MunicipalityJobSourceSnapshot[]
   savedSearches    SavedSearch[]
   searchFollows    SearchFollow[]
 
@@ -82,6 +83,58 @@ model Job {
 
   @@index([municipalityId])
   @@index([industryId])
+}
+
+model ImportRun {
+  id           String                         @id @default(cuid())
+  source       String
+  sourceTable  String?
+  status       String                         @default("running")
+  period       String?
+  metadata     Json?
+  errorMessage String?
+  startedAt    DateTime                       @default(now())
+  finishedAt   DateTime?
+  snapshots    MunicipalityJobSourceSnapshot[]
+
+  @@index([source, startedAt])
+  @@index([sourceTable, period])
+}
+
+model MunicipalityJobSourceSnapshot {
+  id                      String                         @id @default(cuid())
+  municipalityId          String
+  importRunId            String?
+  source                  String
+  sourceTable             String
+  period                  String
+  totalOpenPositions      Int
+  dailyAverageOpenPositions Int
+  newlyPostedPositions    Int
+  fetchedAt               DateTime
+  createdAt               DateTime                       @default(now())
+  updatedAt               DateTime                       @updatedAt
+  municipality            Municipality                   @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
+  importRun               ImportRun?                     @relation(fields: [importRunId], references: [id], onDelete: SetNull)
+  topTitles               MunicipalityJobSourceTopTitle[]
+
+  @@unique([municipalityId, source, sourceTable, period])
+  @@index([municipalityId, source, sourceTable, period])
+  @@index([source, sourceTable, period])
+}
+
+model MunicipalityJobSourceTopTitle {
+  id            String                       @id @default(cuid())
+  snapshotId     String
+  rank           Int
+  titleKey       String
+  titleLabel     String
+  openPositions  Int
+  createdAt      DateTime                     @default(now())
+  snapshot       MunicipalityJobSourceSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotId, rank])
+  @@index([snapshotId, openPositions])
 }
 
 model User {

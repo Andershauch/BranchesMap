@@ -961,6 +961,114 @@ En bruger kan følge en kommune og senere se i appen, at der er sket en opdateri
 
 Vi kan opdatere appen med nye data uden manuelle hårdkodede rettelser i frontend.
 
+### Statusopdatering - Jobindsats som første officielle importspor
+
+Fase 5 er nu konkret påbegyndt som discovery- og importforberedelse mod Jobindsats API'et.
+
+Det, der er afklaret:
+
+- vi har et gyldigt Jobindsats-token og kan kalde API'et via den dokumenterede PowerShell-klientvej
+- appens Node/Next-runtime er stadig ustabil mod upstream og har i flere forsøg returneret `403`
+- PowerShell-discovery fungerer stabilt nok til at kortlægge tabeller og bygge en importstrategi
+- hele tabelkataloget er hentet lokalt
+
+Første konkrete fund:
+
+- `Y25i07` er identificeret som den vigtigste V1-tabel
+- tabellen giver kommune-niveau, periode, stillingsbetegnelse og tre direkte jobmålinger:
+  - antal stillinger
+  - dagligt gennemsnitligt antal stillinger
+  - antal nyopslåede stillinger
+
+Det betyder, at den rigtige V1-strategi ikke er live-opslag i frontend eller server request-flow, men et dagligt importjob til vores eget datalag.
+
+### Anbefalet V1-implementering under Fase 5
+
+**Mål:** Erstat dele af det nuværende estimatlag med officielle Jobindsats-tal, men behold appens canonical model og UI-stabilitet.
+
+#### V1-beslutning
+
+- Jobindsats hentes via batch/import, ikke live i brugerens request
+- importen køres én gang i døgnet
+- `Y25i07` bruges som primær V1-kilde
+- follow/change detection fortsætter oven på vores egne snapshots, ikke direkte på upstream-rows
+
+#### Hvad V1 realistisk kan levere
+
+- officielle jobtal pr. kommune
+- periodebaseret udvikling
+- top stillingsbetegnelser pr. kommune
+
+#### Hvad V1 ikke bør love endnu
+
+- konkrete jobkort med adresse og koordinater
+- ægte live-opdatering i realtid
+- fuld erstatning af senere STAR-jobdata
+
+### Foreslået sprint - Daglig Jobindsats-import
+
+1. Datamodel og staging
+   Opret staging- og snapshotstruktur til Jobindsats-import, så vi kan gemme rå payloads og normaliserede kommune-data adskilt.
+2. Importjob for `Y25i07`
+   Byg et job, der henter seneste relevante periode, importerer alle kommuner i scope og gemmer totaltal samt top stillingsbetegnelser.
+3. Kommunematch og kvalitet
+   Match Jobindsats-kommunenavne til vores egne kommune-id'er og log mismatch eller manglende mapping.
+4. Canonical mapping
+   Oversæt importen til den model appen allerede læser fra, så UI'et ikke kender Jobindsats-formatet.
+5. Follow-integration
+   Kør follow/change detection oven på de importerede kommune-snapshots efter hver succesfuld import.
+6. Drift og cron
+   Kør importen én gang i døgnet og dokumentér retry-, fejl- og rollback-adfærd.
+
+### Status nu - første importfundament
+
+Følgende er nu implementeret og verificeret lokalt:
+
+- Prisma-model til Jobindsats-importkørsler
+- Prisma-model til kommune-snapshots fra Jobindsats
+- lokalt importscript for `Y25i07`
+- PowerShell-baseret fetch-spor som stabil adgangsvej til Jobindsats
+- læselags-integration, så `totalJobs` kan komme fra importeret Jobindsats-data i stedet for kun estimatlag
+
+Første lokale datakørsel er gennemført med:
+
+- `43` kommuner importeret
+- tabel `Y25i07`
+- periode `2026M03`
+
+Det næste arbejde i Fase 5 er derfor ikke længere discovery, men:
+
+1. kvalitetssikring af kommune-match og top stillingsbetegnelser
+2. beslutning om første ESCO-til-produktkategori mapping
+3. valg af faktisk driftsmekanisme for den daglige import
+
+### Driftsspor valgt til V1
+
+Den foreløbige V1-driftsmekanisme er nu valgt og klargjort:
+
+- dagligt batchjob
+- Windows/PowerShell-baseret fetch-spor
+- import efterfulgt af direkte follow-check i samme batch
+- GitHub Actions workflow som første scheduler-kandidat
+
+Det betyder, at næste skridt i Fase 5 ikke er at opfinde scheduler-arkitektur, men at:
+
+1. lægge de nødvendige secrets ind i GitHub
+2. køre første manuelle workflow-kørsel
+3. verificere at follow-opdateringer stadig markeres korrekt efter import i drift
+
+### Produktanbefaling for V1
+
+Den sikreste vej er at lade Jobindsats forbedre datafundamentet først og holde den nuværende UI-struktur stabil.
+
+Det betyder:
+
+- brug Jobindsats til kommune-totaler først
+- behold de brede produktchips i V1
+- udsæt ESCO-til-brancher mapping til næste iteration
+
+På den måde ændrer vi ikke datakilde, kategorimodel og UI-hierarki på én gang.
+
 ## Fase 6 - Drift, kvalitet og skalering
 
 **Mål:** Gør løsningen stabil, målbar og klar til rigtig brug.

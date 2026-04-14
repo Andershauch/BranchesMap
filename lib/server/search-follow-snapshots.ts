@@ -44,8 +44,8 @@ export type MunicipalityFollowSnapshot = {
     }>;
   };
   sources: {
-    totalJobs: "mock_or_db_plus_live_estimate";
-    topIndustries: "mock_or_db_plus_live_estimate";
+    totalJobs: "mock_or_db" | "mock_or_db_plus_live_estimate" | "jobindsats_y25i07_import";
+    topIndustries: "mock_or_db" | "mock_or_db_plus_live_estimate";
     jobCards: "mock_or_db_for_now_extend_with_star_later";
   };
 };
@@ -101,9 +101,7 @@ export async function buildMunicipalityFollowSnapshotBySlug(
       })),
     },
     sources: {
-      totalJobs: "mock_or_db_plus_live_estimate",
-      topIndustries: "mock_or_db_plus_live_estimate",
-      jobCards: "mock_or_db_for_now_extend_with_star_later",
+      ...municipality.sources,
     },
   };
 }
