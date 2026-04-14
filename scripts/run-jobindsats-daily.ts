@@ -23,6 +23,7 @@ function runImportStep() {
 async function runFollowCheckStep() {
   const appBaseUrl = process.env.APP_BASE_URL?.trim();
   const followCheckSecret = process.env.FOLLOW_CHECK_SECRET?.trim();
+  const strictFollowCheck = process.env.STRICT_FOLLOW_CHECK?.trim() === "true";
 
   if (!appBaseUrl || !followCheckSecret) {
     console.log("Skipping follow check step because APP_BASE_URL or FOLLOW_CHECK_SECRET is not configured.");
@@ -41,7 +42,15 @@ async function runFollowCheckStep() {
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(`Follow check request failed (${response.status}): ${body}`);
+    const message = `Follow check request failed (${response.status}): ${body}`;
+
+    if (strictFollowCheck) {
+      throw new Error(message);
+    }
+
+    console.warn(message);
+    console.warn("Continuing because STRICT_FOLLOW_CHECK is not enabled.");
+    return;
   }
 
   const payload = await response.json();
