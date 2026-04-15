@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Fragment } from "react";
 
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
-import {
-  formatNumber,
-  getIndustryLabel,
-} from "@/lib/i18n/format";
+import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import {
@@ -76,25 +74,25 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   const additionalIndustryOverview = industryOverview.slice(3, 10);
   const followButtonLabel = searchState.isFollowing
     ? activeLocale === "da"
-      ? "F\u00f8lger"
+      ? "Følger"
       : "Following"
     : activeLocale === "da"
-      ? "F\u00f8lg kommune"
+      ? "Følg kommune"
       : "Follow municipality";
-  const followsLabel = activeLocale === "da" ? "Se f\u00f8lger" : "View following";
+  const followsLabel = activeLocale === "da" ? "Se følger" : "View following";
   const followedState = getStringParam(search.followed);
   const followStatusMessage =
     followedState === "created"
       ? activeLocale === "da"
-        ? "Du f\u00f8lger nu denne kommune. N\u00e6ste skridt er notifikationer, n\u00e5r data \u00e6ndrer sig."
+        ? "Du følger nu denne kommune. Næste skridt er notifikationer, når data ændrer sig."
         : "You are now following this municipality. The next step is notifications when data changes."
       : followedState === "exists"
         ? activeLocale === "da"
-          ? "Du f\u00f8lger allerede denne kommune."
+          ? "Du følger allerede denne kommune."
           : "You are already following this municipality."
         : followedState === "error"
           ? activeLocale === "da"
-            ? "Kommunen kunne ikke f\u00f8lges. Pr\u00f8v igen."
+            ? "Kommunen kunne ikke følges. Prøv igen."
             : "The municipality could not be followed. Please try again."
           : null;
 
@@ -173,40 +171,62 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
             {buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {municipality.topIndustries.map((industry) => {
-            const industryLabel = getIndustryLabel(dictionary, industry.code, industry.name);
-            const jobnetUrl = buildJobnetIndustrySearchUrl(municipality.name, industry.name);
+            {municipality.topIndustries.map((industry) => {
+              const industryLabel = getIndustryLabel(dictionary, industry.code, industry.name);
+              const jobnetUrl = buildJobnetIndustrySearchUrl(municipality.name, industry.name);
 
-            return (
-              <a
-                key={`${municipality.slug}-${industry.slug}`}
-                href={jobnetUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="rounded-[1.5rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] transition hover:bg-[var(--md-sys-color-surface-container-high)]"
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-full text-xl text-white"
-                    style={{ backgroundColor: industry.accentColor }}
-                  >
-                    {industry.icon}
-                  </span>
-                  <div>
-                    <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)]">
-                      {industryLabel}
-                    </h2>
-                    <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                      <strong className="font-semibold text-[var(--md-sys-color-on-surface)]">
-                        {formatNumber(activeLocale, industry.jobCount)}
-                      </strong>{" "}
-                      {dictionary.labels.estimatedRoles}
-                    </p>
+              return (
+                <article
+                  key={`${municipality.slug}-${industry.slug}`}
+                  className="rounded-[1.5rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)]"
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full text-xl text-white"
+                      style={{ backgroundColor: industry.accentColor }}
+                    >
+                      {industry.icon}
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)]">
+                        <a
+                          href={jobnetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="transition hover:text-[var(--md-sys-color-primary)]"
+                        >
+                          {industryLabel}
+                        </a>
+                      </h2>
+                      <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
+                        <strong className="font-semibold text-[var(--md-sys-color-on-surface)]">
+                          {formatNumber(activeLocale, industry.jobCount)}
+                        </strong>{" "}
+                        {dictionary.labels.estimatedRoles}
+                      </p>
+                      {industry.representativeTitles && industry.representativeTitles.length > 0 ? (
+                        <p className="mt-2 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+                          Titler der typisk søges efter i denne branche er:{" "}
+                          {industry.representativeTitles.map((title, index) => (
+                            <Fragment key={`${industry.slug}-${title}`}>
+                              {index > 0 ? ", " : null}
+                              <a
+                                href={buildJobnetIndustrySearchUrl(municipality.name, industry.name, title)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-semibold text-[var(--md-sys-color-on-surface)] underline decoration-[var(--md-sys-color-outline)] underline-offset-2 transition hover:text-[var(--md-sys-color-primary)]"
+                              >
+                                {title}
+                              </a>
+                            </Fragment>
+                          ))}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </a>
-            );
-          })}
+                </article>
+              );
+            })}
           </div>
 
           {additionalIndustryOverview.length > 0 ? (

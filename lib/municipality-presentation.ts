@@ -82,7 +82,11 @@ export function buildMunicipalityPocStatus(locale: AppLocale, sources: Presented
     : "Industry distribution and jobs are still POC data, but the structure is ready for the next data sources.";
 }
 
-export function buildJobnetIndustrySearchUrl(municipalityName: string, industryName: string) {
-  const query = `${industryName} ${municipalityName}`;
+export function buildJobnetIndustrySearchUrl(
+  municipalityName: string,
+  industryName: string,
+  titleName?: string | null,
+) {
+  const query = [titleName, industryName, municipalityName].filter(Boolean).join(" ");
   return `https://job.jobnet.dk/CV/FindWork?q=${encodeURIComponent(query)}`;
 }

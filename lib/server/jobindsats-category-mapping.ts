@@ -185,6 +185,13 @@ function normalizeForMatching(value: string) {
     .trim();
 }
 
+export function normalizeJobindsatsRepresentativeTitle(titleLabel: string) {
+  return titleLabel
+    .replace(/\s*\([^)]*\)\s*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function mapJobindsatsTitleToIndustryCode(titleLabel: string): ProductIndustryCode | null {
   const normalized = normalizeForMatching(titleLabel);
 

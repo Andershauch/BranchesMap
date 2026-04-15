@@ -22,7 +22,7 @@ import {
 
 const IMPORT_OUTPUT_DIR = path.join(process.cwd(), "_tmp_jobindsats", "imports", JOBINDSATS_OPEN_POSITIONS_TABLE.toLowerCase());
 const DISCOVERY_SCRIPT_PATH = path.join(process.cwd(), "scripts", "jobindsats-discovery.ps1");
-const DEFAULT_TOP_TITLE_LIMIT = 10;
+const DEFAULT_TOP_TITLE_LIMIT = 50;
 
 type MunicipalityScopeRow = {
   id: string;

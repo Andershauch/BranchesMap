@@ -20,6 +20,10 @@ import {
   type MunicipalityTopIndustriesSource,
   type MunicipalityTotalJobsSource,
 } from "@/lib/server/jobindsats-imports";
+import {
+  mapJobindsatsTitleToIndustryCode,
+  normalizeJobindsatsRepresentativeTitle,
+} from "@/lib/server/jobindsats-category-mapping";
 import { prisma } from "@/lib/server/prisma";
 
 export type LocalizedText = {
@@ -34,6 +38,7 @@ export type MunicipalityIndustrySummary = {
   icon: string;
   accentColor: string;
   jobCount: number;
+  representativeTitles?: string[];
 };
 
 export type MunicipalityJobSummary = {
@@ -218,6 +223,41 @@ function createIndustrySummaryFromDatabase(industry: DatabaseIndustryRow, jobCou
   };
 }
 
+function withRepresentativeTitles(
+  industries: MunicipalityIndustrySummary[],
+  importedSnapshot?: DatabaseImportedJobSnapshotRow | null,
+) {
+  if (!importedSnapshot || importedSnapshot.topTitles.length === 0) {
+    return industries;
+  }
+
+  const titlesByCode = new Map<string, string[]>();
+
+  for (const title of importedSnapshot.topTitles) {
+    const industryCode = mapJobindsatsTitleToIndustryCode(title.titleLabel);
+
+    if (!industryCode) {
+      continue;
+    }
+
+    const normalizedTitle = normalizeJobindsatsRepresentativeTitle(title.titleLabel);
+    if (!normalizedTitle) {
+      continue;
+    }
+
+    const existing = titlesByCode.get(industryCode) ?? [];
+    if (!existing.includes(normalizedTitle)) {
+      existing.push(normalizedTitle);
+      titlesByCode.set(industryCode, existing);
+    }
+  }
+
+  return industries.map((industry) => ({
+    ...industry,
+    representativeTitles: titlesByCode.get(industry.code)?.slice(0, 4) ?? [],
+  }));
+}
+
 function buildFallbackTeaser(name: string, topIndustries: MunicipalityIndustrySummary[]) {
   if (topIndustries.length < 3) {
     return name;
@@ -244,8 +284,11 @@ function resolveImportedTopIndustries(importedSnapshot?: DatabaseImportedJobSnap
   }
 
   return {
-    topIndustries: importedSnapshot.categories.slice(0, 3).map((entry) =>
-      createIndustrySummaryFromDatabase(entry.industry, entry.openPositions),
+    topIndustries: withRepresentativeTitles(
+      importedSnapshot.categories.slice(0, 3).map((entry) =>
+        createIndustrySummaryFromDatabase(entry.industry, entry.openPositions),
+      ),
+      importedSnapshot,
     ),
     source: "jobindsats_y25i07_category_mapping" as const,
   };
@@ -257,7 +300,10 @@ function resolveIndustryOverview(
   liveEstimate?: MunicipalityJobEstimateResponse | null,
 ) {
   if (importedSnapshot && importedSnapshot.categories.length > 0) {
-    return importedSnapshot.categories.map((entry) => createIndustrySummaryFromDatabase(entry.industry, entry.openPositions));
+    return withRepresentativeTitles(
+      importedSnapshot.categories.map((entry) => createIndustrySummaryFromDatabase(entry.industry, entry.openPositions)),
+      importedSnapshot,
+    );
   }
 
   if (liveEstimate && liveEstimate.municipalityEstimate.industryBreakdown.length > 0) {
@@ -824,7 +870,7 @@ async function getDatabaseMunicipalityDetailRow(slug: string) {
             },
             topTitles: {
               orderBy: [{ rank: "asc" }],
-              take: 10,
+              take: 50,
               select: {
                 rank: true,
                 titleKey: true,
