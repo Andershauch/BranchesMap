@@ -809,7 +809,7 @@ async function getDatabaseMunicipalityDetailRow(slug: string) {
           include: {
             categories: {
               orderBy: [{ rank: "asc" }],
-              take: 3,
+              take: 10,
               include: {
                 industry: {
                   select: {
