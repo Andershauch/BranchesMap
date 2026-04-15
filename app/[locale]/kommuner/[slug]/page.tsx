@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
 import {
-  formatEstimatedRolesLabel,
   formatNumber,
   getIndustryLabel,
 } from "@/lib/i18n/format";
@@ -74,7 +73,6 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
     label: getIndustryLabel(dictionary, industry.code, industry.name),
     jobnetUrl: buildJobnetIndustrySearchUrl(municipality.name, industry.name),
   }));
-  const topIndustryOverview = industryOverview.slice(0, 3);
   const additionalIndustryOverview = industryOverview.slice(3, 10);
   const followButtonLabel = searchState.isFollowing
     ? activeLocale === "da"
@@ -199,7 +197,10 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                       {industryLabel}
                     </h2>
                     <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                      {formatEstimatedRolesLabel(activeLocale, dictionary, industry.jobCount)}
+                      <strong className="font-semibold text-[var(--md-sys-color-on-surface)]">
+                        {formatNumber(activeLocale, industry.jobCount)}
+                      </strong>{" "}
+                      {dictionary.labels.estimatedRoles}
                     </p>
                   </div>
                 </div>
@@ -222,6 +223,12 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     rel="noreferrer"
                     className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
                   >
+                    <span
+                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs text-white"
+                      style={{ backgroundColor: industry.accentColor }}
+                    >
+                      {industry.icon}
+                    </span>
                     <span>{industry.label}</span>
                     <span className="text-[var(--md-sys-color-on-surface-variant)]">
                       {formatNumber(activeLocale, industry.jobCount)}

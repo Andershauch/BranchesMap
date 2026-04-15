@@ -42,7 +42,7 @@ const dictionaries = {
     },
     labels: {
       demoJobs: "demojobs",
-      estimatedRoles: "estimerede stillinger i POC-versionen",
+      estimatedRoles: "estimerede stillinger i denne branche",
       sampleJobsInIndustry: "eksempeljobs i denne branche",
     },
     industries: {
@@ -96,7 +96,7 @@ const dictionaries = {
     },
     labels: {
       demoJobs: "demo jobs",
-      estimatedRoles: "estimated roles in the POC",
+      estimatedRoles: "estimated roles in this industry",
       sampleJobsInIndustry: "sample jobs in this industry",
     },
     industries: {
