@@ -6,6 +6,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  user
+  admin
+}
+
 model Municipality {
   id               String                     @id @default(cuid())
   code             String                     @unique
@@ -161,27 +166,14 @@ model User {
   passwordHash  String?
   name          String?
   locale        String         @default("da")
+  role          UserRole       @default(user)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   savedSearches SavedSearch[]
   searchFollows SearchFollow[]
-  sessions      UserSession[]
   auditEvents   AuditEvent[]
 
   @@index([createdAt])
-}
-
-model UserSession {
-  id               String    @id @default(cuid())
-  userId           String
-  sessionTokenHash String    @unique
-  expiresAt        DateTime
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  lastSeenAt       DateTime?
-  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, expiresAt])
 }
 
 model SavedSearch {

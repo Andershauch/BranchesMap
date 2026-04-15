@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { logoutAction } from "@/lib/server/auth-actions";
 
 type MenuUser = {
   email: string;
@@ -238,7 +239,7 @@ export function AppMenu({
 
         <div className="mt-auto border-t border-[var(--md-sys-color-outline-variant)] pt-4">
           {user ? (
-            <form action="/api/auth/logout" method="post">
+            <form action={logoutAction}>
               <input type="hidden" name="locale" value={locale} />
               <button
                 type="submit"

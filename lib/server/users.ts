@@ -7,6 +7,19 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+function getAdminEmailSet() {
+  return new Set(
+    (process.env.ADMIN_USER_EMAILS ?? "")
+      .split(",")
+      .map((value) => normalizeEmail(value))
+      .filter(Boolean),
+  );
+}
+
+function resolveRoleForEmail(email: string) {
+  return getAdminEmailSet().has(email) ? "admin" : "user";
+}
+
 export function validatePassword(password: string) {
   return password.trim().length >= 10;
 }
@@ -39,6 +52,7 @@ export async function registerUser({
       passwordHash: hashPassword(password),
       name: name?.trim() || null,
       locale,
+      role: resolveRoleForEmail(normalizedEmail),
     },
   });
 
@@ -55,6 +69,14 @@ export async function authenticateUser({ email, password }: { email: string; pas
 
   if (!verifyPassword(password, user.passwordHash)) {
     return null;
+  }
+
+  const resolvedRole = resolveRoleForEmail(normalizedEmail);
+  if (user.role !== resolvedRole) {
+    return prisma.user.update({
+      where: { id: user.id },
+      data: { role: resolvedRole },
+    });
   }
 
   return user;

@@ -217,11 +217,6 @@ export const urDictionary: Dictionary = {
     intro:
       "کنٹرول کریں کہ ہوم میپ پر کون سی بلدیات دکھائی جائیں، انہیں کس ترتیب سے ترجیح دی جائے، اور بعد میں انہیں کیسے لیبل کیا جا سکتا ہے۔",
     back: "نقشے پر واپس جائیں",
-    loginTitle: "ایڈمن ان لاک کریں",
-    loginBody: "ہوم میپ کو محفوظ طریقے سے ایڈٹ کرنے کے لیے ADMIN_ACCESS_TOKEN سے ایڈمن ٹوکن درج کریں۔",
-    loginButton: "ایڈمن کھولیں",
-    loginPlaceholder: "ایڈمن ٹوکن",
-    configuredMissing: "ADMIN_ACCESS_TOKEN غائب ہے۔ ایڈمن کنٹرولز استعمال کرنے سے پہلے اسے انوائرمنٹ میں سیٹ کریں۔",
     signedInAs: "ایڈمن لاگ ان ہے",
     signOut: "سائن آؤٹ",
     save: "محفوظ کریں",

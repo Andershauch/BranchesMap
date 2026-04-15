@@ -217,11 +217,6 @@ export const deDictionary: Dictionary = {
     intro:
       "Steuere, welche Gemeinden auf der Startkarte angezeigt werden, in welcher Reihenfolge sie priorisiert werden und wie sie später beschriftet werden können.",
     back: "Zurück zur Karte",
-    loginTitle: "Admin freischalten",
-    loginBody: "Gib den Admin-Token aus der ADMIN_ACCESS_TOKEN Umgebungsvariable ein, um die Startkarte sicher zu bearbeiten.",
-    loginButton: "Admin öffnen",
-    loginPlaceholder: "Admin-Token",
-    configuredMissing: "ADMIN_ACCESS_TOKEN fehlt. Setze diese in der Umgebung, bevor du die Admin-Steuerung nutzt.",
     signedInAs: "Admin ist angemeldet",
     signOut: "Abmelden",
     save: "Speichern",

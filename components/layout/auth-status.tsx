@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { logoutAction } from "@/lib/server/auth-actions";
 import { getCurrentUser } from "@/lib/server/auth";
 
 export async function AuthStatus({ locale }: { locale: AppLocale }) {
@@ -42,7 +43,7 @@ export async function AuthStatus({ locale }: { locale: AppLocale }) {
       >
         {copy.savedSearches}
       </Link>
-      <form action="/api/auth/logout" method="post">
+      <form action={logoutAction}>
         <input type="hidden" name="locale" value={locale} />
         <button
           type="submit"

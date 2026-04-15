@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { registerAction } from "@/lib/server/auth-actions";
 import { getCurrentUser } from "@/lib/server/auth";
 import { isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
@@ -77,7 +78,7 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
             </div>
           ) : null}
 
-          <form action="/api/auth/register" method="post" className="mt-6 grid gap-4">
+          <form action={registerAction} className="mt-6 grid gap-4">
             <input type="hidden" name="locale" value={locale} />
             <input type="hidden" name="redirectTo" value={redirectTo} />
             {followMunicipality ? <input type="hidden" name="followMunicipality" value={followMunicipality} /> : null}

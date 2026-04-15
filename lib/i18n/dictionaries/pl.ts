@@ -217,11 +217,6 @@ export const plDictionary: Dictionary = {
     intro:
       "Zarządzaj tym, które gminy są wyświetlane na mapie głównej, w jakiej kolejności oraz jak mają być etykietowane.",
     back: "Powrót do mapy",
-    loginTitle: "Odblokuj admina",
-    loginBody: "Wprowadź token administratora ze zmiennej środowiskowej ADMIN_ACCESS_TOKEN, aby bezpiecznie edytować mapę.",
-    loginButton: "Otwórz admina",
-    loginPlaceholder: "Token admina",
-    configuredMissing: "Brak ADMIN_ACCESS_TOKEN. Ustaw go w środowisku przed użyciem panelu admina.",
     signedInAs: "Administrator jest zalogowany",
     signOut: "Wyloguj się",
     save: "Zapisz",

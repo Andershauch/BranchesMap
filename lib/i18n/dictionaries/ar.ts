@@ -217,11 +217,6 @@ export const arDictionary: Dictionary = {
     intro:
       "التحكم في البلديات التي تظهر على الخريطة الرئيسية، وبأي ترتيب يتم منحها الأولوية، وكيف يمكن تسميتها لاحقاً.",
     back: "العودة إلى الخريطة",
-    loginTitle: "فتح صلاحيات المسؤول",
-    loginBody: "أدخل رمز المسؤول من متغير البيئة ADMIN_ACCESS_TOKEN لتحرير الخريطة الرئيسية بأمان.",
-    loginButton: "فتح لوحة المسؤول",
-    loginPlaceholder: "رمز المسؤول",
-    configuredMissing: "رمز ADMIN_ACCESS_TOKEN مفقود. قم بإعداده في البيئة قبل استخدام ضوابط المسؤول.",
     signedInAs: "المسؤول مسجل الدخول",
     signOut: "تسجيل الخروج",
     save: "حفظ",

@@ -217,11 +217,6 @@ export const enDictionary: Dictionary = {
     intro:
       "Control which municipalities are shown on the home map, in which order they are prioritized, and how they can later be labelled.",
     back: "Back to the map",
-    loginTitle: "Unlock admin",
-    loginBody: "Enter the admin token from the ADMIN_ACCESS_TOKEN environment variable to edit the home map safely.",
-    loginButton: "Open admin",
-    loginPlaceholder: "Admin token",
-    configuredMissing: "ADMIN_ACCESS_TOKEN is missing. Set it in the environment before using admin controls.",
     signedInAs: "Admin is signed in",
     signOut: "Sign out",
     save: "Save",

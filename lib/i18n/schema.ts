@@ -206,11 +206,6 @@ export type Dictionary = {
     title: string;
     intro: string;
     back: string;
-    loginTitle: string;
-    loginBody: string;
-    loginButton: string;
-    loginPlaceholder: string;
-    configuredMissing: string;
     signedInAs: string;
     signOut: string;
     save: string;

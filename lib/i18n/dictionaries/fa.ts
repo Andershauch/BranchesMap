@@ -217,11 +217,6 @@ export const faDictionary: Dictionary = {
     intro:
       "کنترل کنید کدام شهرداری‌ها روی نقشه اصلی نشان داده شوند، با چه اولویتی و چگونه برچسب‌گذاری شوند.",
     back: "بازگشت به نقشه",
-    loginTitle: "باز کردن دسترسی مدیریت",
-    loginBody: "توکن مدیریت را از متغیر محیطی ADMIN_ACCESS_TOKEN وارد کنید تا نقشه اصلی را با امنیت ویرایش کنید.",
-    loginButton: "باز کردن مدیریت",
-    loginPlaceholder: "توکن مدیریت",
-    configuredMissing: "توکن ADMIN_ACCESS_TOKEN موجود نیست. قبل از استفاده از کنترل‌های مدیریت، آن را در محیط تنظیم کنید.",
     signedInAs: "مدیر وارد شده است",
     signOut: "خروج",
     save: "ذخیره",

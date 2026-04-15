@@ -3,28 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/server/prisma";
-import { requireAdminAuth, signInAsAdmin, signOutAdmin } from "@/lib/server/admin-auth";
+import { requireAdminAuth } from "@/lib/server/admin-auth";
 
 function readLocale(formData: FormData) {
   const value = formData.get("locale");
   return typeof value === "string" && value ? value : "da";
-}
-
-export async function signInAdminAction(formData: FormData) {
-  const locale = readLocale(formData);
-  const candidate = formData.get("token");
-
-  if (typeof candidate !== "string" || !(await signInAsAdmin(candidate.trim()))) {
-    throw new Error("Invalid admin token.");
-  }
-
-  revalidatePath(`/${locale}/admin/home-map`);
-}
-
-export async function signOutAdminAction(formData: FormData) {
-  const locale = readLocale(formData);
-  await signOutAdmin();
-  revalidatePath(`/${locale}/admin/home-map`);
 }
 
 export async function updateMunicipalityHomeMapAction(formData: FormData) {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
-import { getSessionCookieName, getUserFromSessionToken } from "@/lib/server/auth";
+import { getCurrentUser } from "@/lib/server/auth";
 import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
 import {
   deleteSearchFollow,
@@ -29,8 +29,7 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const locale = getLocale(formData.get("locale"));
   const returnTo = safeRedirectPath(locale, formData.get("returnTo"), `/${locale}/follows`);
-  const sessionToken = request.cookies.get(getSessionCookieName())?.value;
-  const user = await getUserFromSessionToken(sessionToken);
+  const user = await getCurrentUser();
   const intent = formData.get("intent");
 
   if (!user) {

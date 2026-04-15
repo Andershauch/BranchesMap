@@ -944,6 +944,64 @@ Det betyder konkret:
 4. Ryd auth-UI og flows op
    Gør login, register og account-status mere sammenhængende på tværs af locale, mobil og desktop.
 
+### Sprintoplæg - Rigtig Auth
+
+**Mål:** Gøre auth til et rigtigt platformslag i stedet for et POC-flow.
+
+#### Leverancer
+
+- valgt og implementeret auth-platform
+- robuste sessions og server-side authorization checks
+- beskyttede private routes og admin-routes
+- opryddede login/register/account-flows
+
+#### Konkrete opgaver
+
+1. vælg endelig auth-løsning, anbefalet `Auth.js`
+2. flyt sessionhåndtering over på gennemprøvet model
+3. gennemgå cookies, expiry, secure-flags og logout-flow
+4. beskyt `follows`, `saved searches` og admin konsekvent server-side
+5. ryd redirect-logik op for locale-aware login/register
+6. verificér auth-flow på mobil, desktop og direkte deep links
+
+#### Exit-kriterium
+
+Private sider, admin-adgang og brugerhandlinger hviler på et rigtigt auth-lag og ikke på midlertidig POC-logik.
+
+### Sprintoplæg - App Hardening / Production Readiness
+
+**Mål:** Hærde hele appen, så den er mere produktionsklar, mere robust og mindre sårbar.
+
+#### Leverancer
+
+- gennemgang af sikkerhedsheaders og sessionsikkerhed
+- strammere inputvalidering og authorization review
+- enklere driftsoverblik og mindre informationslæk i fejl
+- første samlet hardening-checkliste for appen
+
+#### Konkrete opgaver
+
+1. indfør eller stram sikkerhedsheaders
+   - CSP
+   - Referrer-Policy
+   - Permissions-Policy
+   - frame/embedding-regler
+2. gennemgå cookies og sessionpolitik
+   - `httpOnly`
+   - `secure`
+   - `sameSite`
+   - fornuftig session-expiry
+3. gennemgå authorization på alle private reads/writes
+4. gennemgå inputvalidering på mutations-endpoints og vigtige query-parametre
+5. tilføj rate limiting eller tilsvarende abuse-beskyttelse på auth- og driftsendpoints
+6. gennemgå fejlbeskeder og logging, så intern struktur ikke lækkes til klienten
+7. gennemgå env-vars, secrets og integrationstilladelser
+8. lav en samlet produktions-QA for auth, locale, PWA og private flows
+
+#### Exit-kriterium
+
+Appen har et første reelt hardening-pass, så den kan vurderes som væsentligt tættere på produktionsdrift end en ren POC.
+
 ## Fase 4A - Følg kommune og in-app notifikationer
 
 **Mål:** Gør "Følg kommune" til et reelt overvågningsflow, hvor brugeren kan se, når en fulgt kommune har ændret sig siden sidst.
