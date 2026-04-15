@@ -10,7 +10,8 @@ import {
   resolveRequestedTimeSelection,
   type JobsRouteRequest,
 } from "@/lib/server/statbank-jobs";
-import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
+import { buildRateLimitKey, consumeDistributedRateLimit } from "@/lib/server/rate-limit";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 import { jsonSecurityResponse } from "@/lib/server/security";
 
 export const runtime = "nodejs";
@@ -48,12 +49,24 @@ function buildErrorResponse(error: unknown) {
 
 export async function GET(request: NextRequest) {
   try {
-    const rateLimit = consumeRateLimit(buildRateLimitKey("jobs-get", request.headers), {
-      limit: 60,
-      windowMs: 60 * 1000,
-    });
+    const rateLimit = await consumeDistributedRateLimit(
+      buildRateLimitKey("jobs-get", request.headers),
+      {
+        limit: 60,
+        windowMs: 60 * 1000,
+      },
+    );
 
     if (!rateLimit.allowed) {
+      await recordSecurityEvent({
+        action: "rate_limited",
+        entityType: "JobsApi",
+        metadata: {
+          route: "/api/jobs",
+          method: "GET",
+        },
+      });
+
       return jsonSecurityResponse(
         {
           ok: false,
@@ -76,12 +89,24 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const rateLimit = consumeRateLimit(buildRateLimitKey("jobs-post", request.headers), {
-      limit: 30,
-      windowMs: 60 * 1000,
-    });
+    const rateLimit = await consumeDistributedRateLimit(
+      buildRateLimitKey("jobs-post", request.headers),
+      {
+        limit: 30,
+        windowMs: 60 * 1000,
+      },
+    );
 
     if (!rateLimit.allowed) {
+      await recordSecurityEvent({
+        action: "rate_limited",
+        entityType: "JobsApi",
+        metadata: {
+          route: "/api/jobs",
+          method: "POST",
+        },
+      });
+
       return jsonSecurityResponse(
         {
           ok: false,

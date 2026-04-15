@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 
 import { isAdminAuthenticated } from "@/lib/server/admin-auth";
-import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
+import { buildRateLimitKey, consumeDistributedRateLimit } from "@/lib/server/rate-limit";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 import { checkActiveSearchFollows, checkSearchFollow } from "@/lib/server/search-follows";
 import { jsonSecurityResponse } from "@/lib/server/security";
 
@@ -54,12 +55,23 @@ function getLimit(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const rateLimit = consumeRateLimit(buildRateLimitKey("follows-check", request.headers), {
-    limit: 20,
-    windowMs: 60 * 1000,
-  });
+  const rateLimit = await consumeDistributedRateLimit(
+    buildRateLimitKey("follows-check", request.headers),
+    {
+      limit: 20,
+      windowMs: 60 * 1000,
+    },
+  );
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent({
+      action: "rate_limited",
+      entityType: "SearchFollow",
+      metadata: {
+        route: "/api/follows/check",
+      },
+    });
+
     return jsonSecurityResponse(
       {
         ok: false,
@@ -75,6 +87,14 @@ export async function POST(request: NextRequest) {
   }
 
   if (!(await isAuthorized(request))) {
+    await recordSecurityEvent({
+      action: "unauthorized_request",
+      entityType: "SearchFollow",
+      metadata: {
+        route: "/api/follows/check",
+      },
+    });
+
     return jsonSecurityResponse(
       {
         ok: false,

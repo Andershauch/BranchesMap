@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
-import { buildRateLimitKey, consumeRateLimitGroup } from "@/lib/server/rate-limit";
+import {
+  buildRateLimitKey,
+  consumeDistributedRateLimitGroup,
+} from "@/lib/server/rate-limit";
 import { followMunicipalitySearch } from "@/lib/server/search-follows";
 import {
   parseLocaleValue,
@@ -13,6 +16,7 @@ import {
   parseOptionalString,
   parseSafeRedirectPath,
 } from "@/lib/server/input-validation";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 import { authenticateUser, registerUser } from "@/lib/server/users";
 
 function withParams(pathname: string, params: Record<string, string | null | undefined>) {
@@ -31,7 +35,7 @@ function withParams(pathname: string, params: Record<string, string | null | und
 function consumeAuthAttemptLimit(namespace: string, email: string) {
   // Server actions do not expose the raw request, so this pass combines a global gate with
   // an identity gate. A later move to route handlers can add per-IP enforcement as well.
-  return consumeRateLimitGroup([
+  return consumeDistributedRateLimitGroup([
     {
       key: buildRateLimitKey(`${namespace}-global`, new Headers(), "global"),
       limit: namespace === "auth-login" ? 40 : 25,
@@ -46,7 +50,7 @@ function consumeAuthAttemptLimit(namespace: string, email: string) {
 }
 
 function consumeAuthFailureLimit(namespace: string, email: string) {
-  return consumeRateLimitGroup([
+  return consumeDistributedRateLimitGroup([
     {
       key: buildRateLimitKey(`${namespace}-fail-global`, new Headers(), "global"),
       limit: namespace === "auth-login-failure" ? 25 : 20,
@@ -66,9 +70,18 @@ export async function loginAction(formData: FormData) {
   const email = parseNormalizedEmail(formData.get("email"));
   const password = parseOptionalString(formData.get("password"));
   const followMunicipality = parseOptionalString(formData.get("followMunicipality"));
-  const throttle = consumeAuthAttemptLimit("auth-login", email);
+  const throttle = await consumeAuthAttemptLimit("auth-login", email);
 
   if (!throttle.allowed) {
+    await recordSecurityEvent({
+      action: "auth_throttled",
+      entityType: "User",
+      metadata: {
+        flow: "login",
+        email,
+      },
+    });
+
     redirect(
       withParams(`/${locale}/login`, {
         error: "invalid_credentials",
@@ -79,7 +92,16 @@ export async function loginAction(formData: FormData) {
   }
 
   if (!email || !password) {
-    consumeAuthFailureLimit("auth-login-failure", email);
+    await consumeAuthFailureLimit("auth-login-failure", email);
+    await recordSecurityEvent({
+      action: "auth_failure",
+      entityType: "User",
+      metadata: {
+        flow: "login",
+        reason: "missing_fields",
+        email,
+      },
+    });
     redirect(
       withParams(`/${locale}/login`, {
         error: "missing_fields",
@@ -91,7 +113,16 @@ export async function loginAction(formData: FormData) {
 
   const user = await authenticateUser({ email, password });
   if (!user) {
-    consumeAuthFailureLimit("auth-login-failure", email);
+    await consumeAuthFailureLimit("auth-login-failure", email);
+    await recordSecurityEvent({
+      action: "auth_failure",
+      entityType: "User",
+      metadata: {
+        flow: "login",
+        reason: "invalid_credentials",
+        email,
+      },
+    });
     redirect(
       withParams(`/${locale}/login`, {
         error: "invalid_credentials",
@@ -148,10 +179,18 @@ export async function registerAction(formData: FormData) {
   const password = parseOptionalString(formData.get("password"));
   const name = parseOptionalString(formData.get("name"));
   const followMunicipality = parseOptionalString(formData.get("followMunicipality"));
-  const throttle = consumeAuthAttemptLimit("auth-register", email);
+  const throttle = await consumeAuthAttemptLimit("auth-register", email);
 
   if (!throttle.allowed) {
-    consumeAuthFailureLimit("auth-register-failure", email);
+    await consumeAuthFailureLimit("auth-register-failure", email);
+    await recordSecurityEvent({
+      action: "auth_throttled",
+      entityType: "User",
+      metadata: {
+        flow: "register",
+        email,
+      },
+    });
     redirect(
       withParams(`/${locale}/register`, {
         error: "unknown",
@@ -162,7 +201,16 @@ export async function registerAction(formData: FormData) {
   }
 
   if (!email || !password) {
-    consumeAuthFailureLimit("auth-register-failure", email);
+    await consumeAuthFailureLimit("auth-register-failure", email);
+    await recordSecurityEvent({
+      action: "auth_failure",
+      entityType: "User",
+      metadata: {
+        flow: "register",
+        reason: "missing_fields",
+        email,
+      },
+    });
     redirect(
       withParams(`/${locale}/register`, {
         error: "missing_fields",
@@ -180,7 +228,16 @@ export async function registerAction(formData: FormData) {
   });
 
   if (!result.ok) {
-    consumeAuthFailureLimit("auth-register-failure", email);
+    await consumeAuthFailureLimit("auth-register-failure", email);
+    await recordSecurityEvent({
+      action: "auth_failure",
+      entityType: "User",
+      metadata: {
+        flow: "register",
+        reason: result.reason,
+        email,
+      },
+    });
     redirect(
       withParams(`/${locale}/register`, {
         error: result.reason,

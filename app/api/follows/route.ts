@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/input-validation";
 import { isTrustedMutationRequest } from "@/lib/server/origin-guard";
 import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 import { jsonSecurityResponse } from "@/lib/server/security";
 import {
   deleteSearchFollow,
@@ -23,6 +24,14 @@ function redirect303(url: URL) {
 
 export async function POST(request: NextRequest) {
   if (!isTrustedMutationRequest(request)) {
+    await recordSecurityEvent({
+      action: "origin_rejected",
+      entityType: "SearchFollow",
+      metadata: {
+        route: "/api/follows",
+      },
+    });
+
     return jsonSecurityResponse(
       {
         ok: false,

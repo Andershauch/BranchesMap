@@ -1,5 +1,9 @@
 import "server-only";
 
+import { Prisma } from "@prisma/client";
+
+import { prisma } from "@/lib/server/prisma";
+
 type RateLimitWindow = {
   count: number;
   resetAt: number;
@@ -77,6 +81,85 @@ export function consumeRateLimitGroup(
 
   for (const entry of limits) {
     const result = consumeRateLimit(entry.key, {
+      limit: entry.limit,
+      windowMs: entry.windowMs,
+    });
+
+    minimumRemaining = Math.min(minimumRemaining, result.remaining);
+    maximumRetryAfterSeconds = Math.max(maximumRetryAfterSeconds, result.retryAfterSeconds);
+
+    if (!result.allowed) {
+      return {
+        allowed: false,
+        remaining: 0,
+        retryAfterSeconds: result.retryAfterSeconds,
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    remaining: Number.isFinite(minimumRemaining) ? minimumRemaining : 0,
+    retryAfterSeconds: maximumRetryAfterSeconds,
+  };
+}
+
+export async function consumeDistributedRateLimit(
+  key: string,
+  { limit, windowMs }: { limit: number; windowMs: number },
+) {
+  const resetAt = new Date(Date.now() + windowMs);
+
+  const rows = await prisma.$queryRaw<Array<{ count: number; resetAt: Date }>>(Prisma.sql`
+    INSERT INTO "RateLimitBucket" ("key", "count", "resetAt", "createdAt", "updatedAt")
+    VALUES (${key}, 1, ${resetAt}, NOW(), NOW())
+    ON CONFLICT ("key")
+    DO UPDATE SET
+      "count" = CASE
+        WHEN "RateLimitBucket"."resetAt" <= NOW() THEN 1
+        ELSE "RateLimitBucket"."count" + 1
+      END,
+      "resetAt" = CASE
+        WHEN "RateLimitBucket"."resetAt" <= NOW() THEN ${resetAt}
+        ELSE "RateLimitBucket"."resetAt"
+      END,
+      "updatedAt" = NOW()
+    RETURNING "count", "resetAt"
+  `);
+
+  const row = rows[0];
+  const retryAfterSeconds = Math.max(
+    1,
+    Math.ceil((new Date(row.resetAt).getTime() - Date.now()) / 1000),
+  );
+
+  if (row.count > limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds,
+    };
+  }
+
+  return {
+    allowed: true,
+    remaining: Math.max(0, limit - row.count),
+    retryAfterSeconds,
+  };
+}
+
+export async function consumeDistributedRateLimitGroup(
+  limits: Array<{
+    key: string;
+    limit: number;
+    windowMs: number;
+  }>,
+) {
+  let minimumRemaining = Number.POSITIVE_INFINITY;
+  let maximumRetryAfterSeconds = 0;
+
+  for (const entry of limits) {
+    const result = await consumeDistributedRateLimit(entry.key, {
       limit: entry.limit,
       windowMs: entry.windowMs,
     });

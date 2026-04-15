@@ -8,7 +8,8 @@ import {
   getJobindsatsTables,
   isJobindsatsConfigured,
 } from "@/lib/server/jobindsats";
-import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
+import { buildRateLimitKey, consumeDistributedRateLimit } from "@/lib/server/rate-limit";
+import { recordSecurityEvent } from "@/lib/server/security-events";
 import { jsonSecurityResponse } from "@/lib/server/security";
 
 export const runtime = "nodejs";
@@ -57,12 +58,23 @@ function getMode(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const rateLimit = consumeRateLimit(buildRateLimitKey("jobindsats-discovery", request.headers), {
-    limit: 30,
-    windowMs: 60 * 1000,
-  });
+  const rateLimit = await consumeDistributedRateLimit(
+    buildRateLimitKey("jobindsats-discovery", request.headers),
+    {
+      limit: 30,
+      windowMs: 60 * 1000,
+    },
+  );
 
   if (!rateLimit.allowed) {
+    await recordSecurityEvent({
+      action: "rate_limited",
+      entityType: "JobindsatsDiscovery",
+      metadata: {
+        route: "/api/jobindsats/discovery",
+      },
+    });
+
     return jsonSecurityResponse(
       {
         ok: false,
@@ -78,6 +90,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (!(await isAuthorized(request))) {
+    await recordSecurityEvent({
+      action: "unauthorized_request",
+      entityType: "JobindsatsDiscovery",
+      metadata: {
+        route: "/api/jobindsats/discovery",
+      },
+    });
+
     return jsonSecurityResponse(
       {
         ok: false,
