@@ -119,49 +119,6 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-5xl">
                 {municipality.name}
               </h1>
-              <div className="mt-4 space-y-4 text-base leading-7 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-                <div>
-                  <p>{buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}</p>
-                  <div className="mt-3 flex flex-col gap-2">
-                    {topIndustryOverview.map((industry) => (
-                      <a
-                        key={`${municipality.slug}-top-${industry.slug}`}
-                        href={industry.jobnetUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
-                      >
-                        <span>{industry.label}</span>
-                        <span className="text-[var(--md-sys-color-on-surface-variant)]">
-                          {formatNumber(activeLocale, industry.jobCount)}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
-                </div>
-
-                {additionalIndustryOverview.length > 0 ? (
-                  <div>
-                    <p>{buildMunicipalityAdditionalIndustriesHeading(activeLocale, municipality.name)}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {additionalIndustryOverview.map((industry) => (
-                        <a
-                          key={`${municipality.slug}-more-${industry.slug}`}
-                          href={industry.jobnetUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
-                        >
-                          <span>{industry.label}</span>
-                          <span className="text-[var(--md-sys-color-on-surface-variant)]">
-                            {formatNumber(activeLocale, industry.jobCount)}
-                          </span>
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
 
               {followStatusMessage ? (
                 <div
@@ -213,7 +170,11 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
           </div>
         </section>
 
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <section className="rounded-[1.75rem] bg-[var(--md-sys-color-surface-container)] px-5 py-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] sm:px-6">
+          <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)] sm:text-xl">
+            {buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}
+          </h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {municipality.topIndustries.map((industry) => {
             const industryLabel = getIndustryLabel(dictionary, industry.code, industry.name);
             const jobnetUrl = buildJobnetIndustrySearchUrl(municipality.name, industry.name);
@@ -245,6 +206,31 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
               </a>
             );
           })}
+          </div>
+
+          {additionalIndustryOverview.length > 0 ? (
+            <div className="mt-6">
+              <h3 className="text-base font-semibold text-[var(--md-sys-color-on-surface)] sm:text-lg">
+                {buildMunicipalityAdditionalIndustriesHeading(activeLocale, municipality.name)}
+              </h3>
+              <div className="mt-4 flex flex-wrap gap-2.5">
+                {additionalIndustryOverview.map((industry) => (
+                  <a
+                    key={`${municipality.slug}-more-${industry.slug}`}
+                    href={industry.jobnetUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
+                  >
+                    <span>{industry.label}</span>
+                    <span className="text-[var(--md-sys-color-on-surface-variant)]">
+                      {formatNumber(activeLocale, industry.jobCount)}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </section>
       </div>
     </main>
