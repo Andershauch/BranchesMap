@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import {
   BRANCH_TABLE,
@@ -10,6 +10,8 @@ import {
   resolveRequestedTimeSelection,
   type JobsRouteRequest,
 } from "@/lib/server/statbank-jobs";
+import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
+import { jsonSecurityResponse } from "@/lib/server/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +36,7 @@ function buildErrorResponse(error: unknown) {
   const details = error instanceof Error ? error.message : "Ukendt fejl.";
   const status = details.startsWith("Unknown municipality code") || details.startsWith("Could not map municipality") ? 400 : 503;
 
-  return NextResponse.json(
+  return jsonSecurityResponse(
     {
       ok: false,
       error: "Danmarks Statistik API er midlertidigt utilgaengelig eller returnerede uventede data.",
@@ -46,7 +48,27 @@ function buildErrorResponse(error: unknown) {
 
 export async function GET(request: NextRequest) {
   try {
-    return NextResponse.json(await getMunicipalityLiveJobEstimate(readJobsRequestFromSearchParams(request)));
+    const rateLimit = consumeRateLimit(buildRateLimitKey("jobs-get", request.headers), {
+      limit: 60,
+      windowMs: 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonSecurityResponse(
+        {
+          ok: false,
+          error: "Too many jobs requests.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
+    return jsonSecurityResponse(await getMunicipalityLiveJobEstimate(readJobsRequestFromSearchParams(request)));
   } catch (error) {
     return buildErrorResponse(error);
   }
@@ -54,8 +76,28 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = consumeRateLimit(buildRateLimitKey("jobs-post", request.headers), {
+      limit: 30,
+      windowMs: 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonSecurityResponse(
+        {
+          ok: false,
+          error: "Too many jobs requests.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const body = (await request.json().catch(() => null)) as Parameters<typeof readJobsRequestFromBody>[0];
-    return NextResponse.json(await getMunicipalityLiveJobEstimate(readJobsRequestFromBody(body)));
+    return jsonSecurityResponse(await getMunicipalityLiveJobEstimate(readJobsRequestFromBody(body)));
   } catch (error) {
     return buildErrorResponse(error);
   }

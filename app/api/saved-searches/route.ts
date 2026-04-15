@@ -9,6 +9,14 @@ function getLocale(value: FormDataEntryValue | null) {
   return typeof value === "string" && value ? value : "da";
 }
 
+function isSimpleSlug(value: string) {
+  return /^[a-z0-9-]{2,64}$/.test(value);
+}
+
+function isRecordId(value: string) {
+  return /^[a-z0-9]{12,32}$/i.test(value);
+}
+
 function safeRedirectPath(locale: string, requestedPath: FormDataEntryValue | null, fallback: string) {
   if (typeof requestedPath === "string" && requestedPath.startsWith(`/${locale}/`) && !requestedPath.startsWith("//")) {
     return requestedPath;
@@ -40,6 +48,11 @@ export async function POST(request: NextRequest) {
     const redirectUrl = buildAppRedirectUrl(request, returnTo);
 
     if (typeof municipalitySlug === "string" && municipalitySlug) {
+      if (!isSimpleSlug(municipalitySlug)) {
+        redirectUrl.searchParams.set("saved", "error");
+        return redirect303(redirectUrl);
+      }
+
       const result = await saveMunicipalitySearch({
         userId: user.id,
         municipalitySlug,
@@ -70,6 +83,10 @@ export async function POST(request: NextRequest) {
     const redirectUrl = buildAppRedirectUrl(request, returnTo);
 
     if (typeof savedSearchId === "string" && savedSearchId) {
+      if (!isRecordId(savedSearchId)) {
+        return redirect303(redirectUrl);
+      }
+
       const deleted = await deleteSavedSearch({ userId: user.id, savedSearchId });
 
       if (deleted) {

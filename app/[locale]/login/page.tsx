@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 
 import { loginAction } from "@/lib/server/auth-actions";
@@ -26,6 +27,8 @@ function normalizeRedirect(locale: string, candidate: string | null, fallback: s
 }
 
 export default async function LoginPage({ params, searchParams }: LoginPageProps) {
+  noStore();
+
   const { locale } = await params;
 
   if (!isValidLocale(locale)) {

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
+import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
 import { followMunicipalitySearch } from "@/lib/server/search-follows";
 import { authenticateUser, registerUser } from "@/lib/server/users";
 
@@ -37,12 +38,36 @@ function withParams(pathname: string, params: Record<string, string | null | und
   return query ? `${pathname}?${query}` : pathname;
 }
 
+function normalizeEmail(email: string | null) {
+  return email?.trim().toLowerCase() ?? "";
+}
+
+function consumeAuthAttemptLimit(namespace: string, email: string) {
+  // Server actions do not expose the raw request, so this first pass keys on normalized email.
+  // The next hardening step can move auth flows to route handlers if we want per-IP + per-email limits.
+  return consumeRateLimit(buildRateLimitKey(namespace, new Headers(), email || "unknown"), {
+    limit: namespace === "auth-login" ? 8 : 6,
+    windowMs: 15 * 60 * 1000,
+  });
+}
+
 export async function loginAction(formData: FormData) {
   const locale = getLocale(formData.get("locale"));
   const redirectTo = safeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
-  const email = getString(formData.get("email"));
+  const email = normalizeEmail(getString(formData.get("email")));
   const password = getString(formData.get("password"));
   const followMunicipality = getString(formData.get("followMunicipality"));
+  const throttle = consumeAuthAttemptLimit("auth-login", email);
+
+  if (!throttle.allowed) {
+    redirect(
+      withParams(`/${locale}/login`, {
+        error: "invalid_credentials",
+        redirectTo,
+        followMunicipality,
+      }),
+    );
+  }
 
   if (!email || !password) {
     redirect(
@@ -108,10 +133,21 @@ export async function loginAction(formData: FormData) {
 export async function registerAction(formData: FormData) {
   const locale = getLocale(formData.get("locale"));
   const redirectTo = safeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
-  const email = getString(formData.get("email"));
+  const email = normalizeEmail(getString(formData.get("email")));
   const password = getString(formData.get("password"));
   const name = getString(formData.get("name"));
   const followMunicipality = getString(formData.get("followMunicipality"));
+  const throttle = consumeAuthAttemptLimit("auth-register", email);
+
+  if (!throttle.allowed) {
+    redirect(
+      withParams(`/${locale}/register`, {
+        error: "unknown",
+        redirectTo,
+        followMunicipality,
+      }),
+    );
+  }
 
   if (!email || !password) {
     redirect(

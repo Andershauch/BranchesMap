@@ -7,7 +7,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: {
     strategy: "jwt",
+    maxAge: 60 * 60 * 24 * 14,
+    updateAge: 60 * 60 * 24,
   },
+  useSecureCookies: process.env.NODE_ENV === "production",
   providers: [
     Credentials({
       name: "Credentials",
@@ -61,6 +64,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.role = token.role === "admin" ? "admin" : "user";
 
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      try {
+        const target = new URL(url);
+        const origin = new URL(baseUrl);
+
+        if (target.origin === origin.origin) {
+          return target.toString();
+        }
+      } catch {
+        return baseUrl;
+      }
+
+      return baseUrl;
     },
   },
 });

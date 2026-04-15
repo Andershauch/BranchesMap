@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 import { defaultLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { applySecurityHeaders } from "@/lib/server/security";
 
 function getPreferredLocale(request: NextRequest): AppLocale {
   const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
@@ -39,23 +40,24 @@ function cookieOptions(request: NextRequest) {
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isApiRequest = pathname === "/api" || pathname.startsWith("/api/");
   const pathnameHasLocale = locales.some(
     (locale) => pathname === `/${locale}` || pathname.startsWith(`/${locale}/`),
   );
 
-  if (!pathnameHasLocale) {
+  if (!isApiRequest && !pathnameHasLocale) {
     const locale = getPreferredLocale(request);
     const nextUrl = request.nextUrl.clone();
     nextUrl.pathname = `/${locale}${pathname}`;
 
-    const response = NextResponse.redirect(nextUrl);
+    const response = applySecurityHeaders(NextResponse.redirect(nextUrl));
     response.cookies.set("NEXT_LOCALE", locale, cookieOptions(request));
 
     return response;
   }
 
   const localeInPath = pathname.split("/")[1];
-  const response = NextResponse.next();
+  const response = applySecurityHeaders(NextResponse.next());
 
   if (localeInPath && isValidLocale(localeInPath)) {
     response.cookies.set("NEXT_LOCALE", localeInPath, cookieOptions(request));
@@ -65,5 +67,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

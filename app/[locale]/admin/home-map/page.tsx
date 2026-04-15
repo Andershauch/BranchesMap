@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -35,6 +36,8 @@ function regionText(region: MunicipalityHomeMapRegionTag) {
 }
 
 export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps) {
+  noStore();
+
   const { locale } = await params;
 
   if (!isValidLocale(locale)) {

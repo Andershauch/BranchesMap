@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { isAdminAuthenticated } from "@/lib/server/admin-auth";
+import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
 import { checkActiveSearchFollows, checkSearchFollow } from "@/lib/server/search-follows";
+import { jsonSecurityResponse } from "@/lib/server/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,8 +54,28 @@ function getLimit(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const rateLimit = consumeRateLimit(buildRateLimitKey("follows-check", request.headers), {
+    limit: 20,
+    windowMs: 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return jsonSecurityResponse(
+      {
+        ok: false,
+        error: "Too many follow-check requests.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   if (!(await isAuthorized(request))) {
-    return NextResponse.json(
+    return jsonSecurityResponse(
       {
         ok: false,
         error: "Not authorized to run follow checks.",
@@ -68,7 +90,7 @@ export async function POST(request: NextRequest) {
   if (followId) {
     const result = await checkSearchFollow({ followId });
 
-    return NextResponse.json({
+    return jsonSecurityResponse({
       ok: result.ok,
       mode: "single",
       result,
@@ -77,7 +99,7 @@ export async function POST(request: NextRequest) {
 
   const result = await checkActiveSearchFollows({ limit: getLimit(request) });
 
-  return NextResponse.json({
+  return jsonSecurityResponse({
     ok: true,
     mode: "batch",
     ...result,

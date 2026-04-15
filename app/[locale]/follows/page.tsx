@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { intlLocaleMap, isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
@@ -31,6 +32,8 @@ function getStringParam(value: string | string[] | undefined) {
 }
 
 export default async function FollowsPage({ params, searchParams }: FollowsPageProps) {
+  noStore();
+
   const { locale } = await params;
 
   if (!isValidLocale(locale)) {

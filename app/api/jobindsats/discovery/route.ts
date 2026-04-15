@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 import { isAdminAuthenticated } from "@/lib/server/admin-auth";
 import {
@@ -8,6 +8,8 @@ import {
   getJobindsatsTables,
   isJobindsatsConfigured,
 } from "@/lib/server/jobindsats";
+import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
+import { jsonSecurityResponse } from "@/lib/server/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,8 +57,28 @@ function getMode(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const rateLimit = consumeRateLimit(buildRateLimitKey("jobindsats-discovery", request.headers), {
+    limit: 30,
+    windowMs: 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return jsonSecurityResponse(
+      {
+        ok: false,
+        error: "Too many Jobindsats discovery requests.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   if (!(await isAuthorized(request))) {
-    return NextResponse.json(
+    return jsonSecurityResponse(
       {
         ok: false,
         error: "Not authorized to access Jobindsats discovery.",
@@ -66,7 +88,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isJobindsatsConfigured()) {
-    return NextResponse.json(
+    return jsonSecurityResponse(
       {
         ok: false,
         error: "JOBINDSATS_API_TOKEN is not configured.",
@@ -79,7 +101,7 @@ export async function GET(request: NextRequest) {
     const mode = getMode(request);
 
     if (mode === "subjects") {
-      return NextResponse.json({
+      return jsonSecurityResponse({
         ok: true,
         mode,
         items: await getJobindsatsSubjects(),
@@ -87,7 +109,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (mode === "tables") {
-      return NextResponse.json({
+      return jsonSecurityResponse({
         ok: true,
         mode,
         items: await getJobindsatsTables(getSubjectIds(request)),
@@ -98,7 +120,7 @@ export async function GET(request: NextRequest) {
       const tableId = request.nextUrl.searchParams.get("tableId")?.trim();
 
       if (!tableId) {
-        return NextResponse.json(
+        return jsonSecurityResponse(
           {
             ok: false,
             error: "tableId is required when mode=table.",
@@ -107,7 +129,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      return NextResponse.json({
+      return jsonSecurityResponse({
         ok: true,
         mode,
         item: await getJobindsatsTable(tableId),
@@ -118,13 +140,13 @@ export async function GET(request: NextRequest) {
     const parsedLimit = rawLimit ? Number.parseInt(rawLimit, 10) : 25;
     const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 25;
 
-    return NextResponse.json({
+    return jsonSecurityResponse({
       ok: true,
       mode,
       items: await findRelevantJobindsatsTables({ limit }),
     });
   } catch (error) {
-    return NextResponse.json(
+    return jsonSecurityResponse(
       {
         ok: false,
         error: error instanceof Error ? error.message : "Unknown Jobindsats discovery error.",
