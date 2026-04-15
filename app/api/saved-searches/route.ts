@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
+import { isTrustedMutationRequest } from "@/lib/server/origin-guard";
 import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
 import { deleteSavedSearch, saveMunicipalitySearch } from "@/lib/server/saved-searches";
 
@@ -30,6 +31,16 @@ function redirect303(url: URL) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isTrustedMutationRequest(request)) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Untrusted request origin.",
+      },
+      { status: 403 },
+    );
+  }
+
   const formData = await request.formData();
   const locale = getLocale(formData.get("locale"));
   const returnTo = safeRedirectPath(locale, formData.get("returnTo"), `/${locale}/saved-searches`);
