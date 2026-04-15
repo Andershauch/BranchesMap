@@ -215,7 +215,13 @@ export function MunicipalitySheet({
                     }`}
                     style={{ backgroundColor: industry.accentColor }}
                   >
-                    <span className={isExpanded ? "text-[10px]" : "text-[9px]"}>{industry.icon}</span>
+                    <span
+                      className={`inline-flex shrink-0 aspect-square items-center justify-center overflow-hidden rounded-full leading-none ${
+                        isExpanded ? "h-4 w-4 text-[10px]" : "h-3.5 w-3.5 text-[9px]"
+                      }`}
+                    >
+                      {industry.icon}
+                    </span>
                     <span className={isExpanded ? "max-w-[4.6rem] truncate" : "max-w-[4.2rem] truncate"}>
                       <span dir="auto">{industry.name}</span>
                     </span>

@@ -176,7 +176,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                 >
                   <div className="flex items-start gap-3">
                     <span
-                      className="inline-flex h-12 w-12 items-center justify-center rounded-full text-xl text-white"
+                      className="inline-flex h-12 w-12 shrink-0 aspect-square items-center justify-center overflow-hidden rounded-full text-xl leading-none text-white"
                       style={{ backgroundColor: industry.accentColor }}
                     >
                       {industry.icon}
@@ -240,7 +240,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
                   >
                     <span
-                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs text-white"
+                      className="inline-flex h-6 w-6 shrink-0 aspect-square items-center justify-center overflow-hidden rounded-full text-xs leading-none text-white"
                       style={{ backgroundColor: industry.accentColor }}
                     >
                       {industry.icon}
