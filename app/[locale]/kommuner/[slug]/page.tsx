@@ -3,14 +3,20 @@ import { notFound } from "next/navigation";
 
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
 import {
-  buildMunicipalityTeaser,
   formatEstimatedRolesLabel,
+  formatNumber,
   formatSampleJobsLabel,
   getIndustryLabel,
   getLocalizedText,
 } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import {
+  buildJobnetIndustrySearchUrl,
+  buildMunicipalityAdditionalIndustriesHeading,
+  buildMunicipalityPocStatus,
+  buildMunicipalityTopIndustriesHeading,
+} from "@/lib/municipality-presentation";
 import { getCurrentUser } from "@/lib/server/auth";
 import { getMunicipalitySearchStateForUser, markMunicipalityFollowUpdatesSeen } from "@/lib/server/search-follows";
 
@@ -65,9 +71,13 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   }
 
   const activeLocale = locale as AppLocale;
-  const topIndustryNames = municipality.topIndustries.map((industry) =>
-    getIndustryLabel(dictionary, industry.code, industry.name),
-  );
+  const industryOverview = municipality.industryOverview.map((industry) => ({
+    ...industry,
+    label: getIndustryLabel(dictionary, industry.code, industry.name),
+    jobnetUrl: buildJobnetIndustrySearchUrl(municipality.name, industry.name),
+  }));
+  const topIndustryOverview = industryOverview.slice(0, 3);
+  const additionalIndustryOverview = industryOverview.slice(3, 10);
   const followButtonLabel = searchState.isFollowing
     ? activeLocale === "da"
       ? "F\u00f8lger"
@@ -111,9 +121,49 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
               <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-5xl">
                 {municipality.name}
               </h1>
-              <p className="mt-4 text-base leading-7 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
-                {buildMunicipalityTeaser(activeLocale, dictionary, municipality.name, topIndustryNames)}
-              </p>
+              <div className="mt-4 space-y-4 text-base leading-7 text-[var(--md-sys-color-on-surface-variant)] sm:text-lg">
+                <div>
+                  <p>{buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}</p>
+                  <div className="mt-3 flex flex-col gap-2">
+                    {topIndustryOverview.map((industry) => (
+                      <a
+                        key={`${municipality.slug}-top-${industry.slug}`}
+                        href={industry.jobnetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
+                      >
+                        <span>{industry.label}</span>
+                        <span className="text-[var(--md-sys-color-on-surface-variant)]">
+                          {formatNumber(activeLocale, industry.jobCount)}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                {additionalIndustryOverview.length > 0 ? (
+                  <div>
+                    <p>{buildMunicipalityAdditionalIndustriesHeading(activeLocale, municipality.name)}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {additionalIndustryOverview.map((industry) => (
+                        <a
+                          key={`${municipality.slug}-more-${industry.slug}`}
+                          href={industry.jobnetUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
+                        >
+                          <span>{industry.label}</span>
+                          <span className="text-[var(--md-sys-color-on-surface-variant)]">
+                            {formatNumber(activeLocale, industry.jobCount)}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
 
               {followStatusMessage ? (
                 <div
@@ -159,36 +209,44 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                 {dictionary.municipality.pocStatusTitle}
               </p>
               <p className="mt-3 text-sm leading-6 sm:text-base">
-                {dictionary.municipality.pocStatusBody}
+                {buildMunicipalityPocStatus(activeLocale, municipality.sources)}
               </p>
             </div>
           </div>
         </section>
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {municipality.topIndustries.map((industry) => (
-            <article
-              key={`${municipality.slug}-${industry.slug}`}
-              className="rounded-[1.5rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)]"
-            >
-              <div className="flex items-center gap-3">
-                <span
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full text-xl text-white"
-                  style={{ backgroundColor: industry.accentColor }}
-                >
-                  {industry.icon}
-                </span>
-                <div>
-                  <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)]">
-                    {getIndustryLabel(dictionary, industry.code, industry.name)}
-                  </h2>
-                  <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                    {formatEstimatedRolesLabel(activeLocale, dictionary, industry.jobCount)}
-                  </p>
+          {municipality.topIndustries.map((industry) => {
+            const industryLabel = getIndustryLabel(dictionary, industry.code, industry.name);
+            const jobnetUrl = buildJobnetIndustrySearchUrl(municipality.name, industry.name);
+
+            return (
+              <a
+                key={`${municipality.slug}-${industry.slug}`}
+                href={jobnetUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-[1.5rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] transition hover:bg-[var(--md-sys-color-surface-container-high)]"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-full text-xl text-white"
+                    style={{ backgroundColor: industry.accentColor }}
+                  >
+                    {industry.icon}
+                  </span>
+                  <div>
+                    <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)]">
+                      {industryLabel}
+                    </h2>
+                    <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
+                      {formatEstimatedRolesLabel(activeLocale, dictionary, industry.jobCount)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </a>
+            );
+          })}
         </section>
 
         <section className="grid gap-4 sm:gap-5">

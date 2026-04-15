@@ -7,6 +7,7 @@ import { MunicipalityTravelEstimate } from "@/components/home/municipality-trave
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
+import { buildMunicipalitySheetProfile } from "@/lib/municipality-presentation";
 
 type SheetMode = "closed" | "preview" | "expanded";
 const sheetEnterDelayMs = 16;
@@ -250,7 +251,9 @@ export function MunicipalitySheet({
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                       {copy.teaserLabel}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{municipality.teaser}</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      {buildMunicipalitySheetProfile(locale, municipality.name, municipality.topIndustries)}
+                    </p>
                   </div>
                 </>
               ) : null}

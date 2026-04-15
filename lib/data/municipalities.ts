@@ -52,6 +52,7 @@ export type MunicipalityRecord = {
   teaser: string;
   totalJobs: number;
   topIndustries: MunicipalityIndustrySummary[];
+  industryOverview: MunicipalityIndustrySummary[];
   jobsByIndustry: Array<{
     industry: MunicipalityIndustrySummary;
     jobs: MunicipalityJobSummary[];
@@ -243,11 +244,33 @@ function resolveImportedTopIndustries(importedSnapshot?: DatabaseImportedJobSnap
   }
 
   return {
-    topIndustries: importedSnapshot.categories.map((entry) =>
+    topIndustries: importedSnapshot.categories.slice(0, 3).map((entry) =>
       createIndustrySummaryFromDatabase(entry.industry, entry.openPositions),
     ),
     source: "jobindsats_y25i07_category_mapping" as const,
   };
+}
+
+function resolveIndustryOverview(
+  current: MunicipalityIndustrySummary[],
+  importedSnapshot?: DatabaseImportedJobSnapshotRow | null,
+  liveEstimate?: MunicipalityJobEstimateResponse | null,
+) {
+  if (importedSnapshot && importedSnapshot.categories.length > 0) {
+    return importedSnapshot.categories.map((entry) => createIndustrySummaryFromDatabase(entry.industry, entry.openPositions));
+  }
+
+  if (liveEstimate && liveEstimate.municipalityEstimate.industryBreakdown.length > 0) {
+    return liveEstimate.municipalityEstimate.industryBreakdown.map((entry) =>
+      createIndustrySummaryFromLiveEstimate({
+        ...entry.industry,
+        jobCount: entry.estimatedJobCount,
+        officialShare: entry.officialShare,
+      }),
+    );
+  }
+
+  return current;
 }
 
 function resolveTopIndustries(
@@ -319,6 +342,11 @@ function createSummaryFromMock(municipality: MockMunicipalityRecord, dbRow?: Dat
 }
 
 function createDetailFromMock(municipality: MockMunicipalityRecord): MunicipalityRecord {
+  const industryOverview =
+    municipality.jobsByIndustry.length > 0
+      ? createIndustryOverviewFromJobGroups(municipality.jobsByIndustry)
+      : municipality.topIndustries;
+
   return {
     code: municipality.code,
     slug: municipality.slug,
@@ -326,6 +354,7 @@ function createDetailFromMock(municipality: MockMunicipalityRecord): Municipalit
     teaser: municipality.teaser,
     totalJobs: countMockJobs(municipality),
     topIndustries: municipality.topIndustries,
+    industryOverview,
     jobsByIndustry: municipality.jobsByIndustry,
     sources: createDefaultSources(),
   };
@@ -400,6 +429,27 @@ function createTopIndustriesFromJobGroups(jobsByIndustry: MunicipalityRecord["jo
       jobCount: entry.industry.jobCount || entry.jobs.length,
     }));
 }
+
+function createIndustryOverviewFromJobGroups(
+  jobsByIndustry: MunicipalityRecord["jobsByIndustry"],
+): MunicipalityIndustrySummary[] {
+  return [...jobsByIndustry]
+    .sort((left, right) => {
+      const leftCount = left.industry.jobCount || left.jobs.length;
+      const rightCount = right.industry.jobCount || right.jobs.length;
+
+      if (leftCount !== rightCount) {
+        return rightCount - leftCount;
+      }
+
+      return left.industry.name.localeCompare(right.industry.name, "da");
+    })
+    .map((entry) => ({
+      ...entry.industry,
+      jobCount: entry.industry.jobCount || entry.jobs.length,
+    }));
+}
+
 function createIndustrySummaryFromLiveEstimate(
   industry: MunicipalityJobEstimateResponse["municipalityEstimate"]["topIndustries"][number],
 ): MunicipalityIndustrySummary {
@@ -548,6 +598,11 @@ function createDetailFromDatabase(
       : jobsByIndustry.length > 0
         ? createTopIndustriesFromJobGroups(jobsByIndustry)
         : fallback?.topIndustries ?? [];
+  const industryOverview = resolveIndustryOverview(
+    jobsByIndustry.map((entry) => entry.industry),
+    importedSnapshot,
+    liveEstimate,
+  );
   const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, importedSnapshot, liveEstimate);
   const resolvedTotalJobs = resolveTotalJobs(
     row.jobs.length || (fallback ? countMockJobs(fallback) : 0),
@@ -563,6 +618,7 @@ function createDetailFromDatabase(
       row.teaser?.trim() || fallback?.teaser || buildFallbackTeaser(row.name, resolvedTopIndustries.topIndustries),
     totalJobs: resolvedTotalJobs.totalJobs,
     topIndustries: resolvedTopIndustries.topIndustries,
+    industryOverview,
     jobsByIndustry: mergeLiveJobsByIndustry(mergeImportedCategoryCounts(jobsByIndustry, importedSnapshot), liveEstimate),
     sources: {
       totalJobs: resolvedTotalJobs.source,
@@ -665,7 +721,7 @@ async function getDatabaseMunicipalitySummaryRows() {
           include: {
             categories: {
               orderBy: [{ rank: "asc" }],
-              take: 3,
+              take: 10,
               include: {
                 industry: {
                   select: {
@@ -909,6 +965,7 @@ export async function getMunicipalityBySlug(slug: string) {
     ...createDetailFromMock(fallback),
     totalJobs: resolvedTotalJobs.totalJobs,
     topIndustries: resolvedTopIndustries.topIndustries,
+    industryOverview: resolveIndustryOverview(fallback.jobsByIndustry.map((entry) => entry.industry), null, liveEstimate),
     jobsByIndustry: mergeLiveJobsByIndustry(fallback.jobsByIndustry, liveEstimate),
     sources: {
       totalJobs: resolvedTotalJobs.source,
