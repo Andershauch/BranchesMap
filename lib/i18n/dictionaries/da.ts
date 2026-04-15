@@ -213,6 +213,7 @@ export const daDictionary: Dictionary = {
     municipalityFallback: "Kommuneprofil",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "Admin: hovedkort-kommuner",
     intro: "Styr hvilke kommuner der vises på hovedkortet, i hvilken rækkefølge de prioriteres, og hvordan de senere kan labeles.",
     back: "Tilbage til kortet",
@@ -230,6 +231,12 @@ export const daDictionary: Dictionary = {
     nameIcons: "Navn + ikoner",
     auto: "Auto",
     visibleCount: "Synlige kommuner",
+    securityTitle: "Sikkerhedshændelser",
+    securityIntro:
+      "Seneste sikkerhedsrelaterede audit-hændelser fra auth-throttling, afviste origins, uautoriserede requests og rate limits.",
+    securityEmpty: "Der er endnu ikke registreret sikkerhedshændelser.",
+    securityEntityFallback: "Sikkerhed",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · brancher og jobs",

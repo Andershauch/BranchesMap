@@ -213,6 +213,7 @@ export const faDictionary: Dictionary = {
     municipalityFallback: "پروفایل شهرداری",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "مدیریت: نقشه اصلی شهرداری‌ها",
     intro:
       "کنترل کنید کدام شهرداری‌ها روی نقشه اصلی نشان داده شوند، با چه اولویتی و چگونه برچسب‌گذاری شوند.",
@@ -231,6 +232,12 @@ export const faDictionary: Dictionary = {
     nameIcons: "نام + آیکون‌ها",
     auto: "خودکار",
     visibleCount: "شهرداری‌های قابل مشاهده",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · صنایع و مشاغل",

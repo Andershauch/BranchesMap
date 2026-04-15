@@ -206,6 +206,7 @@ export type Dictionary = {
     title: string;
     intro: string;
     back: string;
+    eyebrow: string;
     signedInAs: string;
     signOut: string;
     save: string;
@@ -220,6 +221,11 @@ export type Dictionary = {
     nameIcons: string;
     auto: string;
     visibleCount: string;
+    securityTitle: string;
+    securityIntro: string;
+    securityEmpty: string;
+    securityEntityFallback: string;
+    securityActorFallback: string;
   };
   titles: {
     savedSearch: string;

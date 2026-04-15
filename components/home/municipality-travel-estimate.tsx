@@ -37,9 +37,10 @@ function formatDistance(locale: AppLocale, distanceKm: number) {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: distanceKm < 10 ? 1 : 0 }).format(distanceKm);
 }
 
-function formatMinutes(minutes: number) {
+function formatMinutes(minutes: number, locale: AppLocale) {
   const rounded = Math.max(3, Math.round(minutes / 5) * 5);
-  return rounded < 60 ? `${rounded}` : `${Math.floor(rounded / 60)}t ${rounded % 60 || ""}`.trim();
+  const hourSymbol = locale === "da" ? "t" : "h";
+  return rounded < 60 ? `${rounded}` : `${Math.floor(rounded / 60)}${hourSymbol} ${rounded % 60 || ""}`.trim();
 }
 
 export function MunicipalityTravelEstimate({
@@ -108,7 +109,7 @@ export function MunicipalityTravelEstimate({
             {status === "loading"
               ? copy.loading
               : estimate
-                ? `${copy.approx} ${formatMinutes(estimate.minutes)} ${copy.minutes} · ${formatDistance(locale, estimate.distanceKm)} km`
+                  ? `${copy.approx} ${formatMinutes(estimate.minutes, locale)} ${copy.minutes} · ${formatDistance(locale, estimate.distanceKm)} km`
                 : status === "unsupported"
                   ? copy.unsupported
                   : status === "denied"

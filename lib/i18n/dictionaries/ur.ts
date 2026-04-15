@@ -213,6 +213,7 @@ export const urDictionary: Dictionary = {
     municipalityFallback: "بلدیہ کا پروفائل",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "ایڈمن: ہوم میپ بلدیات",
     intro:
       "کنٹرول کریں کہ ہوم میپ پر کون سی بلدیات دکھائی جائیں، انہیں کس ترتیب سے ترجیح دی جائے، اور بعد میں انہیں کیسے لیبل کیا جا سکتا ہے۔",
@@ -231,6 +232,12 @@ export const urDictionary: Dictionary = {
     nameIcons: "نام + آئیکنز",
     auto: "خودکار",
     visibleCount: "نمایاں بلدیات",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · صنعتیں اور ملازمتیں",

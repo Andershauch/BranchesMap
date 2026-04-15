@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { signIn, signOut } from "@/auth";
@@ -8,6 +9,7 @@ import { getCurrentUser } from "@/lib/server/auth";
 import {
   buildRateLimitKey,
   consumeDistributedRateLimitGroup,
+  getRateLimitClientIp,
 } from "@/lib/server/rate-limit";
 import { followMunicipalitySearch } from "@/lib/server/search-follows";
 import {
@@ -32,32 +34,38 @@ function withParams(pathname: string, params: Record<string, string | null | und
   return query ? `${pathname}?${query}` : pathname;
 }
 
-function consumeAuthAttemptLimit(namespace: string, email: string) {
-  // Server actions do not expose the raw request, so this pass combines a global gate with
-  // an identity gate. A later move to route handlers can add per-IP enforcement as well.
+async function getAuthRequestHeaders() {
+  try {
+    return new Headers(await headers());
+  } catch {
+    return new Headers();
+  }
+}
+
+function consumeAuthAttemptLimit(namespace: string, email: string, requestHeaders: Headers) {
   return consumeDistributedRateLimitGroup([
     {
-      key: buildRateLimitKey(`${namespace}-global`, new Headers(), "global"),
+      key: buildRateLimitKey(`${namespace}-ip`, requestHeaders),
       limit: namespace === "auth-login" ? 40 : 25,
       windowMs: 15 * 60 * 1000,
     },
     {
-      key: buildRateLimitKey(namespace, new Headers(), email || "unknown"),
+      key: buildRateLimitKey(namespace, requestHeaders, email || "unknown"),
       limit: namespace === "auth-login" ? 8 : 6,
       windowMs: 15 * 60 * 1000,
     },
   ]);
 }
 
-function consumeAuthFailureLimit(namespace: string, email: string) {
+function consumeAuthFailureLimit(namespace: string, email: string, requestHeaders: Headers) {
   return consumeDistributedRateLimitGroup([
     {
-      key: buildRateLimitKey(`${namespace}-fail-global`, new Headers(), "global"),
+      key: buildRateLimitKey(`${namespace}-ip`, requestHeaders),
       limit: namespace === "auth-login-failure" ? 25 : 20,
       windowMs: 30 * 60 * 1000,
     },
     {
-      key: buildRateLimitKey(namespace, new Headers(), email || "unknown"),
+      key: buildRateLimitKey(namespace, requestHeaders, email || "unknown"),
       limit: namespace === "auth-login-failure" ? 5 : 4,
       windowMs: 30 * 60 * 1000,
     },
@@ -70,7 +78,9 @@ export async function loginAction(formData: FormData) {
   const email = parseNormalizedEmail(formData.get("email"));
   const password = parseOptionalString(formData.get("password"));
   const followMunicipality = parseOptionalString(formData.get("followMunicipality"));
-  const throttle = await consumeAuthAttemptLimit("auth-login", email);
+  const requestHeaders = await getAuthRequestHeaders();
+  const clientIp = getRateLimitClientIp(requestHeaders);
+  const throttle = await consumeAuthAttemptLimit("auth-login", email, requestHeaders);
 
   if (!throttle.allowed) {
     await recordSecurityEvent({
@@ -79,6 +89,7 @@ export async function loginAction(formData: FormData) {
       metadata: {
         flow: "login",
         email,
+        ip: clientIp,
       },
     });
 
@@ -92,7 +103,7 @@ export async function loginAction(formData: FormData) {
   }
 
   if (!email || !password) {
-    await consumeAuthFailureLimit("auth-login-failure", email);
+    await consumeAuthFailureLimit("auth-login-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
       entityType: "User",
@@ -100,6 +111,7 @@ export async function loginAction(formData: FormData) {
         flow: "login",
         reason: "missing_fields",
         email,
+        ip: clientIp,
       },
     });
     redirect(
@@ -113,7 +125,7 @@ export async function loginAction(formData: FormData) {
 
   const user = await authenticateUser({ email, password });
   if (!user) {
-    await consumeAuthFailureLimit("auth-login-failure", email);
+    await consumeAuthFailureLimit("auth-login-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
       entityType: "User",
@@ -121,6 +133,7 @@ export async function loginAction(formData: FormData) {
         flow: "login",
         reason: "invalid_credentials",
         email,
+        ip: clientIp,
       },
     });
     redirect(
@@ -179,16 +192,19 @@ export async function registerAction(formData: FormData) {
   const password = parseOptionalString(formData.get("password"));
   const name = parseOptionalString(formData.get("name"));
   const followMunicipality = parseOptionalString(formData.get("followMunicipality"));
-  const throttle = await consumeAuthAttemptLimit("auth-register", email);
+  const requestHeaders = await getAuthRequestHeaders();
+  const clientIp = getRateLimitClientIp(requestHeaders);
+  const throttle = await consumeAuthAttemptLimit("auth-register", email, requestHeaders);
 
   if (!throttle.allowed) {
-    await consumeAuthFailureLimit("auth-register-failure", email);
+    await consumeAuthFailureLimit("auth-register-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_throttled",
       entityType: "User",
       metadata: {
         flow: "register",
         email,
+        ip: clientIp,
       },
     });
     redirect(
@@ -201,7 +217,7 @@ export async function registerAction(formData: FormData) {
   }
 
   if (!email || !password) {
-    await consumeAuthFailureLimit("auth-register-failure", email);
+    await consumeAuthFailureLimit("auth-register-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
       entityType: "User",
@@ -209,6 +225,7 @@ export async function registerAction(formData: FormData) {
         flow: "register",
         reason: "missing_fields",
         email,
+        ip: clientIp,
       },
     });
     redirect(
@@ -228,7 +245,7 @@ export async function registerAction(formData: FormData) {
   });
 
   if (!result.ok) {
-    await consumeAuthFailureLimit("auth-register-failure", email);
+    await consumeAuthFailureLimit("auth-register-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
       entityType: "User",
@@ -236,6 +253,7 @@ export async function registerAction(formData: FormData) {
         flow: "register",
         reason: result.reason,
         email,
+        ip: clientIp,
       },
     });
     redirect(

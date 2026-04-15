@@ -213,6 +213,7 @@ export const ukDictionary: Dictionary = {
     municipalityFallback: "Профіль муніципалітету",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "Адмін: головна карта муніципалітетів",
     intro:
       "Керуйте тим, які муніципалітети відображаються на головній карті, у якому порядку та як вони підписуються.",
@@ -231,6 +232,12 @@ export const ukDictionary: Dictionary = {
     nameIcons: "Назва + іконки",
     auto: "Авто",
     visibleCount: "Видимі муніципалітети",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · галузі та вакансії",

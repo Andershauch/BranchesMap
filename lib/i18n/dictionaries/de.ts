@@ -213,6 +213,7 @@ export const deDictionary: Dictionary = {
     municipalityFallback: "Gemeindeprofil",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "Admin: Startkarten-Gemeinden",
     intro:
       "Steuere, welche Gemeinden auf der Startkarte angezeigt werden, in welcher Reihenfolge sie priorisiert werden und wie sie später beschriftet werden können.",
@@ -231,6 +232,12 @@ export const deDictionary: Dictionary = {
     nameIcons: "Name + Icons",
     auto: "Auto",
     visibleCount: "Sichtbare Gemeinden",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · Branchen und Jobs",

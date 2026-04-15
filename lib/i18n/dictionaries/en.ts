@@ -217,6 +217,7 @@ export const enDictionary: Dictionary = {
     intro:
       "Control which municipalities are shown on the home map, in which order they are prioritized, and how they can later be labelled.",
     back: "Back to the map",
+    eyebrow: "BranchesMap Admin",
     signedInAs: "Admin is signed in",
     signOut: "Sign out",
     save: "Save",
@@ -231,6 +232,12 @@ export const enDictionary: Dictionary = {
     nameIcons: "Name + icons",
     auto: "Auto",
     visibleCount: "Visible municipalities",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · industries and jobs",

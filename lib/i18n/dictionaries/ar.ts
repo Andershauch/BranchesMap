@@ -213,6 +213,7 @@ export const arDictionary: Dictionary = {
     municipalityFallback: "ملف البلدية",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "المسؤول: خريطة البلديات الرئيسية",
     intro:
       "التحكم في البلديات التي تظهر على الخريطة الرئيسية، وبأي ترتيب يتم منحها الأولوية، وكيف يمكن تسميتها لاحقاً.",
@@ -231,6 +232,12 @@ export const arDictionary: Dictionary = {
     nameIcons: "الاسم + أيقونات",
     auto: "تلقائي",
     visibleCount: "البلديات المرئية",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · الصناعات والوظائف",

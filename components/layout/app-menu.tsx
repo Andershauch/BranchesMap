@@ -32,44 +32,6 @@ function detectStandaloneMode() {
   );
 }
 
-const menuCopy = {
-  da: {
-    menu: "Menu",
-    close: "Luk menu",
-    home: "Kort",
-    follows: "F\u00f8lger",
-    admin: "Admin",
-    login: "Log ind",
-    register: "Opret bruger",
-    logout: "Log ud",
-    signedInAs: "Logget ind som",
-    language: "Sprog",
-    navigation: "Navigation",
-    install: "Installer app",
-    installReady: "Appen kan installeres direkte herfra.",
-    installHint: "Hvis installation ikke vises endnu, så genindlæs HTTPS-linket én gang og åbn menuen igen.",
-    installed: "Appen er allerede installeret eller kører i standalone.",
-  },
-  en: {
-    menu: "Menu",
-    close: "Close menu",
-    home: "Map",
-    follows: "Following",
-    admin: "Admin",
-    login: "Log in",
-    register: "Create account",
-    logout: "Log out",
-    signedInAs: "Signed in as",
-    language: "Language",
-    navigation: "Navigation",
-    install: "Install app",
-    installReady: "The app can be installed directly from here.",
-    installHint: "If install is not available yet, reload the HTTPS link once and open the menu again.",
-    installed: "The app is already installed or running in standalone.",
-  },
-} as const;
-void menuCopy;
-
 function MenuLink({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
   return (
     <Link

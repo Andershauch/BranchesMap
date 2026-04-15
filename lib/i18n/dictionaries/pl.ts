@@ -213,6 +213,7 @@ export const plDictionary: Dictionary = {
     municipalityFallback: "Profil gminy",
   },
   adminHomeMap: {
+    eyebrow: "BranchesMap Admin",
     title: "Admin: mapa główna gmin",
     intro:
       "Zarządzaj tym, które gminy są wyświetlane na mapie głównej, w jakiej kolejności oraz jak mają być etykietowane.",
@@ -231,6 +232,12 @@ export const plDictionary: Dictionary = {
     nameIcons: "Nazwa + ikony",
     auto: "Auto",
     visibleCount: "Widoczne gminy",
+    securityTitle: "Security events",
+    securityIntro:
+      "Latest security-related audit events from auth throttling, rejected origins, unauthorized requests and rate limits.",
+    securityEmpty: "No security events recorded yet.",
+    securityEntityFallback: "Security",
+    securityActorFallback: "system",
   },
   titles: {
     savedSearch: "{municipality} · branże i praca",

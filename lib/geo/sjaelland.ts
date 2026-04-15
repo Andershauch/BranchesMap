@@ -50,14 +50,20 @@ function reverseRing(ring: Position[]) {
 function normalizePolygonRings(rings: PolygonCoordinates): PolygonCoordinates | null {
   const [outerRing, ...holeRings] = rings;
 
-  if (!outerRing || Math.abs(ringArea(outerRing)) <= minRingArea) {
+  if (!outerRing) {
     return null;
   }
 
-  const normalizedOuterRing = ringArea(outerRing) > 0 ? reverseRing(outerRing) : outerRing;
+  const outerArea = ringArea(outerRing);
+  if (Math.abs(outerArea) <= minRingArea) {
+    return null;
+  }
+
+  const normalizedOuterRing = outerArea > 0 ? reverseRing(outerRing) : outerRing;
   const normalizedHoleRings = holeRings
-    .filter((ring) => Math.abs(ringArea(ring)) > minRingArea)
-    .map((ring) => (ringArea(ring) < 0 ? reverseRing(ring) : ring));
+    .map((ring) => ({ ring, area: ringArea(ring) }))
+    .filter(({ area }) => Math.abs(area) > minRingArea)
+    .map(({ ring, area }) => (area < 0 ? reverseRing(ring) : ring));
 
   return [normalizedOuterRing, ...normalizedHoleRings];
 }

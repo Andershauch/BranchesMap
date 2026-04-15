@@ -29,6 +29,10 @@ function getClientIp(headers: Headers) {
   return realIp?.trim() || "unknown";
 }
 
+export function getRateLimitClientIp(headers: Headers) {
+  return getClientIp(headers);
+}
+
 export function buildRateLimitKey(namespace: string, headers: Headers, extraKey?: string | null) {
   const ip = getClientIp(headers);
   return `${namespace}:${extraKey ?? ip}:${ip}`;
