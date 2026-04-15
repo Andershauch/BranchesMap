@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import {
   homeMapLabelModes,
@@ -11,7 +11,7 @@ import {
 import { getMunicipalityHomeMapAdminRows } from "@/lib/data/municipalities";
 import { isValidLocale, type AppLocale } from "@/lib/i18n/config";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
-import { getCurrentUser, isAdminUser } from "@/lib/server/auth";
+import { requireAdminUser } from "@/lib/server/auth";
 
 import { updateMunicipalityHomeMapAction } from "./actions";
 
@@ -46,16 +46,8 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
 
   const language = locale as AppLocale;
   const text = getDictionarySync(language).adminHomeMap;
-  const currentUser = await getCurrentUser();
   const loginPath = `/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/admin/home-map`)}`;
-
-  if (!currentUser) {
-    redirect(loginPath);
-  }
-
-  if (!isAdminUser(currentUser)) {
-    redirect(`/${locale}`);
-  }
+  await requireAdminUser(loginPath);
 
   const municipalities = await getMunicipalityHomeMapAdminRows();
   const visibleCount = municipalities.filter((municipality) => municipality.homeMap.isPrimary).length;

@@ -64,3 +64,38 @@ export function consumeRateLimit(
     retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
   };
 }
+
+export function consumeRateLimitGroup(
+  limits: Array<{
+    key: string;
+    limit: number;
+    windowMs: number;
+  }>,
+) {
+  let minimumRemaining = Number.POSITIVE_INFINITY;
+  let maximumRetryAfterSeconds = 0;
+
+  for (const entry of limits) {
+    const result = consumeRateLimit(entry.key, {
+      limit: entry.limit,
+      windowMs: entry.windowMs,
+    });
+
+    minimumRemaining = Math.min(minimumRemaining, result.remaining);
+    maximumRetryAfterSeconds = Math.max(maximumRetryAfterSeconds, result.retryAfterSeconds);
+
+    if (!result.allowed) {
+      return {
+        allowed: false,
+        remaining: 0,
+        retryAfterSeconds: result.retryAfterSeconds,
+      };
+    }
+  }
+
+  return {
+    allowed: true,
+    remaining: Number.isFinite(minimumRemaining) ? minimumRemaining : 0,
+    retryAfterSeconds: maximumRetryAfterSeconds,
+  };
+}

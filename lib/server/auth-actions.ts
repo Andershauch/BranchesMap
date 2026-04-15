@@ -5,25 +5,15 @@ import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
-import { buildRateLimitKey, consumeRateLimit } from "@/lib/server/rate-limit";
+import { buildRateLimitKey, consumeRateLimitGroup } from "@/lib/server/rate-limit";
 import { followMunicipalitySearch } from "@/lib/server/search-follows";
+import {
+  parseLocaleValue,
+  parseNormalizedEmail,
+  parseOptionalString,
+  parseSafeRedirectPath,
+} from "@/lib/server/input-validation";
 import { authenticateUser, registerUser } from "@/lib/server/users";
-
-function getLocale(value: FormDataEntryValue | null) {
-  return typeof value === "string" && value ? value : "da";
-}
-
-function getString(value: FormDataEntryValue | null) {
-  return typeof value === "string" && value ? value : null;
-}
-
-function safeRedirectPath(locale: string, requestedPath: FormDataEntryValue | null, fallback: string) {
-  if (typeof requestedPath === "string" && requestedPath.startsWith(`/${locale}/`) && !requestedPath.startsWith("//")) {
-    return requestedPath;
-  }
-
-  return fallback;
-}
 
 function withParams(pathname: string, params: Record<string, string | null | undefined>) {
   const search = new URLSearchParams();
@@ -38,25 +28,44 @@ function withParams(pathname: string, params: Record<string, string | null | und
   return query ? `${pathname}?${query}` : pathname;
 }
 
-function normalizeEmail(email: string | null) {
-  return email?.trim().toLowerCase() ?? "";
+function consumeAuthAttemptLimit(namespace: string, email: string) {
+  // Server actions do not expose the raw request, so this pass combines a global gate with
+  // an identity gate. A later move to route handlers can add per-IP enforcement as well.
+  return consumeRateLimitGroup([
+    {
+      key: buildRateLimitKey(`${namespace}-global`, new Headers(), "global"),
+      limit: namespace === "auth-login" ? 40 : 25,
+      windowMs: 15 * 60 * 1000,
+    },
+    {
+      key: buildRateLimitKey(namespace, new Headers(), email || "unknown"),
+      limit: namespace === "auth-login" ? 8 : 6,
+      windowMs: 15 * 60 * 1000,
+    },
+  ]);
 }
 
-function consumeAuthAttemptLimit(namespace: string, email: string) {
-  // Server actions do not expose the raw request, so this first pass keys on normalized email.
-  // The next hardening step can move auth flows to route handlers if we want per-IP + per-email limits.
-  return consumeRateLimit(buildRateLimitKey(namespace, new Headers(), email || "unknown"), {
-    limit: namespace === "auth-login" ? 8 : 6,
-    windowMs: 15 * 60 * 1000,
-  });
+function consumeAuthFailureLimit(namespace: string, email: string) {
+  return consumeRateLimitGroup([
+    {
+      key: buildRateLimitKey(`${namespace}-fail-global`, new Headers(), "global"),
+      limit: namespace === "auth-login-failure" ? 25 : 20,
+      windowMs: 30 * 60 * 1000,
+    },
+    {
+      key: buildRateLimitKey(namespace, new Headers(), email || "unknown"),
+      limit: namespace === "auth-login-failure" ? 5 : 4,
+      windowMs: 30 * 60 * 1000,
+    },
+  ]);
 }
 
 export async function loginAction(formData: FormData) {
-  const locale = getLocale(formData.get("locale"));
-  const redirectTo = safeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
-  const email = normalizeEmail(getString(formData.get("email")));
-  const password = getString(formData.get("password"));
-  const followMunicipality = getString(formData.get("followMunicipality"));
+  const locale = parseLocaleValue(formData.get("locale"));
+  const redirectTo = parseSafeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
+  const email = parseNormalizedEmail(formData.get("email"));
+  const password = parseOptionalString(formData.get("password"));
+  const followMunicipality = parseOptionalString(formData.get("followMunicipality"));
   const throttle = consumeAuthAttemptLimit("auth-login", email);
 
   if (!throttle.allowed) {
@@ -70,6 +79,7 @@ export async function loginAction(formData: FormData) {
   }
 
   if (!email || !password) {
+    consumeAuthFailureLimit("auth-login-failure", email);
     redirect(
       withParams(`/${locale}/login`, {
         error: "missing_fields",
@@ -81,6 +91,7 @@ export async function loginAction(formData: FormData) {
 
   const user = await authenticateUser({ email, password });
   if (!user) {
+    consumeAuthFailureLimit("auth-login-failure", email);
     redirect(
       withParams(`/${locale}/login`, {
         error: "invalid_credentials",
@@ -131,15 +142,16 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
-  const locale = getLocale(formData.get("locale"));
-  const redirectTo = safeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
-  const email = normalizeEmail(getString(formData.get("email")));
-  const password = getString(formData.get("password"));
-  const name = getString(formData.get("name"));
-  const followMunicipality = getString(formData.get("followMunicipality"));
+  const locale = parseLocaleValue(formData.get("locale"));
+  const redirectTo = parseSafeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
+  const email = parseNormalizedEmail(formData.get("email"));
+  const password = parseOptionalString(formData.get("password"));
+  const name = parseOptionalString(formData.get("name"));
+  const followMunicipality = parseOptionalString(formData.get("followMunicipality"));
   const throttle = consumeAuthAttemptLimit("auth-register", email);
 
   if (!throttle.allowed) {
+    consumeAuthFailureLimit("auth-register-failure", email);
     redirect(
       withParams(`/${locale}/register`, {
         error: "unknown",
@@ -150,6 +162,7 @@ export async function registerAction(formData: FormData) {
   }
 
   if (!email || !password) {
+    consumeAuthFailureLimit("auth-register-failure", email);
     redirect(
       withParams(`/${locale}/register`, {
         error: "missing_fields",
@@ -167,6 +180,7 @@ export async function registerAction(formData: FormData) {
   });
 
   if (!result.ok) {
+    consumeAuthFailureLimit("auth-register-failure", email);
     redirect(
       withParams(`/${locale}/register`, {
         error: result.reason,
@@ -217,7 +231,7 @@ export async function registerAction(formData: FormData) {
 }
 
 export async function logoutAction(formData: FormData) {
-  const locale = getLocale(formData.get("locale"));
+  const locale = parseLocaleValue(formData.get("locale"));
   const user = await getCurrentUser();
 
   if (user) {

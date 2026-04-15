@@ -2,33 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { recordAuditEvent } from "@/lib/server/audit";
 import { getCurrentUser } from "@/lib/server/auth";
+import {
+  isRecordId,
+  isSimpleSlug,
+  parseLocaleValue,
+  parseSafeRedirectPath,
+} from "@/lib/server/input-validation";
 import { isTrustedMutationRequest } from "@/lib/server/origin-guard";
 import { buildAppRedirectUrl, buildAppUrl } from "@/lib/server/request-origin";
+import { jsonSecurityResponse } from "@/lib/server/security";
 import {
   deleteSearchFollow,
   followMunicipalitySearch,
   markSearchFollowNotificationSeen,
 } from "@/lib/server/search-follows";
-
-function getLocale(value: FormDataEntryValue | null) {
-  return typeof value === "string" && value ? value : "da";
-}
-
-function isSimpleSlug(value: string) {
-  return /^[a-z0-9-]{2,64}$/.test(value);
-}
-
-function isRecordId(value: string) {
-  return /^[a-z0-9]{12,32}$/i.test(value);
-}
-
-function safeRedirectPath(locale: string, requestedPath: FormDataEntryValue | null, fallback: string) {
-  if (typeof requestedPath === "string" && requestedPath.startsWith(`/${locale}/`) && !requestedPath.startsWith("//")) {
-    return requestedPath;
-  }
-
-  return fallback;
-}
 
 function redirect303(url: URL) {
   return NextResponse.redirect(url, 303);
@@ -36,7 +23,7 @@ function redirect303(url: URL) {
 
 export async function POST(request: NextRequest) {
   if (!isTrustedMutationRequest(request)) {
-    return NextResponse.json(
+    return jsonSecurityResponse(
       {
         ok: false,
         error: "Untrusted request origin.",
@@ -46,8 +33,8 @@ export async function POST(request: NextRequest) {
   }
 
   const formData = await request.formData();
-  const locale = getLocale(formData.get("locale"));
-  const returnTo = safeRedirectPath(locale, formData.get("returnTo"), `/${locale}/follows`);
+  const locale = parseLocaleValue(formData.get("locale"));
+  const returnTo = parseSafeRedirectPath(locale, formData.get("returnTo"), `/${locale}/follows`);
   const user = await getCurrentUser();
   const intent = formData.get("intent");
 
