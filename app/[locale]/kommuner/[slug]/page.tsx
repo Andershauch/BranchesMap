@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { Fragment } from "react";
 
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
-import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
+import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import {
   buildJobnetIndustrySearchUrl,
   buildMunicipalityAdditionalIndustriesHeading,
@@ -66,6 +66,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   }
 
   const activeLocale = locale as AppLocale;
+  const isRtl = isRtlLocale(activeLocale);
   const industryOverview = municipality.industryOverview.map((industry) => ({
     ...industry,
     label: getIndustryLabel(dictionary, industry.code, industry.name),
@@ -73,31 +74,24 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   }));
   const additionalIndustryOverview = industryOverview.slice(3, 10);
   const followButtonLabel = searchState.isFollowing
-    ? activeLocale === "da"
-      ? "Følger"
-      : "Following"
-    : activeLocale === "da"
-      ? "Følg kommune"
-      : "Follow municipality";
-  const followsLabel = activeLocale === "da" ? "Se følger" : "View following";
+    ? dictionary.municipalityPage.following
+    : dictionary.municipalityPage.followMunicipality;
+  const followsLabel = dictionary.municipalityPage.viewFollowing;
   const followedState = getStringParam(search.followed);
   const followStatusMessage =
     followedState === "created"
-      ? activeLocale === "da"
-        ? "Du følger nu denne kommune. Næste skridt er notifikationer, når data ændrer sig."
-        : "You are now following this municipality. The next step is notifications when data changes."
+      ? dictionary.municipalityPage.followCreated
       : followedState === "exists"
-        ? activeLocale === "da"
-          ? "Du følger allerede denne kommune."
-          : "You are already following this municipality."
+        ? dictionary.municipalityPage.followExists
         : followedState === "error"
-          ? activeLocale === "da"
-            ? "Kommunen kunne ikke følges. Prøv igen."
-            : "The municipality could not be followed. Please try again."
+          ? dictionary.municipalityPage.followError
           : null;
 
   return (
-    <main className="min-h-[calc(100dvh-4rem)] px-4 py-4 text-[var(--md-sys-color-on-surface)] sm:px-6 sm:py-6">
+    <main
+      dir={isRtl ? "rtl" : "ltr"}
+      className="min-h-[calc(100dvh-4rem)] px-4 py-4 text-[var(--md-sys-color-on-surface)] sm:px-6 sm:py-6"
+    >
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 sm:gap-6">
         <section className="rounded-[1.75rem] bg-[var(--md-sys-color-surface-container)] px-5 py-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] sm:px-6">
           <Link
@@ -108,7 +102,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
           </Link>
 
           <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-3xl">
+            <div className="max-w-3xl text-start">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--md-sys-color-primary)]">
                 {dictionary.municipality.kicker}
               </p>
@@ -155,7 +149,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
               </div>
             </div>
 
-            <div className="w-full max-w-sm rounded-[1.5rem] bg-[var(--md-sys-color-primary-container)] p-5 text-[var(--md-sys-color-on-primary-container)]">
+            <div className="w-full max-w-sm rounded-[1.5rem] bg-[var(--md-sys-color-primary-container)] p-5 text-start text-[var(--md-sys-color-on-primary-container)]">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
                 {dictionary.municipality.pocStatusTitle}
               </p>
@@ -167,7 +161,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
         </section>
 
         <section className="rounded-[1.75rem] bg-[var(--md-sys-color-surface-container)] px-5 py-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] sm:px-6">
-          <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)] sm:text-xl">
+          <h2 className="text-start text-lg font-semibold text-[var(--md-sys-color-on-surface)] sm:text-xl">
             {buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}
           </h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -187,12 +181,13 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     >
                       {industry.icon}
                     </span>
-                    <div className="min-w-0">
+                    <div className="min-w-0 text-start">
                       <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)]">
                         <a
                           href={jobnetUrl}
                           target="_blank"
                           rel="noreferrer"
+                          dir="auto"
                           className="transition hover:text-[var(--md-sys-color-primary)]"
                         >
                           {industryLabel}
@@ -206,7 +201,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                       </p>
                       {industry.representativeTitles && industry.representativeTitles.length > 0 ? (
                         <p className="mt-2 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                          Titler der typisk søges efter i denne branche er:{" "}
+                          {dictionary.municipalityPage.representativeTitlesPrefix}{" "}
                           {industry.representativeTitles.map((title, index) => (
                             <Fragment key={`${industry.slug}-${title}`}>
                               {index > 0 ? ", " : null}
@@ -214,6 +209,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                                 href={buildJobnetIndustrySearchUrl(municipality.name, industry.name, title)}
                                 target="_blank"
                                 rel="noreferrer"
+                                dir="auto"
                                 className="font-semibold text-[var(--md-sys-color-on-surface)] underline decoration-[var(--md-sys-color-outline)] underline-offset-2 transition hover:text-[var(--md-sys-color-primary)]"
                               >
                                 {title}
@@ -231,7 +227,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
 
           {additionalIndustryOverview.length > 0 ? (
             <div className="mt-6">
-              <h3 className="text-base font-semibold text-[var(--md-sys-color-on-surface)] sm:text-lg">
+              <h3 className="text-start text-base font-semibold text-[var(--md-sys-color-on-surface)] sm:text-lg">
                 {buildMunicipalityAdditionalIndustriesHeading(activeLocale, municipality.name)}
               </h3>
               <div className="mt-4 flex flex-wrap gap-2.5">
@@ -249,8 +245,8 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     >
                       {industry.icon}
                     </span>
-                    <span>{industry.label}</span>
-                    <span className="text-[var(--md-sys-color-on-surface-variant)]">
+                    <span dir="auto">{industry.label}</span>
+                    <span dir="auto" className="text-[var(--md-sys-color-on-surface-variant)]">
                       {formatNumber(activeLocale, industry.jobCount)}
                     </span>
                   </a>

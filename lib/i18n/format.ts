@@ -15,7 +15,7 @@ export function getIndustryLabel(
 }
 
 export function getLocalizedText(text: LocalizedText, locale: AppLocale) {
-  return text[locale] ?? text.da;
+  return text[locale] ?? text.en ?? text.da;
 }
 
 export function buildMunicipalityTeaser(
@@ -28,7 +28,7 @@ export function buildMunicipalityTeaser(
     return municipalityName;
   }
 
-  if (locale === "en") {
+  if (locale !== "da") {
     return `${municipalityName} is strongest in ${industryNames[0].toLowerCase()}, ${industryNames[1].toLowerCase()}, and ${industryNames[2].toLowerCase()} in this POC.`;
   }
 

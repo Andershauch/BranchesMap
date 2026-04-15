@@ -25,11 +25,12 @@ import {
   normalizeJobindsatsRepresentativeTitle,
 } from "@/lib/server/jobindsats-category-mapping";
 import { prisma } from "@/lib/server/prisma";
+import type { AppLocale } from "@/lib/i18n/config";
 
 export type LocalizedText = {
   da: string;
   en: string;
-};
+} & Partial<Record<Exclude<AppLocale, "da" | "en">, string>>;
 
 export type MunicipalityIndustrySummary = {
   code: string;

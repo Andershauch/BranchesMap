@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 
 type TravelEstimateStatus = "idle" | "loading" | "ready" | "denied" | "unsupported" | "error";
 
@@ -14,35 +15,6 @@ type UserPosition = {
 
 const averageCarSpeedKmh = 62;
 const routeDetourFactor = 1.28;
-
-const travelCopy = {
-  da: {
-    title: "Rejsetid",
-    idle: "Beregn cirka rejsetid fra din placering",
-    loading: "Henter placering...",
-    unsupported: "Din browser underst\u00f8tter ikke GPS-lokation.",
-    denied: "Placering er ikke tilladt i browseren.",
-    error: "Kunne ikke hente din placering.",
-    button: "Beregn fra mig",
-    retry: "Pr\u00f8v igen",
-    approx: "ca.",
-    minutes: "min i bil",
-    note: "V1-estimat til kommuneomr\u00e5de. Pr\u00e6cise jobadresser kan kobles p\u00e5 senere.",
-  },
-  en: {
-    title: "Travel time",
-    idle: "Estimate travel time from your location",
-    loading: "Getting location...",
-    unsupported: "Your browser does not support GPS location.",
-    denied: "Location is not allowed in the browser.",
-    error: "Could not get your location.",
-    button: "Estimate from me",
-    retry: "Try again",
-    approx: "approx.",
-    minutes: "min by car",
-    note: "V1 estimate to the municipality area. Precise job addresses can be connected later.",
-  },
-} as const;
 
 function toRadians(value: number) {
   return (value * Math.PI) / 180;
@@ -77,7 +49,7 @@ export function MunicipalityTravelEstimate({
   locale: AppLocale;
   destination: TravelDestination | null;
 }) {
-  const copy = travelCopy[locale];
+  const copy = getDictionarySync(locale).travel;
   const [status, setStatus] = useState<TravelEstimateStatus>("idle");
   const [position, setPosition] = useState<UserPosition | null>(null);
 

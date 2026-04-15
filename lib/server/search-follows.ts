@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { prisma } from "@/lib/server/prisma";
 import { buildMunicipalityFollowSnapshotWithHash } from "@/lib/server/search-follow-snapshots";
 
@@ -40,7 +41,7 @@ export type SearchFollowCheckResult =
     };
 
 function buildMunicipalityFollowTitle(name: string, locale: string) {
-  return locale === "da" ? `${name} \u00b7 f\u00f8lg opdateringer` : `${name} \u00b7 follow updates`;
+  return getDictionarySync(locale).titles.followSearch.replace("{municipality}", name);
 }
 
 export async function followMunicipalitySearch({

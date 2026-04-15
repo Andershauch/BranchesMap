@@ -9,6 +9,7 @@ import {
 } from "@/lib/config/home-map-display";
 import { getMunicipalityHomeMapAdminRows } from "@/lib/data/municipalities";
 import { isValidLocale, type AppLocale } from "@/lib/i18n/config";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { isAdminAuthenticated, isAdminConfigured } from "@/lib/server/admin-auth";
 
 import {
@@ -26,61 +27,8 @@ type AdminHomeMapPageProps = {
   }>;
 };
 
-const copy = {
-  da: {
-    title: "Admin: hovedkort-kommuner",
-    intro:
-      "Styr hvilke kommuner der vises p\u00e5 hovedkortet, i hvilken r\u00e6kkef\u00f8lge de prioriteres, og hvordan de senere kan labeles.",
-    back: "Tilbage til kortet",
-    loginTitle: "L\u00e5s admin op",
-    loginBody: "Indtast admin-tokenet fra milj\u00f8variablen ADMIN_ACCESS_TOKEN for at redigere hovedkortet sikkert.",
-    loginButton: "\u00c5bn admin",
-    loginPlaceholder: "Admin-token",
-    configuredMissing: "ADMIN_ACCESS_TOKEN mangler. S\u00e6t den i milj\u00f8et, f\u00f8r admin-styring kan bruges.",
-    signedInAs: "Admin er logget ind",
-    signOut: "Log ud",
-    save: "Gem",
-    visible: "Vis p\u00e5 hovedkort",
-    priority: "Prioritet",
-    labelMode: "Labeltype",
-    region: "Region-tag",
-    active: "Aktiv",
-    yes: "ja",
-    no: "nej",
-    nameOnly: "Kun navn",
-    nameIcons: "Navn + ikoner",
-    auto: "Auto",
-    visibleCount: "Synlige kommuner",
-  },
-  en: {
-    title: "Admin: home map municipalities",
-    intro:
-      "Control which municipalities are shown on the home map, in which order they are prioritized, and how they can later be labelled.",
-    back: "Back to the map",
-    loginTitle: "Unlock admin",
-    loginBody: "Enter the admin token from the ADMIN_ACCESS_TOKEN environment variable to edit the home map safely.",
-    loginButton: "Open admin",
-    loginPlaceholder: "Admin token",
-    configuredMissing: "ADMIN_ACCESS_TOKEN is missing. Set it in the environment before using admin controls.",
-    signedInAs: "Admin is signed in",
-    signOut: "Sign out",
-    save: "Save",
-    visible: "Show on home map",
-    priority: "Priority",
-    labelMode: "Label mode",
-    region: "Region tag",
-    active: "Active",
-    yes: "yes",
-    no: "no",
-    nameOnly: "Name only",
-    nameIcons: "Name + icons",
-    auto: "Auto",
-    visibleCount: "Visible municipalities",
-  },
-} as const;
-
 function labelModeText(locale: AppLocale, mode: MunicipalityHomeMapLabelMode) {
-  const labels = copy[locale];
+  const labels = getDictionarySync(locale).adminHomeMap;
   if (mode === "name-only") return labels.nameOnly;
   if (mode === "name-icons") return labels.nameIcons;
   return labels.auto;
@@ -98,7 +46,7 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
   }
 
   const language = locale as AppLocale;
-  const text = copy[language];
+  const text = getDictionarySync(language).adminHomeMap;
   const configured = isAdminConfigured();
   const authenticated = configured ? await isAdminAuthenticated() : false;
   const municipalities = authenticated ? await getMunicipalityHomeMapAdminRows() : [];

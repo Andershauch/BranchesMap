@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/server/auth";
-import { isValidLocale, type AppLocale } from "@/lib/i18n/config";
+import { isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 
 type LoginPageProps = {
   params: Promise<{
@@ -10,43 +11,6 @@ type LoginPageProps = {
   }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
-
-const loginCopy = {
-  da: {
-    eyebrow: "Fase 2",
-    title: "Log ind",
-    intro: "Log ind for at bruge dine f\u00f8lger og holde styr p\u00e5 kommuner sikkert.",
-    followIntro: "Log ind for at f\u00f8lge denne kommune. Vi bruger din konto til senere at kunne vise opdateringer.",
-    email: "E-mail",
-    password: "Adgangskode",
-    submit: "Log ind",
-    registerPrompt: "Har du ikke en bruger endnu?",
-    registerLink: "Opret bruger",
-    back: "Tilbage til kortet",
-    followBadge: "F\u00f8lg kommune efter login",
-    errors: {
-      missing_fields: "Udfyld b\u00e5de e-mail og adgangskode.",
-      invalid_credentials: "E-mail eller adgangskode er forkert.",
-    },
-  },
-  en: {
-    eyebrow: "Phase 2",
-    title: "Log in",
-    intro: "Log in to use your follows and keep track of municipalities securely.",
-    followIntro: "Log in to follow this municipality. Your account lets us show updates later.",
-    email: "Email",
-    password: "Password",
-    submit: "Log in",
-    registerPrompt: "Do not have an account yet?",
-    registerLink: "Create account",
-    back: "Back to the map",
-    followBadge: "Follow municipality after login",
-    errors: {
-      missing_fields: "Fill in both email and password.",
-      invalid_credentials: "Email or password is incorrect.",
-    },
-  },
-} as const;
 
 function getStringParam(value: string | string[] | undefined) {
   return typeof value === "string" && value ? value : null;
@@ -68,7 +32,8 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   }
 
   const activeLocale = locale as AppLocale;
-  const copy = loginCopy[activeLocale];
+  const isRtl = isRtlLocale(activeLocale);
+  const copy = getDictionarySync(activeLocale).loginPage;
   const user = await getCurrentUser();
   const search = await searchParams;
   const redirectTo = normalizeRedirect(locale, getStringParam(search.redirectTo), `/${locale}/follows`);
@@ -83,7 +48,10 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   const registerHref = `/${locale}/register?redirectTo=${encodeURIComponent(redirectTo)}${followMunicipality ? `&followMunicipality=${encodeURIComponent(followMunicipality)}` : ""}`;
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-4 py-8 text-slate-900 sm:px-6 sm:py-12">
+    <main
+      dir={isRtl ? "rtl" : "ltr"}
+      className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-4 py-8 text-slate-900 sm:px-6 sm:py-12"
+    >
       <div className="mx-auto flex w-full max-w-md flex-col gap-6">
         <Link
           href={`/${locale}`}
@@ -92,7 +60,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
           {copy.back}
         </Link>
 
-        <section className="rounded-[2rem] border border-slate-900/10 bg-white/92 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
+        <section className="rounded-[2rem] border border-slate-900/10 bg-white/92 p-6 text-start shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-8">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">{copy.eyebrow}</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{copy.title}</h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">{followMunicipality ? copy.followIntro : copy.intro}</p>
@@ -121,7 +89,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
                 name="email"
                 required
                 autoComplete="email"
-                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-teal-500"
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-start text-base text-slate-900 outline-none transition focus:border-teal-500"
               />
             </label>
 
@@ -132,7 +100,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
                 name="password"
                 required
                 autoComplete="current-password"
-                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 outline-none transition focus:border-teal-500"
+                className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-start text-base text-slate-900 outline-none transition focus:border-teal-500"
               />
             </label>
 
@@ -145,7 +113,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
           </form>
         </section>
 
-        <section className="rounded-[1.6rem] border border-slate-900/10 bg-white/88 p-5 text-sm text-slate-700 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
+        <section className="rounded-[1.6rem] border border-slate-900/10 bg-white/88 p-5 text-start text-sm text-slate-700 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
           <span>{copy.registerPrompt}</span>{" "}
           <Link href={registerHref} className="font-semibold text-slate-900 underline-offset-4 hover:underline">
             {copy.registerLink}

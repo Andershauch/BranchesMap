@@ -6,36 +6,12 @@ import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { MunicipalityTravelEstimate } from "@/components/home/municipality-travel-estimate";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
-import type { AppLocale } from "@/lib/i18n/config";
+import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { buildMunicipalitySheetProfile } from "@/lib/municipality-presentation";
 
 type SheetMode = "closed" | "preview" | "expanded";
 const sheetEnterDelayMs = 16;
-
-const sheetCopy = {
-  da: {
-    jobsSuffix: "jobs i POC",
-    teaserLabel: "Profil",
-    openProfile: "\u00c5bn kommune",
-    follow: "F\u00f8lg",
-    following: "F\u00f8lger allerede",
-    expand: "Udvid",
-    collapse: "Minim\u00e9r",
-    close: "Luk",
-    swipeHint: "Swipe op for mere",
-  },
-  en: {
-    jobsSuffix: "jobs in the POC",
-    teaserLabel: "Profile",
-    openProfile: "Open municipality",
-    follow: "Follow",
-    following: "Already following",
-    expand: "Expand",
-    collapse: "Collapse",
-    close: "Close",
-    swipeHint: "Swipe up for more",
-  },
-} as const;
 
 function formatCount(locale: AppLocale, value: number) {
   return new Intl.NumberFormat(locale).format(value);
@@ -60,7 +36,8 @@ export function MunicipalitySheet({
   onCollapse: () => void;
   onClose: () => void;
 }) {
-  const copy = sheetCopy[locale];
+  const copy = getDictionarySync(locale).sheet;
+  const isRtl = isRtlLocale(locale);
   const touchStartYRef = useRef<number | null>(null);
   const [isEntered, setIsEntered] = useState(false);
   const isExpanded = mode === "expanded";
@@ -138,6 +115,7 @@ export function MunicipalitySheet({
 
       <section className="pointer-events-none absolute inset-x-0 bottom-0 z-30">
         <div
+          dir={isRtl ? "rtl" : "ltr"}
           className={`pointer-events-auto w-full overflow-hidden rounded-t-[1.8rem] rounded-b-none border-x-0 border-b-0 border-t border-white/72 bg-[color:rgba(255,255,255,0.88)] backdrop-blur-2xl transition-[transform,box-shadow,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform ${
             isExpanded
               ? "shadow-[0_-22px_72px_rgba(15,23,42,0.18),0_-2px_0_rgba(255,255,255,0.44)]"
@@ -187,12 +165,15 @@ export function MunicipalitySheet({
               </div>
 
               <div className="mt-3 flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 text-start">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="truncate text-[1.45rem] font-semibold tracking-tight text-slate-950">
                       {municipality.name}
                     </h2>
-                    <span className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-900/6">
+                    <span
+                      dir="auto"
+                      className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-900/6"
+                    >
                       {formatCount(locale, municipality.totalJobs)} {copy.jobsSuffix}
                     </span>
                   </div>
@@ -236,9 +217,11 @@ export function MunicipalitySheet({
                   >
                     <span className={isExpanded ? "text-[10px]" : "text-[9px]"}>{industry.icon}</span>
                     <span className={isExpanded ? "max-w-[4.6rem] truncate" : "max-w-[4.2rem] truncate"}>
-                      {industry.name}
+                      <span dir="auto">{industry.name}</span>
                     </span>
-                    <span className="text-white/85">{formatCount(locale, industry.jobCount)}</span>
+                    <span dir="auto" className="text-white/85">
+                      {formatCount(locale, industry.jobCount)}
+                    </span>
                   </span>
                 ))}
               </div>
@@ -248,10 +231,10 @@ export function MunicipalitySheet({
                   <MunicipalityTravelEstimate locale={locale} destination={travelDestination} />
 
                   <div className="mt-4 rounded-[1.35rem] bg-white/60 px-4 py-4 ring-1 ring-slate-900/5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    <p className="text-start text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
                       {copy.teaserLabel}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 text-start text-sm leading-6 text-slate-600">
                       {buildMunicipalitySheetProfile(locale, municipality.name, municipality.topIndustries)}
                     </p>
                   </div>

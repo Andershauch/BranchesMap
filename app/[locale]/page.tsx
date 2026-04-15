@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getCurrentUser } from "@/lib/server/auth";
 import {
@@ -34,8 +35,9 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
   }
 
   const currentUser = await getCurrentUser();
-  const [municipalities, search, followedMunicipalitySlugs, updatedMunicipalitySlugs] = await Promise.all([
+  const [municipalities, dictionary, search, followedMunicipalitySlugs, updatedMunicipalitySlugs] = await Promise.all([
     getMunicipalitySummaries(),
+    getDictionary(locale as AppLocale),
     searchParams,
     currentUser ? listFollowedMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
     currentUser ? listUnreadFollowMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
@@ -50,7 +52,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
       <HomeMapExplorer
         municipalities={municipalities}
         locale={locale as AppLocale}
-        ariaLabel={locale === "da" ? "Kort over Sj\u00e6llands kommuner" : "Map of Zealand municipalities"}
+        ariaLabel={dictionary.home.mapAriaLabel}
         initialFocusedSlug={initialFocusedSlug}
         followedMunicipalitySlugs={followedMunicipalitySlugs}
         updatedMunicipalitySlugs={updatedMunicipalitySlugs}

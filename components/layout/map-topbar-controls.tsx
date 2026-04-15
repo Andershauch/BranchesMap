@@ -2,20 +2,8 @@
 
 import { usePathname } from "next/navigation";
 
-import type { AppLocale } from "@/lib/i18n/config";
-
-const uiCopy = {
-  da: {
-    zoomIn: "Zoom ind",
-    zoomOut: "Zoom ud",
-    reset: "Nulstil",
-  },
-  en: {
-    zoomIn: "Zoom in",
-    zoomOut: "Zoom out",
-    reset: "Reset",
-  },
-} as const;
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
 
 const zoomInEvent = "branches-map:zoom-in";
 const zoomOutEvent = "branches-map:zoom-out";
@@ -33,7 +21,8 @@ export function MapTopBarControls({
   displayName: string | null;
 }) {
   const pathname = usePathname();
-  const copy = uiCopy[locale];
+  const copy = getDictionarySync(locale).mapControls;
+  const isRtl = isRtlLocale(locale);
   const isHomeRoute = pathname === `/${locale}` || pathname === `/${locale}/`;
 
   if (!isHomeRoute) {
@@ -42,15 +31,22 @@ export function MapTopBarControls({
     }
 
     return (
-      <div className="hidden max-w-[16rem] truncate rounded-full border border-white/55 bg-white/72 px-4 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] shadow-[0_8px_24px_rgba(15,23,42,0.08)] sm:block">
+      <div
+        className={`hidden max-w-[16rem] truncate rounded-full border border-white/55 bg-white/72 px-4 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] shadow-[0_8px_24px_rgba(15,23,42,0.08)] sm:block ${
+          isRtl ? "text-left" : "text-right"
+        }`}
+      >
         {displayName}
       </div>
     );
   }
 
   return (
-    <div className="flex shrink-0 items-center">
-      <div className="flex h-10 items-center rounded-full border border-white/60 bg-white/72 p-1 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+    <div className={`flex shrink-0 items-center ${isRtl ? "justify-start" : "justify-end"}`}>
+      <div
+        dir="ltr"
+        className="flex h-10 items-center rounded-full border border-white/60 bg-white/72 p-1 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl"
+      >
         <button
           type="button"
           onClick={() => dispatchMapControlEvent(zoomOutEvent)}

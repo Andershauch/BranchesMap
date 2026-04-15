@@ -789,6 +789,107 @@ Anbefalet model:
 
 Appen kan skifte sprog uden layoutbrud eller tekstkaos.
 
+### Status nu - i18n fundament
+
+Fase 3 er nu reelt påbegyndt og har et brugbart fundament:
+
+- locale-strukturen er udvidet til `da`, `en`, `uk`, `ar`, `fa`, `ur`, `pl` og `de`
+- `en` er referencefil for det samlede UI-dictionary
+- RTL kører strukturelt for `ar`, `fa` og `ur`
+- flere centrale sider og komponenter er flyttet over på dictionary-baserede tekster
+
+Det, der stadig mangler for at kunne kalde Fase 3 stabil, er ikke flere sprog i sig selv, men produktpolish omkring sprogene:
+
+- RTL-gennemgang af konkrete komponenter og spacing
+- en lettere og mere tydelig sprogvælger i selve appoplevelsen
+- fuld oprydning af de sidste hårdkodede brugerrettede tekster
+
+### Næste sprint - Sprog, RTL og tilgængelighed
+
+1. RTL-polish
+   Gennemgå de konkrete views hvor blanding af LTR/RTL, tal, badges og links stadig kan bryde rytmen visuelt.
+2. Let sprogvælger
+   Gør sprogvælgeren enklere, hurtigere og mere tydelig i topbar/menu, så skift af sprog føles som en primær appfunktion.
+3. Fuld dictionary-dækning
+   Flyt de sidste brugerrettede tekster ud i `en.ts` og lad øvrige sprog arve eller overskrive derfra.
+4. Dynamiske datatekster
+   Forbered oversættelse af importerede jobtitler og branchenære datatekster som et separat datalag, ikke som del af basis-UI.
+
+### Planlagt udvidelse - oversatte importtitler og oplæsning
+
+Dette spor er besluttet, men kommer efter RTL- og sprogvælgerarbejdet.
+
+#### Spor A - oversatte importtitler
+
+1. Udvid datamodellen
+   Gem original Jobindsats-titel og oversættelser pr. aktivt sprog.
+2. Oversæt ved import
+   Kør oversættelse på nye eller ændrede titler i det daglige importflow og gem resultaterne.
+3. Frontend fallback
+   Vis oversat titel hvis den findes for aktivt locale, ellers original titel.
+
+#### Spor B - oplæsningsfunktion
+
+1. Definér oplæsningsmanuskript
+   Byg en kort, struktureret tekst pr. kommune i stedet for at læse hele UI'et op.
+2. Browserbaseret V1
+   Tilføj en enkel `Læs op`-funktion med browserens indbyggede tale-API.
+3. Senere TTS-opgradering
+   Hvis kvaliteten ikke er god nok, opgraderes til rigtig TTS med caching pr. kommune og sprog.
+
+### Konkrete UI-opgaver - RTL og sprogvælger
+
+#### Del A - RTL-polish
+
+1. Topbar og menu
+   Gennemgå topbar, menu-knap, auth-status og sprogområde, så rækkefølge, spacing og alignment ser naturlig ud i `ar`, `fa` og `ur`.
+2. Kommune-sheet på kortet
+   Test preview- og expanded-state med RTL-tekster, badges, jobtal og CTA-knapper, så intet hopper eller bryder linjer grimt.
+3. Kommunesiden
+   Gennemgå overskrifter, branchekort, titel-links og pills med blandet tekstretning, tal og latinske jobtitler.
+4. Form-views
+   Test login, register, follows og saved searches i RTL, særligt label/input-forhold, fejltekster og knapplacering.
+5. Blandede tekstretninger
+   Indfør klare regler for hvor `dir`, `text-align` og evt. isolering af tal/latinske titler skal bruges for at undgå rodet rendering.
+
+#### Del B - Let og enkel sprogvælger
+
+1. Fast placering
+   Beslut én tydelig placering for sprogvælgeren som virker både på mobil og desktop, uden at den føles gemt væk i admin-agtig UI.
+2. Enkel model
+   Brug en let liste- eller sheet-baseret vælger med:
+   - aktivt sprog
+   - lokale navn på sproget
+   - hurtig skift uden ekstra trin
+3. Ens adfærd
+   Sørg for at topbar, menu og evt. auth-relaterede views ikke har forskellige mønstre for sprogswitch.
+4. Persistens
+   Behold valgt locale konsekvent ved navigation, login/register og tilbage til kortet.
+5. QA på lange sproglabels
+   Test især `ukrainsk`, `arabisk`, `farsi`, `urdu` og `tysk`, så listen ikke bryder layout på små skærme.
+
+#### Del C - Definition of Done for dette UI-sprint
+
+- RTL-sprog kan bruges i topbar, menu, kommune-sheet og kommuneside uden tydelige layoutbrud
+- sprogvælgeren er hurtig at finde og bruge på mobil
+- valgt sprog bevares stabilt gennem navigation og auth-flows
+- blanding af lokale tekster, tal og eksterne jobtitler er læsbar i både LTR og RTL
+
+#### Status nu - RTL og sprogvælger
+
+Dette sprint er nu i praksis gennemført som første UI-polish-pass:
+
+- topbar og menu er justeret til RTL, inklusive drawer-retning og mere neutral tekstjustering
+- kommune-sheet og kommuneside er gjort mere robuste ved blandet RTL/LTR-indhold
+- login, register, follows og saved searches er justeret til RTL-flow og bedre locale-formatering
+- sprogvælgeren er flyttet fra menuen op i topbaren og forenklet til en kompakt dropdown
+
+Det næste arbejde i dette spor er derfor ikke mere grundlæggende RTL-støtte, men:
+
+- konkret visuel QA på rigtige devices og skærmstørrelser
+- evt. finpudsning af spacing og typografi i enkelte sprog
+- derefter overgang til rigtig auth og senere oversatte importtitler
+
 ## Fase 4 - Bruger, login og gemte søgninger
 
 **Mål:** Introducer private brugerfunktioner på en sikker måde.
@@ -821,6 +922,27 @@ Appen kan skifte sprog uden layoutbrud eller tekstkaos.
 ### Exit-kriterium
 
 En bruger kan logge ind sikkert og gemme private søgninger uden at se andres data.
+
+### Status nu - auth er midlertidig og skal gøres rigtig
+
+Der findes nu et fungerende POC-loginflow, men auth-sporet skal stadig hæves til et rigtigt produktionsniveau.
+
+Det betyder konkret:
+
+- nuværende login/register-flow er godt nok til POC og intern validering
+- roller, session-håndtering og beskyttelse af admin-adgang skal gøres mere robuste
+- auth skal tænkes sammen med follows, saved searches, admin og senere notifikationer
+
+### Næste sprint - rigtig auth
+
+1. Vælg endelig auth-retning
+   Beslut om den rigtige løsning er Auth.js eller tilsvarende gennemprøvet auth-lag.
+2. Hærd session-modellen
+   Gennemgå cookies, session-udløb, server-side checks og beskyttelse af følsomme routes.
+3. Beskyt admin-sporet rigtigt
+   Flyt admin-adgang væk fra midlertidige mekanismer og ind bag rigtig authorization.
+4. Ryd auth-UI og flows op
+   Gør login, register og account-status mere sammenhængende på tværs af locale, mobil og desktop.
 
 ## Fase 4A - Følg kommune og in-app notifikationer
 

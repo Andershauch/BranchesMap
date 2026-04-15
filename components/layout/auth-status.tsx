@@ -1,32 +1,17 @@
 import Link from "next/link";
 
+import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/server/auth";
-import type { AppLocale } from "@/lib/i18n/config";
-
-const authStatusCopy = {
-  da: {
-    signedInAs: "Logget ind som",
-    savedSearches: "Gemte s\u00f8gninger",
-    login: "Log ind",
-    register: "Opret bruger",
-    logout: "Log ud",
-  },
-  en: {
-    signedInAs: "Signed in as",
-    savedSearches: "Saved searches",
-    login: "Log in",
-    register: "Create account",
-    logout: "Log out",
-  },
-} as const;
 
 export async function AuthStatus({ locale }: { locale: AppLocale }) {
   const user = await getCurrentUser();
-  const copy = authStatusCopy[locale];
+  const copy = getDictionarySync(locale).authStatus;
+  const isRtl = isRtlLocale(locale);
 
   if (!user) {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-2">
+      <div className={`flex flex-wrap items-center gap-2 ${isRtl ? "justify-start" : "justify-end"}`}>
         <Link
           href={`/${locale}/login`}
           className="inline-flex rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
@@ -46,7 +31,7 @@ export async function AuthStatus({ locale }: { locale: AppLocale }) {
   const displayName = user.name?.trim() ? user.name : user.email;
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className={`flex flex-wrap items-center gap-2 ${isRtl ? "justify-start" : "justify-end"}`}>
       <div className="hidden max-w-[18rem] items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm sm:inline-flex">
         <span className="text-slate-500">{copy.signedInAs}</span>
         <span className="truncate font-medium text-slate-900">{displayName}</span>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { locales, type AppLocale } from "@/lib/i18n/config";
 
@@ -35,30 +36,72 @@ export function LocaleSwitcher({ currentLocale, labels, title }: LocaleSwitcherP
   const pathname = usePathname() || `/${currentLocale}`;
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   return (
-    <div
-      className="inline-flex items-center gap-1 rounded-full bg-[var(--md-sys-color-surface-container)] p-1"
-      aria-label={title}
-    >
-      {locales.map((locale) => {
-        const href = buildLocaleHref(pathname, locale, queryString);
-        const active = locale === currentLocale;
+    <div ref={wrapperRef} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-label={title}
+        aria-expanded={open}
+        className="inline-flex h-10 items-center justify-center rounded-full border border-white/60 bg-white/72 px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface)] shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition hover:bg-white/84"
+      >
+        {currentLocale}
+      </button>
 
-        return (
-          <Link
-            key={locale}
-            href={href}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              active
-                ? "bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-[0_1px_2px_var(--md-sys-color-shadow)]"
-                : "text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container-high)] hover:text-[var(--md-sys-color-on-surface)]"
-            }`}
-          >
-            {labels[locale]}
-          </Link>
-        );
-      })}
+      {open ? (
+        <div className="absolute top-[calc(100%+0.5rem)] end-0 z-[120] min-w-[12rem] overflow-hidden rounded-[1.2rem] border border-white/60 bg-[color:rgba(255,255,255,0.92)] p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.16)] backdrop-blur-2xl">
+          <p className="px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
+            {title}
+          </p>
+          <div className="grid gap-1">
+            {locales.map((locale) => {
+              const href = buildLocaleHref(pathname, locale, queryString);
+              const active = locale === currentLocale;
+
+              return (
+                <Link
+                  key={locale}
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center justify-between rounded-[0.95rem] px-3 py-2.5 text-sm transition ${
+                    active
+                      ? "bg-[var(--md-sys-color-primary-container)] font-semibold text-[var(--md-sys-color-on-primary-container)]"
+                      : "text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)]"
+                  }`}
+                >
+                  <span>{labels[locale]}</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-70">{locale}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

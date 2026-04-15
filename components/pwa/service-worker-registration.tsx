@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { isValidLocale, type AppLocale } from "@/lib/i18n/config";
 
 const serviceWorkerPath = "/sw.js";
 const updateCheckIntervalMs = 15 * 60 * 1000;
-
-type SupportedLocale = "da" | "en";
 
 const pwaCopy = {
   da: {
@@ -27,14 +27,15 @@ const pwaCopy = {
     updating: "Refreshing...",
   },
 } as const;
+void pwaCopy;
 
-function detectLocale(): SupportedLocale {
+function detectLocale(): AppLocale {
   if (typeof window === "undefined") {
     return "da";
   }
 
   const [, maybeLocale] = window.location.pathname.split("/");
-  return maybeLocale === "en" ? "en" : "da";
+  return isValidLocale(maybeLocale) ? maybeLocale : "da";
 }
 
 function PwaStatusBanner({
@@ -45,14 +46,14 @@ function PwaStatusBanner({
   onApplyUpdate,
   onDismissUpdate,
 }: {
-  locale: SupportedLocale;
+  locale: AppLocale;
   isOffline: boolean;
   updateReady: boolean;
   isApplyingUpdate: boolean;
   onApplyUpdate: () => void;
   onDismissUpdate: () => void;
 }) {
-  const copy = pwaCopy[locale];
+  const copy = getDictionarySync(locale).pwa;
 
   if (!isOffline && !updateReady) {
     return null;
@@ -102,7 +103,7 @@ function PwaStatusBanner({
 }
 
 export function ServiceWorkerRegistration() {
-  const [locale] = useState<SupportedLocale>(detectLocale);
+  const [locale] = useState<AppLocale>(detectLocale);
   const [isOffline, setIsOffline] = useState(
     () => (typeof window !== "undefined" ? !window.navigator.onLine : false),
   );

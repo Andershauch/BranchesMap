@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { prisma } from "@/lib/server/prisma";
 
 export type SavedSearchListItem = {
@@ -13,7 +14,7 @@ export type SavedSearchListItem = {
 };
 
 function buildMunicipalitySearchTitle(name: string, locale: string) {
-  return locale === "da" ? `${name} \u00b7 brancher og jobs` : `${name} \u00b7 industries and jobs`;
+  return getDictionarySync(locale).titles.savedSearch.replace("{municipality}", name);
 }
 
 export async function saveMunicipalitySearch({

@@ -1,0 +1,233 @@
+export type Dictionary = {
+  meta: {
+    title: string;
+    description: string;
+  };
+  header: {
+    appName: string;
+    appTagline: string;
+    localeLabel: string;
+  };
+  locales: {
+    da: string;
+    en: string;
+    uk: string;
+    ar: string;
+    fa: string;
+    ur: string;
+    pl: string;
+    de: string;
+  };
+  home: {
+    kicker: string;
+    title: string;
+    intro: string;
+    municipalitiesBadge: string;
+    boundariesBadge: string;
+    geometryBadge: string;
+    utf8Action: string;
+    mapTitle: string;
+    mapDescription: string;
+    mapNote: string;
+    mapAriaLabel: string;
+  };
+  municipality: {
+    backToMap: string;
+    kicker: string;
+    pocStatusTitle: string;
+    pocStatusBody: string;
+    municipalityCode: string;
+  };
+  municipalityPage: {
+    following: string;
+    followMunicipality: string;
+    viewFollowing: string;
+    followCreated: string;
+    followExists: string;
+    followError: string;
+    representativeTitlesPrefix: string;
+    sheetProfileEmpty: string;
+    sheetProfileSummary: string;
+    topIndustriesHeading: string;
+    additionalIndustriesHeading: string;
+    pocStatusImportedFull: string;
+    pocStatusImportedTotalOnly: string;
+    pocStatusFallback: string;
+  };
+  labels: {
+    demoJobs: string;
+    estimatedRoles: string;
+    sampleJobsInIndustry: string;
+  };
+  industries: {
+    health: string;
+    tech: string;
+    build: string;
+    logistics: string;
+    education: string;
+    tourism: string;
+    food: string;
+  };
+  menu: {
+    menu: string;
+    close: string;
+    home: string;
+    follows: string;
+    admin: string;
+    login: string;
+    register: string;
+    logout: string;
+    signedInAs: string;
+    language: string;
+    navigation: string;
+    install: string;
+    installReady: string;
+    installHint: string;
+    installed: string;
+  };
+  authStatus: {
+    signedInAs: string;
+    savedSearches: string;
+    login: string;
+    register: string;
+    logout: string;
+  };
+  mapControls: {
+    zoomIn: string;
+    zoomOut: string;
+    reset: string;
+  };
+  pwa: {
+    offlineTitle: string;
+    offlineBody: string;
+    updateTitle: string;
+    updateBody: string;
+    updateAction: string;
+    updateLater: string;
+    updating: string;
+  };
+  sheet: {
+    jobsSuffix: string;
+    teaserLabel: string;
+    openProfile: string;
+    follow: string;
+    following: string;
+    expand: string;
+    collapse: string;
+    close: string;
+    swipeHint: string;
+  };
+  travel: {
+    title: string;
+    idle: string;
+    loading: string;
+    unsupported: string;
+    denied: string;
+    error: string;
+    button: string;
+    retry: string;
+    approx: string;
+    minutes: string;
+    note: string;
+  };
+  followsPage: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    emptyTitle: string;
+    emptyBody: string;
+    goToMap: string;
+    openMunicipality: string;
+    remove: string;
+    markSeen: string;
+    created: string;
+    checked: string;
+    notChecked: string;
+    newUpdate: string;
+    updateFound: string;
+    updateSeen: string;
+    signedInAs: string;
+    active: string;
+    inactive: string;
+    municipalityFallback: string;
+  };
+  loginPage: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    followIntro: string;
+    email: string;
+    password: string;
+    submit: string;
+    registerPrompt: string;
+    registerLink: string;
+    back: string;
+    followBadge: string;
+    errors: {
+      missing_fields: string;
+      invalid_credentials: string;
+    };
+  };
+  registerPage: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    followIntro: string;
+    name: string;
+    email: string;
+    password: string;
+    passwordHint: string;
+    submit: string;
+    loginPrompt: string;
+    loginLink: string;
+    back: string;
+    followBadge: string;
+    errors: {
+      missing_fields: string;
+      email_taken: string;
+      weak_password: string;
+      unknown: string;
+    };
+  };
+  savedSearchesPage: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    emptyTitle: string;
+    emptyBody: string;
+    goToMap: string;
+    openMunicipality: string;
+    remove: string;
+    created: string;
+    signedInAs: string;
+    municipalityFallback: string;
+  };
+  adminHomeMap: {
+    title: string;
+    intro: string;
+    back: string;
+    loginTitle: string;
+    loginBody: string;
+    loginButton: string;
+    loginPlaceholder: string;
+    configuredMissing: string;
+    signedInAs: string;
+    signOut: string;
+    save: string;
+    visible: string;
+    priority: string;
+    labelMode: string;
+    region: string;
+    active: string;
+    yes: string;
+    no: string;
+    nameOnly: string;
+    nameIcons: string;
+    auto: string;
+    visibleCount: string;
+  };
+  titles: {
+    savedSearch: string;
+    followSearch: string;
+  };
+};

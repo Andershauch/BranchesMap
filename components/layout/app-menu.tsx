@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { LocaleSwitcher } from "@/components/layout/locale-switcher";
-import type { AppLocale } from "@/lib/i18n/config";
+import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
+import { getDictionarySync } from "@/lib/i18n/dictionaries";
 
 type MenuUser = {
   email: string;
@@ -67,13 +67,14 @@ const menuCopy = {
     installed: "The app is already installed or running in standalone.",
   },
 } as const;
+void menuCopy;
 
 function MenuLink({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
   return (
     <Link
       href={href}
       onClick={onClick}
-      className="block rounded-xl px-3 py-3 text-base font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container)]"
+      className="block rounded-xl px-3 py-3 text-start text-base font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container)]"
     >
       {label}
     </Link>
@@ -83,18 +84,15 @@ function MenuLink({ href, label, onClick }: { href: string; label: string; onCli
 export function AppMenu({
   locale,
   user,
-  localeLabels,
-  localeTitle,
 }: {
   locale: AppLocale;
   user: MenuUser | null;
-  localeLabels: Record<AppLocale, string>;
-  localeTitle: string;
 }) {
   const [open, setOpen] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(detectStandaloneMode);
-  const copy = menuCopy[locale];
+  const copy = getDictionarySync(locale).menu;
+  const isRtl = isRtlLocale(locale);
   const displayName = user?.name?.trim() ? user.name : user?.email ?? "";
 
   useEffect(() => {
@@ -160,7 +158,7 @@ export function AppMenu({
   }
 
   const drawer = (
-    <div className="fixed inset-0 z-[100]">
+    <div className="fixed inset-0 z-[100]" dir={isRtl ? "rtl" : "ltr"}>
       <button
         type="button"
         aria-label={copy.close}
@@ -168,16 +166,22 @@ export function AppMenu({
         className="absolute inset-0 bg-slate-950/48 backdrop-blur-[2px]"
       />
 
-      <aside className="absolute inset-y-0 left-0 z-[101] flex h-full w-[min(18.5rem,calc(100vw-1.5rem))] flex-col overflow-y-auto border-r border-white/65 bg-[color:rgba(255,255,255,0.86)] px-4 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.22)] backdrop-blur-2xl">
+      <aside
+        className={`absolute inset-y-0 z-[101] flex h-full w-[min(18.5rem,calc(100vw-1.5rem))] flex-col overflow-y-auto bg-[color:rgba(255,255,255,0.86)] px-4 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.22)] backdrop-blur-2xl ${
+          isRtl ? "right-0 border-l" : "left-0 border-r"
+        } border-white/65`}
+      >
         <div className="flex items-center justify-between gap-4 pb-4">
-          <div>
+          <div className="min-w-0 text-start">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--md-sys-color-primary)]">
               BranchesMap
             </p>
             {user ? (
               <p className="mt-1 text-sm text-[var(--md-sys-color-on-surface-variant)]">
                 {copy.signedInAs}
-                <span className="ml-1 font-medium text-[var(--md-sys-color-on-surface)]">{displayName}</span>
+                <span className={`${isRtl ? "mr-1" : "ml-1"} font-medium text-[var(--md-sys-color-on-surface)]`}>
+                  {displayName}
+                </span>
               </p>
             ) : null}
           </div>
@@ -192,7 +196,7 @@ export function AppMenu({
         </div>
 
         <div className="border-t border-[var(--md-sys-color-outline-variant)] pt-4">
-          <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
+          <p className="px-3 text-start text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
             {copy.navigation}
           </p>
           <nav className="mt-2 grid gap-1">
@@ -203,21 +207,12 @@ export function AppMenu({
         </div>
 
         <div className="mt-6 border-t border-[var(--md-sys-color-outline-variant)] pt-4">
-          <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
-            {copy.language}
-          </p>
-          <div className="mt-3 px-1">
-            <LocaleSwitcher currentLocale={locale} labels={localeLabels} title={localeTitle} />
-          </div>
-        </div>
-
-        <div className="mt-6 border-t border-[var(--md-sys-color-outline-variant)] pt-4">
-          <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
+          <p className="px-3 text-start text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface-variant)]">
             PWA
           </p>
           <div className="mt-3 px-1">
             {isStandalone ? (
-              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-sm text-[var(--md-sys-color-on-surface-variant)]">
+              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-start text-sm text-[var(--md-sys-color-on-surface-variant)]">
                 {copy.installed}
               </p>
             ) : installPromptEvent ? (
@@ -229,12 +224,12 @@ export function AppMenu({
                 >
                   {copy.install}
                 </button>
-                <p className="px-3 text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
+                <p className="px-3 text-start text-xs leading-5 text-[var(--md-sys-color-on-surface-variant)]">
                   {copy.installReady}
                 </p>
               </div>
             ) : (
-              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-start text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
                 {copy.installHint}
               </p>
             )}

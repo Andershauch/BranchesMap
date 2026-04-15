@@ -3,8 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AppMenu } from "@/components/layout/app-menu";
+import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { MapTopBarControls } from "@/components/layout/map-topbar-controls";
-import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getCurrentUser } from "@/lib/server/auth";
 
@@ -38,6 +39,12 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
       languages: {
         da: "/da",
         en: "/en",
+        uk: "/uk",
+        ar: "/ar",
+        fa: "/fa",
+        ur: "/ur",
+        pl: "/pl",
+        de: "/de",
       },
     },
   };
@@ -53,13 +60,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const activeLocale = locale as AppLocale;
   const [dictionary, user] = await Promise.all([getDictionary(locale), getCurrentUser()]);
   const displayName = user?.name?.trim() ? user.name : user?.email ?? null;
-  const supportingText =
-    activeLocale === "da"
-      ? "Mobile-first kort og kommunedata for Sj\u00e6lland"
-      : "Mobile-first map and municipality insights for Zealand";
+  const supportingText = dictionary.header.appTagline;
+  const direction = isRtlLocale(activeLocale) ? "rtl" : "ltr";
 
   return (
-    <div lang={locale} className="flex min-h-screen flex-col text-[var(--md-sys-color-on-surface)]">
+    <div lang={locale} dir={direction} className="flex min-h-screen flex-col text-[var(--md-sys-color-on-surface)]">
       <header
         className="sticky top-0 z-50 h-[var(--app-header-height)] pt-[var(--safe-top)]"
       >
@@ -68,8 +73,6 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             <AppMenu
               locale={activeLocale}
               user={user ? { email: user.email, name: user.name } : null}
-              localeLabels={dictionary.locales}
-              localeTitle={dictionary.header.localeLabel}
             />
             <Link href={`/${locale}`} className="min-w-0">
               <p className="truncate text-[0.94rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
@@ -81,7 +84,14 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
             </Link>
           </div>
 
-          <MapTopBarControls locale={activeLocale} displayName={displayName} />
+          <div className="flex shrink-0 items-center gap-2">
+            <LocaleSwitcher
+              currentLocale={activeLocale}
+              labels={dictionary.locales}
+              title={dictionary.header.localeLabel}
+            />
+            <MapTopBarControls locale={activeLocale} displayName={displayName} />
+          </div>
         </div>
       </header>
 
