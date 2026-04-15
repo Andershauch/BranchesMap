@@ -7,6 +7,7 @@ export type MunicipalityTotalJobsSource =
   | "jobindsats_y25i07_import";
 
 export type MunicipalityTopIndustriesSource = "mock_or_db" | "mock_or_db_plus_live_estimate";
+export type MunicipalityImportedTopIndustriesSource = "jobindsats_y25i07_category_mapping";
 
 export const JOBINDSATS_MONTHLY_PERIOD_PATTERN = /^\d{4}M\d{2}$/;
 

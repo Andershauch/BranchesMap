@@ -43,6 +43,7 @@ model Industry {
   createdAt         DateTime                   @default(now())
   updatedAt         DateTime                   @updatedAt
   municipalityStats MunicipalityIndustryStat[]
+  jobSourceCategories MunicipalityJobSourceCategory[]
   jobs              Job[]
   savedSearches     SavedSearch[]
   searchFollows     SearchFollow[]
@@ -116,11 +117,28 @@ model MunicipalityJobSourceSnapshot {
   updatedAt               DateTime                       @updatedAt
   municipality            Municipality                   @relation(fields: [municipalityId], references: [id], onDelete: Cascade)
   importRun               ImportRun?                     @relation(fields: [importRunId], references: [id], onDelete: SetNull)
+  categories              MunicipalityJobSourceCategory[]
   topTitles               MunicipalityJobSourceTopTitle[]
 
   @@unique([municipalityId, source, sourceTable, period])
   @@index([municipalityId, source, sourceTable, period])
   @@index([source, sourceTable, period])
+}
+
+model MunicipalityJobSourceCategory {
+  id            String                       @id @default(cuid())
+  snapshotId    String
+  industryId    String
+  rank          Int
+  openPositions Int
+  createdAt     DateTime                     @default(now())
+  snapshot      MunicipalityJobSourceSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  industry      Industry                     @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@unique([snapshotId, industryId])
+  @@unique([snapshotId, rank])
+  @@index([snapshotId, openPositions])
+  @@index([industryId])
 }
 
 model MunicipalityJobSourceTopTitle {

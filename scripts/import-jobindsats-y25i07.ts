@@ -15,6 +15,10 @@ import {
   getLatestMonthlyJobindsatsPeriod,
   normalizeJobindsatsText,
 } from "../lib/server/jobindsats-imports";
+import {
+  mapJobindsatsTitleToIndustryCode,
+  type ProductIndustryCode,
+} from "../lib/server/jobindsats-category-mapping";
 
 const IMPORT_OUTPUT_DIR = path.join(process.cwd(), "_tmp_jobindsats", "imports", JOBINDSATS_OPEN_POSITIONS_TABLE.toLowerCase());
 const DISCOVERY_SCRIPT_PATH = path.join(process.cwd(), "scripts", "jobindsats-discovery.ps1");
@@ -59,6 +63,11 @@ type MunicipalityImportPayload = {
     rank: number;
     titleKey: string;
     titleLabel: string;
+    openPositions: number;
+  }>;
+  categoryCounts: Array<{
+    industryId: string;
+    rank: number;
     openPositions: number;
   }>;
 };
@@ -198,6 +207,22 @@ async function getMunicipalityScope(prisma: PrismaClient) {
   }) as Promise<MunicipalityScopeRow[]>;
 }
 
+async function getIndustryMap(prisma: PrismaClient) {
+  const industries = await prisma.industry.findMany({
+    where: {
+      code: {
+        in: ["health", "tech", "build", "logistics", "education", "tourism", "food"],
+      },
+    },
+    select: {
+      id: true,
+      code: true,
+    },
+  });
+
+  return new Map(industries.map((industry) => [industry.code, industry.id]));
+}
+
 function resolveLatestPeriod(periodArg: string | null) {
   const metadataOutputName = `table-${JOBINDSATS_OPEN_POSITIONS_TABLE.toLowerCase()}-import`;
 
@@ -280,6 +305,7 @@ function buildMunicipalityPayload(
   totalResponse: JobindsatsDataResponse,
   titleResponse: JobindsatsDataResponse,
   topTitleLimit: number,
+  industryMap: Map<string, string>,
 ): MunicipalityImportPayload {
   const totalRows = parseDataRows(totalResponse);
   const totalRow = totalRows.find((row) => row.area === municipality.name && row.period === period);
@@ -307,6 +333,47 @@ function buildMunicipalityPayload(
       openPositions: row.totalOpenPositions,
     }));
 
+  const categoryTotals = new Map<ProductIndustryCode, number>();
+
+  for (const row of parseDataRows(titleResponse)) {
+    if (row.area !== municipality.name || row.period !== period || !row.titleLabel) {
+      continue;
+    }
+
+    if (row.titleLabel === "Stillingsbetegnelse i alt" || row.totalOpenPositions <= 0) {
+      continue;
+    }
+
+    const industryCode = mapJobindsatsTitleToIndustryCode(row.titleLabel);
+
+    if (!industryCode) {
+      continue;
+    }
+
+    categoryTotals.set(industryCode, (categoryTotals.get(industryCode) ?? 0) + row.totalOpenPositions);
+  }
+
+  const categoryCounts = [...categoryTotals.entries()]
+    .map(([industryCode, openPositions]) => ({
+      industryCode,
+      industryId: industryMap.get(industryCode) ?? null,
+      openPositions,
+    }))
+    .filter((entry): entry is { industryCode: ProductIndustryCode; industryId: string; openPositions: number } => Boolean(entry.industryId))
+    .sort((left, right) => {
+      if (left.openPositions !== right.openPositions) {
+        return right.openPositions - left.openPositions;
+      }
+
+      return left.industryCode.localeCompare(right.industryCode, "en");
+    })
+    .slice(0, 3)
+    .map((entry, index) => ({
+      industryId: entry.industryId,
+      rank: index + 1,
+      openPositions: entry.openPositions,
+    }));
+
   return {
     municipalityId: municipality.id,
     municipalitySlug: municipality.slug,
@@ -316,6 +383,7 @@ function buildMunicipalityPayload(
     dailyAverageOpenPositions: totalRow.dailyAverageOpenPositions,
     newlyPostedPositions: totalRow.newlyPostedPositions,
     topTitles: titleRows,
+    categoryCounts,
   };
 }
 
@@ -338,7 +406,7 @@ async function persistImport(
 
   try {
     for (const payload of payloads) {
-      const snapshot = await prisma.municipalityJobSourceSnapshot.upsert({
+      await prisma.municipalityJobSourceSnapshot.upsert({
         where: {
           municipalityId_source_sourceTable_period: {
             municipalityId: payload.municipalityId,
@@ -353,6 +421,27 @@ async function persistImport(
           dailyAverageOpenPositions: payload.dailyAverageOpenPositions,
           newlyPostedPositions: payload.newlyPostedPositions,
           fetchedAt: new Date(),
+          topTitles: {
+            deleteMany: {},
+            createMany: {
+              data: payload.topTitles.map((title) => ({
+                rank: title.rank,
+                titleKey: title.titleKey,
+                titleLabel: title.titleLabel,
+                openPositions: title.openPositions,
+              })),
+            },
+          },
+          categories: {
+            deleteMany: {},
+            createMany: {
+              data: payload.categoryCounts.map((entry) => ({
+                industryId: entry.industryId,
+                rank: entry.rank,
+                openPositions: entry.openPositions,
+              })),
+            },
+          },
         },
         create: {
           municipalityId: payload.municipalityId,
@@ -364,26 +453,27 @@ async function persistImport(
           dailyAverageOpenPositions: payload.dailyAverageOpenPositions,
           newlyPostedPositions: payload.newlyPostedPositions,
           fetchedAt: new Date(),
+          topTitles: {
+            createMany: {
+              data: payload.topTitles.map((title) => ({
+                rank: title.rank,
+                titleKey: title.titleKey,
+                titleLabel: title.titleLabel,
+                openPositions: title.openPositions,
+              })),
+            },
+          },
+          categories: {
+            createMany: {
+              data: payload.categoryCounts.map((entry) => ({
+                industryId: entry.industryId,
+                rank: entry.rank,
+                openPositions: entry.openPositions,
+              })),
+            },
+          },
         },
       });
-
-      await prisma.municipalityJobSourceTopTitle.deleteMany({
-        where: {
-          snapshotId: snapshot.id,
-        },
-      });
-
-      if (payload.topTitles.length > 0) {
-        await prisma.municipalityJobSourceTopTitle.createMany({
-          data: payload.topTitles.map((title) => ({
-            snapshotId: snapshot.id,
-            rank: title.rank,
-            titleKey: title.titleKey,
-            titleLabel: title.titleLabel,
-            openPositions: title.openPositions,
-          })),
-        });
-      }
     }
 
     await prisma.importRun.update({
@@ -417,6 +507,7 @@ async function main() {
   try {
     const { periodArg, topTitleLimit } = parseArgs();
     const municipalities = await getMunicipalityScope(prisma);
+    const industryMap = await getIndustryMap(prisma);
 
     if (municipalities.length === 0) {
       throw new Error("No active municipalities found. Seed the database before importing Jobindsats data.");
@@ -431,7 +522,9 @@ async function main() {
       const totalResponse = fetchMunicipalityTotals(period, municipality);
       const titleResponse = fetchMunicipalityTitles(period, municipality);
 
-      payloads.push(buildMunicipalityPayload(municipality, period, totalResponse, titleResponse, topTitleLimit));
+      payloads.push(
+        buildMunicipalityPayload(municipality, period, totalResponse, titleResponse, topTitleLimit, industryMap),
+      );
     }
 
     await persistImport(prisma, period, payloads);
