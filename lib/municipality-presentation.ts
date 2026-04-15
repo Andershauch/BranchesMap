@@ -90,6 +90,15 @@ export function buildJobnetIndustrySearchUrl(
   industryName: string,
   titleName?: string | null,
 ) {
-  const query = [titleName, industryName, municipalityName].filter(Boolean).join(" ");
-  return `https://job.jobnet.dk/CV/FindWork?q=${encodeURIComponent(query)}`;
+  const normalizedMunicipality = municipalityName.trim();
+  const searchTerms = [
+    normalizedMunicipality.toLocaleLowerCase("da-DK"),
+    titleName?.trim(),
+    industryName.trim(),
+    normalizedMunicipality,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return `https://jobnet.dk/find-job?searchString=${encodeURIComponent(searchTerms)}`;
 }
