@@ -5,9 +5,7 @@ import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/muni
 import {
   formatEstimatedRolesLabel,
   formatNumber,
-  formatSampleJobsLabel,
   getIndustryLabel,
-  getLocalizedText,
 } from "@/lib/i18n/format";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
@@ -247,62 +245,6 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
               </a>
             );
           })}
-        </section>
-
-        <section className="grid gap-4 sm:gap-5">
-          {municipality.jobsByIndustry.map(({ industry, jobs }) => (
-            <article
-              key={`${municipality.slug}-${industry.slug}-jobs`}
-              className="rounded-[1.75rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_4px_16px_var(--md-sys-color-shadow)] sm:p-6"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <span
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-full text-xl text-white"
-                    style={{ backgroundColor: industry.accentColor }}
-                  >
-                    {industry.icon}
-                  </span>
-                  <div>
-                    <h2 className="text-xl font-semibold text-[var(--md-sys-color-on-surface)]">
-                      {getIndustryLabel(dictionary, industry.code, industry.name)}
-                    </h2>
-                    <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                      {formatSampleJobsLabel(activeLocale, dictionary, jobs.length)}
-                    </p>
-                  </div>
-                </div>
-                <span className="rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                  {dictionary.municipality.municipalityCode}: {municipality.code}
-                </span>
-              </div>
-
-              <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                {jobs.map((job) => (
-                  <article
-                    key={job.id}
-                    className="rounded-[1.4rem] bg-[var(--md-sys-color-surface-container-high)] p-4 text-[var(--md-sys-color-on-surface)]"
-                  >
-                    <h3 className="text-base font-semibold">{getLocalizedText(job.title, activeLocale)}</h3>
-                    <p className="mt-2 text-sm font-medium text-[var(--md-sys-color-on-surface-variant)]">
-                      {getLocalizedText(job.employerName, activeLocale)}
-                    </p>
-                    <p className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                      {getLocalizedText(job.summary, activeLocale)}
-                    </p>
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--md-sys-color-on-surface-variant)]">
-                      <span className="rounded-full bg-[var(--md-sys-color-surface-container-low)] px-3 py-1.5">
-                        {getLocalizedText(job.locationLabel, activeLocale)}
-                      </span>
-                      <span className="rounded-full bg-[var(--md-sys-color-surface-container-low)] px-3 py-1.5">
-                        {activeLocale.toUpperCase()}
-                      </span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </article>
-          ))}
         </section>
       </div>
     </main>

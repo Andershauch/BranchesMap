@@ -367,7 +367,7 @@ function buildMunicipalityPayload(
 
       return left.industryCode.localeCompare(right.industryCode, "en");
     })
-    .slice(0, 3)
+    .slice(0, 10)
     .map((entry, index) => ({
       industryId: entry.industryId,
       rank: index + 1,
