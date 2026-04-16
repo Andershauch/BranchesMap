@@ -47,23 +47,26 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
     notFound();
   }
 
-  const currentUser = await getCurrentUser();
-  if (currentUser) {
-    await markMunicipalityFollowUpdatesSeen({ userId: currentUser.id, municipalitySlug: slug });
-  }
-
-  const [municipality, dictionary, search, searchState] = await Promise.all([
+  const currentUserPromise = getCurrentUser();
+  const [municipality, dictionary, search, currentUser] = await Promise.all([
     getMunicipalityBySlug(slug),
     getDictionary(locale),
     searchParams,
-    currentUser
-      ? getMunicipalitySearchStateForUser({ userId: currentUser.id, municipalitySlug: slug })
-      : Promise.resolve({ isSaved: false, isFollowing: false }),
+    currentUserPromise,
   ]);
 
   if (!municipality) {
     notFound();
   }
+
+  const searchState = currentUser
+    ? (
+        await Promise.all([
+          markMunicipalityFollowUpdatesSeen({ userId: currentUser.id, municipalitySlug: slug }),
+          getMunicipalitySearchStateForUser({ userId: currentUser.id, municipalitySlug: slug }),
+        ])
+      )[1]
+    : { isSaved: false, isFollowing: false };
 
   const activeLocale = locale as AppLocale;
   const isRtl = isRtlLocale(activeLocale);

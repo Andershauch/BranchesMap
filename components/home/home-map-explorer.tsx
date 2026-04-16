@@ -30,15 +30,11 @@ export function HomeMapExplorer({
   locale,
   ariaLabel,
   initialFocusedSlug,
-  followedMunicipalitySlugs,
-  updatedMunicipalitySlugs,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
   initialFocusedSlug?: string | null;
-  followedMunicipalitySlugs: string[];
-  updatedMunicipalitySlugs: string[];
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
   const featuredSlugs = useMemo(
@@ -61,6 +57,8 @@ export function HomeMapExplorer({
   const [renderedDetailsSlug, setRenderedDetailsSlug] = useState<string | null>(safeInitialFocusedSlug);
   const [sheetSession, setSheetSession] = useState(0);
   const [sheetMode, setSheetMode] = useState<SheetMode>(safeInitialFocusedSlug ? "preview" : "closed");
+  const [followedMunicipalitySlugs, setFollowedMunicipalitySlugs] = useState<string[]>([]);
+  const [updatedMunicipalitySlugs, setUpdatedMunicipalitySlugs] = useState<string[]>([]);
   const closeTimeoutRef = useRef<number | null>(null);
   const detailsMunicipality = renderedDetailsSlug
     ? sortedMunicipalities.find((municipality) => municipality.slug === renderedDetailsSlug) ?? null
@@ -71,6 +69,48 @@ export function HomeMapExplorer({
       if (closeTimeoutRef.current) {
         window.clearTimeout(closeTimeoutRef.current);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadHomeState() {
+      try {
+        const response = await fetch("/api/home-state", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          ok?: boolean;
+          followedMunicipalitySlugs?: string[];
+          updatedMunicipalitySlugs?: string[];
+        };
+
+        if (!payload.ok) {
+          return;
+        }
+
+        setFollowedMunicipalitySlugs(payload.followedMunicipalitySlugs ?? []);
+        setUpdatedMunicipalitySlugs(payload.updatedMunicipalitySlugs ?? []);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    loadHomeState();
+
+    return () => {
+      controller.abort();
     };
   }, []);
 

@@ -72,7 +72,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
             <AppMenu
               locale={activeLocale}
-              user={user ? { email: user.email, name: user.name } : null}
+              user={user ? { email: user.email, name: user.name, role: user.role } : null}
             />
             <Link href={`/${locale}`} className="min-w-0">
               <p className="truncate text-[0.94rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">

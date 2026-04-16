@@ -4,13 +4,6 @@ import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
-import { getCurrentUser } from "@/lib/server/auth";
-import {
-  listFollowedMunicipalitySlugsForUser,
-  listUnreadFollowMunicipalitySlugsForUser,
-} from "@/lib/server/search-follows";
-
-export const dynamic = "force-dynamic";
 
 type LocalizedHomePageProps = {
   params: Promise<{
@@ -34,13 +27,10 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
     notFound();
   }
 
-  const currentUser = await getCurrentUser();
-  const [municipalities, dictionary, search, followedMunicipalitySlugs, updatedMunicipalitySlugs] = await Promise.all([
+  const [municipalities, dictionary, search] = await Promise.all([
     getMunicipalitySummaries(),
     getDictionary(locale as AppLocale),
     searchParams,
-    currentUser ? listFollowedMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
-    currentUser ? listUnreadFollowMunicipalitySlugsForUser(currentUser.id) : Promise.resolve([]),
   ]);
   const requestedFocusSlug = getStringParam(search.focus);
   const initialFocusedSlug = municipalities.some((municipality) => municipality.slug === requestedFocusSlug)
@@ -54,8 +44,6 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
         locale={locale as AppLocale}
         ariaLabel={dictionary.home.mapAriaLabel}
         initialFocusedSlug={initialFocusedSlug}
-        followedMunicipalitySlugs={followedMunicipalitySlugs}
-        updatedMunicipalitySlugs={updatedMunicipalitySlugs}
       />
     </main>
   );

@@ -124,6 +124,36 @@ type MapFeature = {
   };
 };
 
+type RenderPathFeature = {
+  slug: string;
+  pathData: string;
+  fillColor: string;
+  fillOpacity: number;
+  strokeColor: string;
+  strokeOpacity: number;
+  strokeWidth: number;
+};
+
+type RenderOverlayFeature = {
+  slug: string;
+  marker: Point;
+  iconScale: number;
+  visibleIndustries: MunicipalitySummary["topIndustries"];
+  iconFontSize: number;
+  iconPositions: Array<{ x: number; y: number }>;
+  labelFontSize: number;
+  labelY: number;
+  labelOpacity: number;
+  labelFill: string;
+  labelStroke: string;
+  labelStrokeWidth: number;
+  labelFontWeight: number;
+  uppercaseName: string;
+  hasUnreadUpdate: boolean;
+  updateMarkerPosition: { x: number; y: number };
+  shouldAnimateUpdateMarker: boolean;
+};
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -380,6 +410,90 @@ export function SjaellandMunicipalityMap({
     () => new Map(features.map((feature) => [feature.municipality.slug, feature])),
     [features],
   );
+  const renderPathFeatures = useMemo<RenderPathFeature[]>(
+    () =>
+      features.map((feature) => {
+        const { municipality, pathData } = feature;
+        const isFocused = municipality.slug === focusedSlug;
+        const isDetailed = municipality.slug === detailsSlug;
+        const isFeatured = featuredSlugSet.has(municipality.slug);
+        const isFollowed = followedSlugSet.has(municipality.slug);
+        const isHovered = municipality.slug === hoveredSlug;
+
+        return {
+          slug: municipality.slug,
+          pathData,
+          fillColor: isFocused
+            ? municipality.topIndustries[0]?.accentColor ?? "#0f766e"
+            : isFollowed
+              ? "#bdebd4"
+              : isFeatured
+                ? municipality.topIndustries[0]?.accentColor ?? "#94a3b8"
+                : "#d7dfdc",
+          fillOpacity: isDetailed ? 0.38 : isFocused ? 0.3 : isFollowed ? 0.36 : isFeatured ? 0.12 : 0.08,
+          strokeColor: isFocused ? "#0f172a" : isFollowed ? "#087f5b" : "#475569",
+          strokeOpacity: isHovered || isFocused ? 0.82 : isFollowed ? 0.52 : 0.28,
+          strokeWidth: isFocused ? 2.2 : isHovered ? 1.65 : isFollowed ? 1.45 : 1.2,
+        };
+      }),
+    [detailsSlug, featuredSlugSet, features, focusedSlug, followedSlugSet, hoveredSlug],
+  );
+  const renderOverlayFeatures = useMemo<RenderOverlayFeature[]>(
+    () =>
+      features.flatMap((feature) => {
+        const { municipality, marker, bounds } = feature;
+        const tuning = labelTuning[municipality.slug] ?? {};
+        const isFocused = municipality.slug === focusedSlug;
+        const isFeatured = featuredSlugSet.has(municipality.slug);
+        const hasUnreadUpdate = updatedSlugSet.has(municipality.slug);
+        const showLabel = shouldShowLabel(zoomLevel, isFeatured, isFocused);
+        const visibleIndustries = getVisibleIndustries(
+          municipality.topIndustries,
+          zoomLevel,
+          isFeatured,
+          isFocused,
+        );
+
+        if (!showLabel && visibleIndustries.length === 0 && !hasUnreadUpdate) {
+          return [];
+        }
+
+        const iconScale = isDesktopViewport
+          ? clamp(1 / Math.pow(zoomLevel, 0.58), 0.36, 0.72)
+          : clamp(1 / Math.pow(zoomLevel, 0.14), 0.76, 1);
+
+        return [
+          {
+            slug: municipality.slug,
+            marker,
+            iconScale,
+            visibleIndustries,
+            iconFontSize: getIconFontSize(bounds, isFocused),
+            iconPositions: getIconPositions(visibleIndustries.length, bounds, tuning.iconDy ?? 0),
+            labelFontSize: getLabelFontSize(bounds, isFocused),
+            labelY: getLabelYOffset(visibleIndustries.length),
+            labelOpacity: isFocused ? 1 : isFeatured ? 0.96 : 0.84,
+            labelFill: isFocused ? "#0f172a" : "rgba(15,23,42,0.86)",
+            labelStroke: isFocused ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.82)",
+            labelStrokeWidth: isFocused ? 2.2 : 1.75,
+            labelFontWeight: isFocused ? 700 : 600,
+            uppercaseName: showLabel ? municipality.name.toLocaleUpperCase("da-DK") : "",
+            hasUnreadUpdate,
+            updateMarkerPosition: getUpdateMarkerPosition(bounds, visibleIndustries.length),
+            shouldAnimateUpdateMarker: hasUnreadUpdate && shouldAnimateUpdateMarkers,
+          },
+        ];
+      }),
+    [
+      featuredSlugSet,
+      features,
+      focusedSlug,
+      isDesktopViewport,
+      shouldAnimateUpdateMarkers,
+      updatedSlugSet,
+      zoomLevel,
+    ],
+  );
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(min-width: ${initialDesktopBreakpoint}px)`);
@@ -424,45 +538,42 @@ export function SjaellandMunicipalityMap({
     };
   }, [featureMap, features.length, focusedSlug]);
 
-  function zoomAtCenter(factor: number) {
-    setViewBox((current) =>
-      scaleViewBox(current, factor, {
-        x: current.x + current.width / 2,
-        y: current.y + current.height / 2,
-      }),
-    );
-  }
-
-  function resetView() {
-    gestureRef.current = null;
-    pointersRef.current.clear();
-    movedDuringGestureRef.current = false;
-    setIsDragging(false);
-
-    const initialFeature = featureMap.get(initialZoomSlug);
-    if (!initialFeature) {
-      setViewBox(initialViewBox);
-      return;
-    }
-
-    const initialZoomLevel =
-      window.innerWidth >= initialDesktopBreakpoint ? initialDesktopZoomLevel : initialMobileZoomLevel;
-
-    setViewBox(createFixedZoomFeatureViewBox(initialFeature.bounds, initialZoomLevel));
-    onMunicipalityPress(initialZoomSlug);
-  }
-
   useEffect(() => {
     function handleZoomIn() {
-      zoomAtCenter(zoomStep);
+      setViewBox((current) =>
+        scaleViewBox(current, zoomStep, {
+          x: current.x + current.width / 2,
+          y: current.y + current.height / 2,
+        }),
+      );
     }
 
     function handleZoomOut() {
-      zoomAtCenter(1 / zoomStep);
+      setViewBox((current) =>
+        scaleViewBox(current, 1 / zoomStep, {
+          x: current.x + current.width / 2,
+          y: current.y + current.height / 2,
+        }),
+      );
     }
 
     function handleReset() {
-      resetView();
+      gestureRef.current = null;
+      pointersRef.current.clear();
+      movedDuringGestureRef.current = false;
+      setIsDragging(false);
+
+      const initialFeature = featureMap.get(initialZoomSlug);
+      if (!initialFeature) {
+        setViewBox(initialViewBox);
+        return;
+      }
+
+      const initialZoomLevel =
+        window.innerWidth >= initialDesktopBreakpoint ? initialDesktopZoomLevel : initialMobileZoomLevel;
+
+      setViewBox(createFixedZoomFeatureViewBox(initialFeature.bounds, initialZoomLevel));
+      onMunicipalityPress(initialZoomSlug);
     }
 
     window.addEventListener(zoomInEvent, handleZoomIn);
@@ -474,7 +585,7 @@ export function SjaellandMunicipalityMap({
       window.removeEventListener(zoomOutEvent, handleZoomOut);
       window.removeEventListener(resetEvent, handleReset);
     };
-  });
+  }, [featureMap, onMunicipalityPress]);
 
   function activateMunicipality(slug: string) {
     const feature = featureMap.get(slug);
@@ -682,81 +793,39 @@ export function SjaellandMunicipalityMap({
       >
         <rect width={width} height={height} fill="transparent" />
 
-        {features.map((feature) => {
-          const { municipality, pathData } = feature;
-          const isFocused = municipality.slug === focusedSlug;
-          const isDetailed = municipality.slug === detailsSlug;
-          const isFeatured = featuredSlugSet.has(municipality.slug);
-          const isFollowed = followedSlugSet.has(municipality.slug);
-          const isHovered = municipality.slug === hoveredSlug;
-          const fillColor = isFocused
-            ? municipality.topIndustries[0]?.accentColor ?? "#0f766e"
-            : isFollowed
-              ? "#bdebd4"
-            : isFeatured
-              ? municipality.topIndustries[0]?.accentColor ?? "#94a3b8"
-              : "#d7dfdc";
-          const strokeColor = isFocused ? "#0f172a" : isFollowed ? "#087f5b" : "#475569";
-          const strokeOpacity = isHovered || isFocused ? 0.82 : isFollowed ? 0.52 : 0.28;
-
+        {renderPathFeatures.map((feature) => {
           return (
             <path
-              key={municipality.slug}
-              d={pathData}
-              fill={fillColor}
-              fillOpacity={isDetailed ? 0.38 : isFocused ? 0.3 : isFollowed ? 0.36 : isFeatured ? 0.12 : 0.08}
-              stroke={strokeColor}
-              strokeOpacity={strokeOpacity}
-              strokeWidth={isFocused ? 2.2 : isHovered ? 1.65 : isFollowed ? 1.45 : 1.2}
+              key={feature.slug}
+              d={feature.pathData}
+              fill={feature.fillColor}
+              fillOpacity={feature.fillOpacity}
+              stroke={feature.strokeColor}
+              strokeOpacity={feature.strokeOpacity}
+              strokeWidth={feature.strokeWidth}
               className="cursor-pointer transition"
-              data-municipality-slug={municipality.slug}
-              onMouseEnter={() => setHoveredSlug(municipality.slug)}
+              data-municipality-slug={feature.slug}
+              onMouseEnter={() => setHoveredSlug(feature.slug)}
               onMouseLeave={() =>
-                setHoveredSlug((current) => (current === municipality.slug ? null : current))
+                setHoveredSlug((current) => (current === feature.slug ? null : current))
               }
             />
           );
         })}
 
         <g pointerEvents="none">
-          {features.map((feature, overlayIndex) => {
-            const { municipality, marker, bounds } = feature;
-            const tuning = labelTuning[municipality.slug] ?? {};
-            const isFocused = municipality.slug === focusedSlug;
-            const isFeatured = featuredSlugSet.has(municipality.slug);
-            const hasUnreadUpdate = updatedSlugSet.has(municipality.slug);
-            const showLabel = shouldShowLabel(zoomLevel, isFeatured, isFocused);
-            const visibleIndustries = getVisibleIndustries(
-              municipality.topIndustries,
-              zoomLevel,
-              isFeatured,
-              isFocused,
-            );
-
-            if (!showLabel && visibleIndustries.length === 0 && !hasUnreadUpdate) {
-              return null;
-            }
-
-            const iconScale = isDesktopViewport
-              ? clamp(1 / Math.pow(zoomLevel, 0.58), 0.36, 0.72)
-              : clamp(1 / Math.pow(zoomLevel, 0.14), 0.76, 1);
-            const iconFontSize = getIconFontSize(bounds, isFocused);
-            const iconPositions = getIconPositions(visibleIndustries.length, bounds, tuning.iconDy ?? 0);
-            const labelFontSize = getLabelFontSize(bounds, isFocused);
-            const labelY = getLabelYOffset(visibleIndustries.length);
-            const updateMarkerPosition = getUpdateMarkerPosition(bounds, visibleIndustries.length);
-
+          {renderOverlayFeatures.map((feature, overlayIndex) => {
             return (
               <g
-                key={municipality.slug + "-overlay"}
-                transform={`translate(${marker.x}, ${marker.y}) scale(${iconScale})`}
+                key={feature.slug + "-overlay"}
+                transform={`translate(${feature.marker.x}, ${feature.marker.y}) scale(${feature.iconScale})`}
                 aria-hidden="true"
               >
-                {hasUnreadUpdate ? (
+                {feature.hasUnreadUpdate ? (
                   <g
-                    transform={`translate(${updateMarkerPosition.x}, ${updateMarkerPosition.y})`}
+                    transform={`translate(${feature.updateMarkerPosition.x}, ${feature.updateMarkerPosition.y})`}
                   >
-                    {shouldAnimateUpdateMarkers ? (
+                    {feature.shouldAnimateUpdateMarker ? (
                       <circle
                         r={11}
                         fill="none"
@@ -780,35 +849,35 @@ export function SjaellandMunicipalityMap({
                   </g>
                 ) : null}
 
-                {visibleIndustries.map((industry, index) => (
+                {feature.visibleIndustries.map((industry, index) => (
                   <text
-                    key={municipality.slug + "-" + industry.slug + "-icon"}
-                    x={iconPositions[index]?.x ?? 0}
-                    y={iconPositions[index]?.y ?? 0}
-                    fontSize={iconFontSize}
+                    key={feature.slug + "-" + industry.slug + "-icon"}
+                    x={feature.iconPositions[index]?.x ?? 0}
+                    y={feature.iconPositions[index]?.y ?? 0}
+                    fontSize={feature.iconFontSize}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    opacity={isFocused ? 1 : 0.94}
+                    opacity={feature.labelFontWeight === 700 ? 1 : 0.94}
                   >
                     {industry.icon}
                   </text>
                 ))}
 
-                {showLabel ? (
+                {feature.uppercaseName ? (
                   <text
-                    y={labelY}
-                    fontSize={labelFontSize}
-                    fontWeight={isFocused ? 700 : 600}
+                    y={feature.labelY}
+                    fontSize={feature.labelFontSize}
+                    fontWeight={feature.labelFontWeight}
                     textAnchor="middle"
                     dominantBaseline="hanging"
-                    fill={isFocused ? "#0f172a" : "rgba(15,23,42,0.86)"}
-                    stroke={isFocused ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.82)"}
-                    strokeWidth={isFocused ? 2.2 : 1.75}
+                    fill={feature.labelFill}
+                    stroke={feature.labelStroke}
+                    strokeWidth={feature.labelStrokeWidth}
                     paintOrder="stroke fill"
                     letterSpacing={0.1}
-                    opacity={isFocused ? 1 : isFeatured ? 0.96 : 0.84}
+                    opacity={feature.labelOpacity}
                   >
-                    {municipality.name.toLocaleUpperCase("da-DK")}
+                    {feature.uppercaseName}
                   </text>
                 ) : null}
               </g>

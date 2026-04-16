@@ -1,5 +1,7 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
+
 import {
   getMunicipalityHomeMapConfig,
   type MunicipalityHomeMapConfig,
@@ -162,6 +164,12 @@ type DatabaseMunicipalityDetailRow = {
   jobSourceSnapshots: DatabaseImportedJobSnapshotRow[];
 };
 
+type LiveEstimateCacheEntry = {
+  value: MunicipalityJobEstimateResponse | null;
+  expiresAt: number;
+  pending?: Promise<MunicipalityJobEstimateResponse | null>;
+};
+
 export type MunicipalityDataSources = {
   totalJobs: MunicipalityTotalJobsSource;
   topIndustries: MunicipalityTopIndustriesSource | MunicipalityImportedTopIndustriesSource;
@@ -171,6 +179,19 @@ export type MunicipalityDataSources = {
 const defaultIndustryIcon = "*";
 const defaultIndustryColor = "#64748b";
 const mockMunicipalityMap = new Map(pocMunicipalities.map((municipality) => [municipality.slug, municipality]));
+const municipalityPublicDataTag = "municipality-public-data";
+const municipalityAdminDataTag = "municipality-admin-data";
+const liveEstimateTtlMs = 15 * 60 * 1000;
+const liveEstimateErrorTtlMs = 2 * 60 * 1000;
+const globalForMunicipalityData = globalThis as typeof globalThis & {
+  branchesMapLiveEstimateCache?: Map<string, LiveEstimateCacheEntry>;
+};
+const liveEstimateCache =
+  globalForMunicipalityData.branchesMapLiveEstimateCache ?? new Map<string, LiveEstimateCacheEntry>();
+
+if (!globalForMunicipalityData.branchesMapLiveEstimateCache) {
+  globalForMunicipalityData.branchesMapLiveEstimateCache = liveEstimateCache;
+}
 
 function normalizeLabelMode(value: string): MunicipalityHomeMapLabelMode {
   return value === "name-only" || value === "name-icons" ? value : "auto";
@@ -680,12 +701,48 @@ async function getLiveEstimateSafely(municipalityCode: string) {
     return null;
   }
 
-  try {
-    return await getMunicipalityLiveJobEstimate(createJobsRequest({ municipalityCode, locale: "da" }));
-  } catch (error) {
-    console.error(`Failed to read live StatBank estimate for municipality ${municipalityCode}.`, error);
-    return null;
+  const now = Date.now();
+  const cached = liveEstimateCache.get(municipalityCode);
+
+  if (cached && cached.expiresAt > now && !cached.pending) {
+    return cached.value;
   }
+
+  if (cached?.pending) {
+    return cached.pending;
+  }
+
+  const pending = (async () => {
+    try {
+      const estimate = await getMunicipalityLiveJobEstimate(
+        createJobsRequest({ municipalityCode, locale: "da" }),
+      );
+      liveEstimateCache.set(municipalityCode, {
+        value: estimate,
+        expiresAt: Date.now() + liveEstimateTtlMs,
+      });
+      return estimate;
+    } catch (error) {
+      if (
+        !(error instanceof Error && "digest" in error && (error as Error & { digest?: string }).digest === "DYNAMIC_SERVER_USAGE")
+      ) {
+        console.error(`Failed to read live StatBank estimate for municipality ${municipalityCode}.`, error);
+      }
+      liveEstimateCache.set(municipalityCode, {
+        value: null,
+        expiresAt: Date.now() + liveEstimateErrorTtlMs,
+      });
+      return null;
+    }
+  })();
+
+  liveEstimateCache.set(municipalityCode, {
+    value: cached?.value ?? null,
+    expiresAt: now + liveEstimateTtlMs,
+    pending,
+  });
+
+  return pending;
 }
 
 async function getLiveEstimateMap(
@@ -704,189 +761,214 @@ async function getLiveEstimateMap(
 
   return new Map(entries.filter((entry): entry is readonly [string, MunicipalityJobEstimateResponse] => Boolean(entry)));
 }
-async function getDatabaseMunicipalityMap() {
-  try {
-    const rows = await prisma.municipality.findMany({
-      select: {
-        slug: true,
-        isActive: true,
-        homeMapVisible: true,
-        homeMapPriority: true,
-        homeMapLabelMode: true,
-        homeMapRegionTag: true,
-      },
-    });
+const getCachedDatabaseMunicipalityMap = unstable_cache(
+  async () => {
+    try {
+      const rows = await prisma.municipality.findMany({
+        select: {
+          slug: true,
+          isActive: true,
+          homeMapVisible: true,
+          homeMapPriority: true,
+          homeMapLabelMode: true,
+          homeMapRegionTag: true,
+        },
+      });
 
-    return new Map(rows.map((row) => [row.slug, row satisfies DatabaseHomeMapRow]));
-  } catch (error) {
-    console.error("Failed to read municipality home map configuration from Prisma.", error);
-    return new Map<string, DatabaseHomeMapRow>();
-  }
+      return rows satisfies DatabaseHomeMapRow[];
+    } catch (error) {
+      console.error("Failed to read municipality home map configuration from Prisma.", error);
+      return [] as DatabaseHomeMapRow[];
+    }
+  },
+  ["municipality-home-map-config"],
+  { revalidate: 60 * 60, tags: [municipalityAdminDataTag, municipalityPublicDataTag] },
+);
+
+async function getDatabaseMunicipalityMap() {
+  const rows = await getCachedDatabaseMunicipalityMap();
+  return new Map(rows.map((row) => [row.slug, row satisfies DatabaseHomeMapRow]));
 }
+
+const getCachedDatabaseMunicipalitySummaryRows = unstable_cache(
+  async () => {
+    try {
+      return (await prisma.municipality.findMany({
+        select: {
+          code: true,
+          slug: true,
+          name: true,
+          teaser: true,
+          isActive: true,
+          homeMapVisible: true,
+          homeMapPriority: true,
+          homeMapLabelMode: true,
+          homeMapRegionTag: true,
+          _count: {
+            select: {
+              jobs: true,
+            },
+          },
+          industryStats: {
+            orderBy: [{ rank: "asc" }, { jobCount: "desc" }],
+            take: 3,
+            select: {
+              jobCount: true,
+              industry: {
+                select: {
+                  code: true,
+                  slug: true,
+                  nameDa: true,
+                  icon: true,
+                  accentColor: true,
+                },
+              },
+            },
+          },
+          jobSourceSnapshots: {
+            where: {
+              source: JOBINDSATS_SOURCE,
+              sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
+            },
+            orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
+            take: 1,
+            include: {
+              categories: {
+                orderBy: [{ rank: "asc" }],
+                take: 10,
+                include: {
+                  industry: {
+                    select: {
+                      code: true,
+                      slug: true,
+                      nameDa: true,
+                      icon: true,
+                      accentColor: true,
+                    },
+                  },
+                },
+              },
+              topTitles: {
+                orderBy: [{ rank: "asc" }],
+                take: 5,
+                select: {
+                  rank: true,
+                  titleKey: true,
+                  titleLabel: true,
+                  openPositions: true,
+                },
+              },
+            },
+          },
+        },
+      })) satisfies DatabaseMunicipalitySummaryRow[];
+    } catch (error) {
+      console.error("Failed to read municipality summaries from Prisma.", error);
+      return [] as DatabaseMunicipalitySummaryRow[];
+    }
+  },
+  ["municipality-summary-rows"],
+  { revalidate: 10 * 60, tags: [municipalityPublicDataTag] },
+);
 
 async function getDatabaseMunicipalitySummaryRows() {
-  try {
-    return (await prisma.municipality.findMany({
-      select: {
-        code: true,
-        slug: true,
-        name: true,
-        teaser: true,
-        isActive: true,
-        homeMapVisible: true,
-        homeMapPriority: true,
-        homeMapLabelMode: true,
-        homeMapRegionTag: true,
-        _count: {
-          select: {
-            jobs: true,
-          },
-        },
-        industryStats: {
-          orderBy: [{ rank: "asc" }, { jobCount: "desc" }],
-          take: 3,
-          select: {
-            jobCount: true,
-            industry: {
-              select: {
-                code: true,
-                slug: true,
-                nameDa: true,
-                icon: true,
-                accentColor: true,
-              },
-            },
-          },
-        },
-        jobSourceSnapshots: {
-          where: {
-            source: JOBINDSATS_SOURCE,
-            sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
-          },
-          orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
-          take: 1,
-          include: {
-            categories: {
-              orderBy: [{ rank: "asc" }],
-              take: 10,
-              include: {
-                industry: {
-                  select: {
-                    code: true,
-                    slug: true,
-                    nameDa: true,
-                    icon: true,
-                    accentColor: true,
-                  },
-                },
-              },
-            },
-            topTitles: {
-              orderBy: [{ rank: "asc" }],
-              take: 5,
-              select: {
-                rank: true,
-                titleKey: true,
-                titleLabel: true,
-                openPositions: true,
-              },
-            },
-          },
-        },
-      },
-    })) satisfies DatabaseMunicipalitySummaryRow[];
-  } catch (error) {
-    console.error("Failed to read municipality summaries from Prisma.", error);
-    return [] as DatabaseMunicipalitySummaryRow[];
-  }
+  return getCachedDatabaseMunicipalitySummaryRows();
 }
 
-async function getDatabaseMunicipalityDetailRow(slug: string) {
-  try {
-    return (await prisma.municipality.findUnique({
-      where: { slug },
-      select: {
-        code: true,
-        slug: true,
-        name: true,
-        teaser: true,
-        isActive: true,
-        industryStats: {
-          orderBy: [{ rank: "asc" }, { jobCount: "desc" }],
-          select: {
-            jobCount: true,
-            industry: {
-              select: {
-                code: true,
-                slug: true,
-                nameDa: true,
-                icon: true,
-                accentColor: true,
-              },
-            },
-          },
-        },
-        jobs: {
-          orderBy: [{ industryId: "asc" }, { title: "asc" }],
-          select: {
-            id: true,
-            title: true,
-            employerName: true,
-            locationLabel: true,
-            summary: true,
-            applyUrl: true,
-            industry: {
-              select: {
-                code: true,
-                slug: true,
-                nameDa: true,
-                icon: true,
-                accentColor: true,
-              },
-            },
-          },
-        },
-        jobSourceSnapshots: {
-          where: {
-            source: JOBINDSATS_SOURCE,
-            sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
-          },
-          orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
-          take: 1,
-          include: {
-            categories: {
-              orderBy: [{ rank: "asc" }],
-              take: 10,
-              include: {
-                industry: {
-                  select: {
-                    code: true,
-                    slug: true,
-                    nameDa: true,
-                    icon: true,
-                    accentColor: true,
-                  },
+const getCachedDatabaseMunicipalityDetailRow = unstable_cache(
+  async (slug: string) => {
+    try {
+      return (await prisma.municipality.findUnique({
+        where: { slug },
+        select: {
+          code: true,
+          slug: true,
+          name: true,
+          teaser: true,
+          isActive: true,
+          industryStats: {
+            orderBy: [{ rank: "asc" }, { jobCount: "desc" }],
+            select: {
+              jobCount: true,
+              industry: {
+                select: {
+                  code: true,
+                  slug: true,
+                  nameDa: true,
+                  icon: true,
+                  accentColor: true,
                 },
               },
             },
-            topTitles: {
-              orderBy: [{ rank: "asc" }],
-              take: 50,
-              select: {
-                rank: true,
-                titleKey: true,
-                titleLabel: true,
-                openPositions: true,
+          },
+          jobs: {
+            orderBy: [{ industryId: "asc" }, { title: "asc" }],
+            select: {
+              id: true,
+              title: true,
+              employerName: true,
+              locationLabel: true,
+              summary: true,
+              applyUrl: true,
+              industry: {
+                select: {
+                  code: true,
+                  slug: true,
+                  nameDa: true,
+                  icon: true,
+                  accentColor: true,
+                },
+              },
+            },
+          },
+          jobSourceSnapshots: {
+            where: {
+              source: JOBINDSATS_SOURCE,
+              sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
+            },
+            orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
+            take: 1,
+            include: {
+              categories: {
+                orderBy: [{ rank: "asc" }],
+                take: 10,
+                include: {
+                  industry: {
+                    select: {
+                      code: true,
+                      slug: true,
+                      nameDa: true,
+                      icon: true,
+                      accentColor: true,
+                    },
+                  },
+                },
+              },
+              topTitles: {
+                orderBy: [{ rank: "asc" }],
+                take: 50,
+                select: {
+                  rank: true,
+                  titleKey: true,
+                  titleLabel: true,
+                  openPositions: true,
+                },
               },
             },
           },
         },
-      },
-    })) satisfies DatabaseMunicipalityDetailRow | null;
-  } catch (error) {
-    console.error(`Failed to read municipality ${slug} from Prisma.`, error);
-    return null;
-  }
+      })) satisfies DatabaseMunicipalityDetailRow | null;
+    } catch (error) {
+      console.error(`Failed to read municipality ${slug} from Prisma.`, error);
+      return null;
+    }
+  },
+  ["municipality-detail-row"],
+  { revalidate: 10 * 60, tags: [municipalityPublicDataTag] },
+);
+
+async function getDatabaseMunicipalityDetailRow(slug: string) {
+  return getCachedDatabaseMunicipalityDetailRow(slug);
 }
 
 function sortSummaries(items: MunicipalitySummary[]) {
@@ -931,19 +1013,15 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
 
   const databaseMap = new Map(databaseRows.map((row) => [row.slug, row]));
   const visibleMunicipalities = pocMunicipalities.filter((municipality) => databaseMap.get(municipality.slug)?.isActive !== false);
-  const liveEstimateMap = await getLiveEstimateMap(
-    visibleMunicipalities.map((municipality) => ({ slug: municipality.slug, code: municipality.code })),
-  );
 
   return sortSummaries(
     visibleMunicipalities.map((municipality) => {
       const databaseRow = databaseMap.get(municipality.slug);
-      const liveEstimate = liveEstimateMap.get(municipality.slug);
       return databaseRow
-        ? createSummaryFromDatabase(databaseRow, municipality, liveEstimate)
+        ? createSummaryFromDatabase(databaseRow, municipality, null)
         : (() => {
-            const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, null, liveEstimate);
-            const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, liveEstimate);
+            const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, null, null);
+            const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, null);
 
             return {
               ...createSummaryFromMock(municipality),
