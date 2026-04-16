@@ -15,6 +15,7 @@
     "db:studio": "prisma studio",
     "jobindsats:daily": "tsx ./scripts/run-jobindsats-daily.ts",
     "jobindsats:import:y25i07": "tsx ./scripts/import-jobindsats-y25i07.ts",
+    "jobindsats:audit:titles": "tsx ./scripts/audit-jobindsats-title-quality.ts",
     "geo:build": "node ./scripts/build-sjaelland-geo.mjs",
     "check:encoding": "node ./scripts/check-encoding.mjs"
   },

@@ -23,6 +23,7 @@ import {
   type MunicipalityTotalJobsSource,
 } from "@/lib/server/jobindsats-imports";
 import {
+  classifyJobindsatsTitle,
   rankJobindsatsRepresentativeTitle,
 } from "@/lib/server/jobindsats-category-mapping";
 import { prisma } from "@/lib/server/prisma";
@@ -325,7 +326,9 @@ function createImportedIndustryPresentationModel(importedSnapshots: DatabaseImpo
             return left.title.localeCompare(right.title, "da");
           }) ?? [];
 
-      const representativeTitles = rankedTitles.slice(0, 4).map((title) => title.title);
+      const nonGenericTitles = rankedTitles.filter((title) => !classifyJobindsatsTitle(title.title).isGeneric);
+      const selectedTitles = (nonGenericTitles.length > 0 ? nonGenericTitles : rankedTitles).slice(0, 4);
+      const representativeTitles = selectedTitles.map((title) => title.title);
       const bestTitleScore = rankedTitles[0]?.score ?? 0;
       const titleCoverage = rankedTitles.reduce((sum, title) => sum + title.openPositions, 0);
       const history = getHistoricalIndustryMetrics(importedSnapshots, entry.industry.code, entry.openPositions);

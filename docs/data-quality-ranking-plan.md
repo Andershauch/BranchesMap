@@ -50,6 +50,17 @@ The mapping layer has also been expanded to cover more of the previously weak ar
 
 The current ranking also uses recent import history to prefer industries that are stable across the latest periods instead of only reacting to a single-period spike.
 
+There is now also a repeatable audit step in the repo:
+
+- `npm run jobindsats:audit:titles`
+
+It writes a report of:
+
+- top unmapped titles
+- top mapped-but-generic titles
+
+This is the basis for cleaning the mapping systematically instead of by guesswork.
+
 ## Next ranking steps
 
 ### Step 1
@@ -68,6 +79,11 @@ Introduce industry ranking signals beyond volume:
 - newly posted positions
 - change over time
 - stability over multiple imports
+
+Note:
+
+- stability over multiple imports is now partly implemented
+- a real freshness component is still limited by the current import shape, because `newlyPostedPositions` is available per municipality snapshot, not per mapped industry
 
 ### Step 3
 

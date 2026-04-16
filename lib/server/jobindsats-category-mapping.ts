@@ -1,3 +1,5 @@
+import { normalizeJobindsatsText } from "@/lib/server/jobindsats-imports";
+
 export const PRODUCT_INDUSTRY_CODES = [
   "health",
   "tech",
@@ -22,6 +24,14 @@ export type RankedRepresentativeTitle = {
   score: number;
   openPositions: number;
   rank: number;
+};
+
+export type JobindsatsTitleClassification = {
+  normalizedTitle: string;
+  normalizedForMatching: string;
+  industryCode: ProductIndustryCode | null;
+  isGeneric: boolean;
+  score: number | null;
 };
 
 type CategoryRule = {
@@ -57,6 +67,17 @@ const CATEGORY_RULES: CategoryRule[] = [
       "socialradgiver",
       "hjaelpemiddel",
       "handicap",
+      "laegesekretaer",
+      "behandling",
+      "genoptraening",
+      "psykolog",
+      "uddannelseslaege",
+      "dyrlaege",
+      "ambulance",
+      "laege",
+      "psykologarbejde",
+      "hospitalsarbejde",
+      "sundhedsomradet",
     ],
   },
   {
@@ -85,6 +106,8 @@ const CATEGORY_RULES: CategoryRule[] = [
       "analytiker",
       "ingenior",
       "ingeniorarbejde",
+      "ingenioer",
+      "ingenioerarbejde",
       "ingeniorteknisk",
       "maskinmester",
       "tekniker",
@@ -95,6 +118,20 @@ const CATEGORY_RULES: CategoryRule[] = [
       "ux",
       "devops",
       "qa",
+      "projektleder",
+      "studentermedhjaelp",
+      "kommunikation",
+      "bibliotek",
+      "museum",
+      "fotograf",
+      "kamera",
+      "akademisk",
+      "ph d",
+      "professor",
+      "lektor",
+      "forskning",
+      "naturvidenskab",
+      "teknik",
     ],
   },
   {
@@ -131,6 +168,33 @@ const CATEGORY_RULES: CategoryRule[] = [
       "maskinarbejder",
       "montor",
       "teknisk designer",
+      "toemrer",
+      "anlaegsarbejde",
+      "anlaegsgartner",
+      "brolaegger",
+      "rorlaegger",
+      "stillads",
+      "isolering",
+      "isolator",
+      "daekmontor",
+      "teknisk servicemedarbejder",
+      "ejendomsfunktionaer",
+      "specialarbejder",
+      "rengoering",
+      "rengoeringsassistent",
+      "rengoeringsinspektor",
+      "vinduespudser",
+      "nedriver",
+      "maskinforer",
+      "maskinfoerer",
+      "maskinfoererarbejde",
+      "anlaegsstruktor",
+      "anlaegsstruktoer",
+      "isolatoer",
+      "daekmontoer",
+      "teknisk service",
+      "begravelses",
+      "kirkegard",
     ],
   },
   {
@@ -166,6 +230,40 @@ const CATEGORY_RULES: CategoryRule[] = [
       "e commerce",
       "ehandel",
       "ordre",
+      "kontor",
+      "administration",
+      "regnskab",
+      "finans",
+      "bogholderi",
+      "okonomi",
+      "sekretaer",
+      "sagsbehandler",
+      "koordinator",
+      "callcenter",
+      "ekspedient",
+      "interviewer",
+      "fundraiser",
+      "hr",
+      "ledelse",
+      "fuldmaegtig",
+      "juridisk",
+      "jurist",
+      "afdelingsleder",
+      "teamleder",
+      "projektmedarbejder",
+      "driftsplanlaegger",
+      "organisation",
+      "raadgivning",
+      "okonomiassistent",
+      "administrativ assistent",
+      "administrativt arbejde",
+      "vagt",
+      "sikkerhed",
+      "overvaagning",
+      "bud",
+      "omdeler",
+      "visual merchandiser",
+      "oekonomi",
     ],
   },
   {
@@ -192,6 +290,29 @@ const CATEGORY_RULES: CategoryRule[] = [
       "daginstitu",
       "specialpaedagog",
       "skoleleder",
+      "paedagog",
+      "paedagogmedhjaelper",
+      "paedagogisk assistent",
+      "paedagogisk konsulent",
+      "bornepas",
+      "born",
+      "socialpaedagog",
+      "socialarbejder",
+      "socialraadgiver",
+      "vejledning",
+      "pau",
+      "akademisk arbejde",
+      "paedagogisk arbejde",
+      "paedagog",
+      "socialpaedagog",
+      "bornepasser",
+      "bornepasning",
+      "boernepas",
+      "boernepasser",
+      "boernepasning",
+      "lektor",
+      "professor",
+      "uddannelse",
     ],
   },
   {
@@ -217,6 +338,8 @@ const CATEGORY_RULES: CategoryRule[] = [
       "housekeeping",
       "vaert",
       "vaertskab",
+      "livredder",
+      "dyrepasser",
     ],
   },
   {
@@ -239,6 +362,12 @@ const CATEGORY_RULES: CategoryRule[] = [
       "mad",
       "catering",
       "produktionskok",
+      "koekkenmedhjaelper",
+      "koekkenassistent",
+      "ernaeringsassistent",
+      "naerings",
+      "nydelsesmiddel",
+      "koekken",
     ],
   },
 ];
@@ -266,6 +395,20 @@ const GENERIC_TITLE_PATTERNS = [
   " ledelse",
   " jern metal og auto",
   " butiksekspedition",
+  " elever",
+  " studentermedhjaelp",
+  " juridisk arbejde",
+  " administrativt sundhedsarbejde",
+  " sygepleje og jordemoderarbejde",
+  " forskning og universitetsundervisning samfundsvidenskab",
+  " forskning og universitetsundervisning naturvidenskab og teknik",
+  " tvargaende arbejde",
+  " kontor og sekretararbejde",
+  " socialraadgivning mv",
+  " rengoering mv",
+  " servering mv",
+  " ledelse:",
+  " hotel restauration koekken kantine",
 ];
 
 const CONCRETE_TITLE_PATTERNS = [
@@ -292,11 +435,25 @@ const CONCRETE_TITLE_PATTERNS = [
   "tjener",
   "bager",
   "slagter",
+  "fuldmaegtig",
+  "jurist",
+  "afdelingsleder",
+  "rengoeringsassistent",
+  "paedagogmedhjaelper",
+  "paedagogisk assistent",
+  "laege",
+  "laegesekretaer",
 ];
 
 function normalizeForMatching(value: string) {
   return value
     .toLowerCase()
+    .replace(/æ/g, "ae")
+    .replace(/ø/g, "oe")
+    .replace(/å/g, "aa")
+    .replace(/æ/g, "ae")
+    .replace(/ø/g, "oe")
+    .replace(/å/g, "aa")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
@@ -304,7 +461,7 @@ function normalizeForMatching(value: string) {
 }
 
 export function normalizeJobindsatsRepresentativeTitle(titleLabel: string) {
-  return titleLabel
+  return normalizeJobindsatsText(titleLabel)
     .replace(/\s*\([^)]*\)\s*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -347,6 +504,47 @@ function scoreTitlePresentation(normalized: string, normalizedTitle: string) {
   }
 
   return score;
+}
+
+export function isGenericJobindsatsRepresentativeTitle(titleLabel: string) {
+  const normalizedTitle = normalizeJobindsatsRepresentativeTitle(titleLabel);
+  if (!normalizedTitle) {
+    return false;
+  }
+
+  const normalized = ` ${normalizeForMatching(normalizedTitle)} `;
+
+  return (
+    GENERIC_TITLE_PATTERNS.some((pattern) => normalized.includes(pattern)) ||
+    normalized.includes(" mv") ||
+    normalized.includes("elever") ||
+    normalized.includes("elev")
+  );
+}
+
+export function classifyJobindsatsTitle(titleLabel: string): JobindsatsTitleClassification {
+  const normalizedTitle = normalizeJobindsatsRepresentativeTitle(titleLabel);
+  const normalizedForMatching = normalizeForMatching(normalizedTitle);
+  const industryCode = normalizedTitle ? mapJobindsatsTitleToIndustryCode(normalizedTitle) : null;
+  const isGeneric = normalizedTitle ? isGenericJobindsatsRepresentativeTitle(normalizedTitle) : false;
+
+  if (!normalizedTitle || !industryCode) {
+    return {
+      normalizedTitle,
+      normalizedForMatching,
+      industryCode,
+      isGeneric,
+      score: null,
+    };
+  }
+
+  return {
+    normalizedTitle,
+    normalizedForMatching,
+    industryCode,
+    isGeneric,
+    score: scoreTitlePresentation(` ${normalizedForMatching} `, normalizedTitle),
+  };
 }
 
 export function rankJobindsatsRepresentativeTitle(
