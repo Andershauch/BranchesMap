@@ -23,8 +23,7 @@ import {
   type MunicipalityTotalJobsSource,
 } from "@/lib/server/jobindsats-imports";
 import {
-  mapJobindsatsTitleToIndustryCode,
-  normalizeJobindsatsRepresentativeTitle,
+  rankJobindsatsRepresentativeTitle,
 } from "@/lib/server/jobindsats-category-mapping";
 import { prisma } from "@/lib/server/prisma";
 import type { AppLocale } from "@/lib/i18n/config";
@@ -245,39 +244,124 @@ function createIndustrySummaryFromDatabase(industry: DatabaseIndustryRow, jobCou
   };
 }
 
-function withRepresentativeTitles(
-  industries: MunicipalityIndustrySummary[],
-  importedSnapshot?: DatabaseImportedJobSnapshotRow | null,
+function getHistoricalIndustryMetrics(
+  importedSnapshots: DatabaseImportedJobSnapshotRow[],
+  industryCode: string,
+  currentOpenPositions: number,
 ) {
-  if (!importedSnapshot || importedSnapshot.topTitles.length === 0) {
-    return industries;
+  const historicalCounts = importedSnapshots
+    .slice(1)
+    .map((snapshot) => snapshot.categories.find((entry) => entry.industry.code === industryCode)?.openPositions ?? 0)
+    .filter((count) => count > 0);
+
+  const appearances = historicalCounts.length;
+  const averageCount = appearances > 0 ? historicalCounts.reduce((sum, count) => sum + count, 0) / appearances : 0;
+
+  return {
+    appearances,
+    averageCount,
+    consistencyRatio: averageCount > 0 ? Math.min(1, averageCount / Math.max(1, currentOpenPositions)) : 0,
+  };
+}
+
+function createImportedIndustryPresentationModel(importedSnapshots: DatabaseImportedJobSnapshotRow[]) {
+  const importedSnapshot = importedSnapshots[0] ?? null;
+
+  if (!importedSnapshot || importedSnapshot.categories.length === 0) {
+    return null;
   }
 
-  const titlesByCode = new Map<string, string[]>();
+  const titlesByCode = new Map<
+    string,
+    Array<{
+      title: string;
+      score: number;
+      openPositions: number;
+      rank: number;
+    }>
+  >();
 
   for (const title of importedSnapshot.topTitles) {
-    const industryCode = mapJobindsatsTitleToIndustryCode(title.titleLabel);
+    const rankedTitle = rankJobindsatsRepresentativeTitle({
+      titleLabel: title.titleLabel,
+      openPositions: title.openPositions,
+      rank: title.rank,
+    });
 
-    if (!industryCode) {
+    if (!rankedTitle) {
       continue;
     }
 
-    const normalizedTitle = normalizeJobindsatsRepresentativeTitle(title.titleLabel);
-    if (!normalizedTitle) {
-      continue;
-    }
-
-    const existing = titlesByCode.get(industryCode) ?? [];
-    if (!existing.includes(normalizedTitle)) {
-      existing.push(normalizedTitle);
-      titlesByCode.set(industryCode, existing);
+    const existing = titlesByCode.get(rankedTitle.industryCode) ?? [];
+    if (!existing.some((entry) => entry.title === rankedTitle.normalizedTitle)) {
+      existing.push({
+        title: rankedTitle.normalizedTitle,
+        score: rankedTitle.score,
+        openPositions: rankedTitle.openPositions,
+        rank: rankedTitle.rank,
+      });
+      titlesByCode.set(rankedTitle.industryCode, existing);
     }
   }
 
-  return industries.map((industry) => ({
-    ...industry,
-    representativeTitles: titlesByCode.get(industry.code)?.slice(0, 4) ?? [],
-  }));
+  return importedSnapshot.categories
+    .map((entry) => {
+      const rankedTitles =
+        titlesByCode
+          .get(entry.industry.code)
+          ?.sort((left, right) => {
+            if (left.score !== right.score) {
+              return right.score - left.score;
+            }
+
+            if (left.openPositions !== right.openPositions) {
+              return right.openPositions - left.openPositions;
+            }
+
+            if (left.rank !== right.rank) {
+              return left.rank - right.rank;
+            }
+
+            return left.title.localeCompare(right.title, "da");
+          }) ?? [];
+
+      const representativeTitles = rankedTitles.slice(0, 4).map((title) => title.title);
+      const bestTitleScore = rankedTitles[0]?.score ?? 0;
+      const titleCoverage = rankedTitles.reduce((sum, title) => sum + title.openPositions, 0);
+      const history = getHistoricalIndustryMetrics(importedSnapshots, entry.industry.code, entry.openPositions);
+      const presentationScore =
+        entry.openPositions * 100 +
+        representativeTitles.length * 20 +
+        bestTitleScore +
+        Math.min(titleCoverage, entry.openPositions) +
+        history.appearances * 35 +
+        Math.round(history.averageCount) * 10 +
+        Math.round(history.consistencyRatio * 25);
+
+      return {
+        rank: entry.rank,
+        presentationScore,
+        industry: {
+          ...createIndustrySummaryFromDatabase(entry.industry, entry.openPositions),
+          representativeTitles,
+        } satisfies MunicipalityIndustrySummary,
+      };
+    })
+    .sort((left, right) => {
+      if (left.presentationScore !== right.presentationScore) {
+        return right.presentationScore - left.presentationScore;
+      }
+
+      if (left.industry.jobCount !== right.industry.jobCount) {
+        return right.industry.jobCount - left.industry.jobCount;
+      }
+
+      if (left.rank !== right.rank) {
+        return left.rank - right.rank;
+      }
+
+      return left.industry.name.localeCompare(right.industry.name, "da");
+    });
 }
 
 function buildFallbackTeaser(name: string, topIndustries: MunicipalityIndustrySummary[]) {
@@ -300,32 +384,28 @@ function createDefaultSources(): MunicipalityDataSources {
   };
 }
 
-function resolveImportedTopIndustries(importedSnapshot?: DatabaseImportedJobSnapshotRow | null) {
-  if (!importedSnapshot || importedSnapshot.categories.length === 0) {
+function resolveImportedTopIndustries(importedSnapshots: DatabaseImportedJobSnapshotRow[]) {
+  const presentationModel = createImportedIndustryPresentationModel(importedSnapshots);
+
+  if (!presentationModel || presentationModel.length === 0) {
     return null;
   }
 
   return {
-    topIndustries: withRepresentativeTitles(
-      importedSnapshot.categories.slice(0, 3).map((entry) =>
-        createIndustrySummaryFromDatabase(entry.industry, entry.openPositions),
-      ),
-      importedSnapshot,
-    ),
+    topIndustries: presentationModel.slice(0, 3).map((entry) => entry.industry),
     source: "jobindsats_y25i07_category_mapping" as const,
   };
 }
 
 function resolveIndustryOverview(
   current: MunicipalityIndustrySummary[],
-  importedSnapshot?: DatabaseImportedJobSnapshotRow | null,
+  importedSnapshots: DatabaseImportedJobSnapshotRow[],
   liveEstimate?: MunicipalityJobEstimateResponse | null,
 ) {
-  if (importedSnapshot && importedSnapshot.categories.length > 0) {
-    return withRepresentativeTitles(
-      importedSnapshot.categories.map((entry) => createIndustrySummaryFromDatabase(entry.industry, entry.openPositions)),
-      importedSnapshot,
-    );
+  const presentationModel = createImportedIndustryPresentationModel(importedSnapshots);
+
+  if (presentationModel && presentationModel.length > 0) {
+    return presentationModel.map((entry) => entry.industry);
   }
 
   if (liveEstimate && liveEstimate.municipalityEstimate.industryBreakdown.length > 0) {
@@ -343,10 +423,10 @@ function resolveIndustryOverview(
 
 function resolveTopIndustries(
   current: MunicipalityIndustrySummary[],
-  importedSnapshot?: DatabaseImportedJobSnapshotRow | null,
+  importedSnapshots: DatabaseImportedJobSnapshotRow[],
   liveEstimate?: MunicipalityJobEstimateResponse | null,
 ) {
-  const imported = resolveImportedTopIndustries(importedSnapshot);
+  const imported = resolveImportedTopIndustries(importedSnapshots);
 
   if (imported) {
     return imported;
@@ -625,7 +705,7 @@ function createSummaryFromDatabase(
     row.industryStats.length > 0
       ? row.industryStats.map((stat) => createIndustrySummaryFromDatabase(stat.industry, stat.jobCount))
       : fallback?.topIndustries ?? [];
-  const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, importedSnapshot, liveEstimate);
+  const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, row.jobSourceSnapshots, liveEstimate);
   const resolvedTotalJobs = resolveTotalJobs(
     row._count.jobs || (fallback ? countMockJobs(fallback) : 0),
     importedSnapshot,
@@ -668,10 +748,10 @@ function createDetailFromDatabase(
         : fallback?.topIndustries ?? [];
   const industryOverview = resolveIndustryOverview(
     jobsByIndustry.map((entry) => entry.industry),
-    importedSnapshot,
+    row.jobSourceSnapshots,
     liveEstimate,
   );
-  const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, importedSnapshot, liveEstimate);
+  const resolvedTopIndustries = resolveTopIndustries(baseTopIndustries, row.jobSourceSnapshots, liveEstimate);
   const resolvedTotalJobs = resolveTotalJobs(
     row.jobs.length || (fallback ? countMockJobs(fallback) : 0),
     importedSnapshot,
@@ -831,7 +911,7 @@ const getCachedDatabaseMunicipalitySummaryRows = unstable_cache(
               sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
             },
             orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
-            take: 1,
+            take: 3,
             include: {
               categories: {
                 orderBy: [{ rank: "asc" }],
@@ -927,7 +1007,7 @@ const getCachedDatabaseMunicipalityDetailRow = unstable_cache(
               sourceTable: JOBINDSATS_OPEN_POSITIONS_TABLE,
             },
             orderBy: [{ period: "desc" }, { fetchedAt: "desc" }],
-            take: 1,
+            take: 3,
             include: {
               categories: {
                 orderBy: [{ rank: "asc" }],
@@ -995,7 +1075,7 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
     return sortSummaries(
       pocMunicipalities.map((municipality) => {
         const liveEstimate = liveEstimateMap.get(municipality.slug);
-        const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, null, liveEstimate);
+        const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, [], liveEstimate);
         const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, liveEstimate);
         return {
           ...createSummaryFromMock(municipality),
@@ -1020,7 +1100,7 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
       return databaseRow
         ? createSummaryFromDatabase(databaseRow, municipality, null)
         : (() => {
-            const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, null, null);
+            const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, [], null);
             const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, null);
 
             return {
@@ -1084,13 +1164,13 @@ export async function getMunicipalityBySlug(slug: string) {
   }
 
   const liveEstimate = await getLiveEstimateSafely(fallback.code);
-  const resolvedTopIndustries = resolveTopIndustries(fallback.topIndustries, null, liveEstimate);
+  const resolvedTopIndustries = resolveTopIndustries(fallback.topIndustries, [], liveEstimate);
   const resolvedTotalJobs = resolveTotalJobs(countMockJobs(fallback), null, liveEstimate);
   return {
     ...createDetailFromMock(fallback),
     totalJobs: resolvedTotalJobs.totalJobs,
     topIndustries: resolvedTopIndustries.topIndustries,
-    industryOverview: resolveIndustryOverview(fallback.jobsByIndustry.map((entry) => entry.industry), null, liveEstimate),
+    industryOverview: resolveIndustryOverview(fallback.jobsByIndustry.map((entry) => entry.industry), [], liveEstimate),
     jobsByIndustry: mergeLiveJobsByIndustry(fallback.jobsByIndustry, liveEstimate),
     sources: {
       totalJobs: resolvedTotalJobs.source,
