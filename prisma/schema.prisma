@@ -239,3 +239,18 @@ model RateLimitBucket {
 
   @@index([resetAt])
 }
+
+model JobindsatsTitleTranslation {
+  daKey     String   @id
+  en        String
+  uk        String?
+  ar        String?
+  fa        String?
+  ur        String?
+  pl        String?
+  de        String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt])
+}

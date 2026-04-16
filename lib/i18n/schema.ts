@@ -226,6 +226,24 @@ export type Dictionary = {
     securityEmpty: string;
     securityEntityFallback: string;
     securityActorFallback: string;
+    translationEditor: string;
+  };
+  adminJobindsatsTitles: {
+    title: string;
+    intro: string;
+    back: string;
+    searchPlaceholder: string;
+    localeLabel: string;
+    sourceLabel: string;
+    englishLabel: string;
+    translationLabel: string;
+    save: string;
+    search: string;
+    saved: string;
+    empty: string;
+    summary: string;
+    previous: string;
+    next: string;
   };
   titles: {
     savedSearch: string;

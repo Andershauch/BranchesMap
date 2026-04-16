@@ -1,10 +1,13 @@
-import enJobindsatsTitleTranslations, { type JobindsatsTitleKey } from "@/lib/i18n/jobindsats-titles/en";
-import arJobindsatsTitleTranslations from "@/lib/i18n/jobindsats-titles/ar";
-import deJobindsatsTitleTranslations from "@/lib/i18n/jobindsats-titles/de";
-import faJobindsatsTitleTranslations from "@/lib/i18n/jobindsats-titles/fa";
-import plJobindsatsTitleTranslations from "@/lib/i18n/jobindsats-titles/pl";
-import ukJobindsatsTitleTranslations from "@/lib/i18n/jobindsats-titles/uk";
-import urJobindsatsTitleTranslations from "@/lib/i18n/jobindsats-titles/ur";
+import {
+  arJobindsatsTitleTranslations,
+  deJobindsatsTitleTranslations,
+  enJobindsatsTitleTranslations,
+  faJobindsatsTitleTranslations,
+  plJobindsatsTitleTranslations,
+  type JobindsatsTitleKey,
+  ukJobindsatsTitleTranslations,
+  urJobindsatsTitleTranslations,
+} from "../lib/i18n/generated/jobindsats-title-translations";
 
 type SupportedLocale = "ar" | "de" | "fa" | "pl" | "uk" | "ur";
 

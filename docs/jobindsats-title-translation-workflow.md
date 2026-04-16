@@ -8,32 +8,54 @@ Translate imported Jobindsats representative titles without changing the origina
 
 ## Current model
 
-- original Danish title stays the source of truth
+- source of truth is `data/jobindsats-titles.csv`
+- runtime translations are generated into `lib/i18n/generated/jobindsats-title-translations.ts`
 - UI translation uses:
-  1. locale-specific override
+  1. locale-specific translation from generated data
   2. English reference translation
   3. original Danish title
 
 ## Files
 
-Reference file:
+Editable source file:
 
-- `lib/i18n/jobindsats-titles/en.ts`
+- `data/jobindsats-titles.csv`
 
-Locale override files:
+Generated runtime file:
 
-- `lib/i18n/jobindsats-titles/pl.ts`
-- `lib/i18n/jobindsats-titles/uk.ts`
-- `lib/i18n/jobindsats-titles/ar.ts`
-- `lib/i18n/jobindsats-titles/fa.ts`
-- `lib/i18n/jobindsats-titles/ur.ts`
-- `lib/i18n/jobindsats-titles/de.ts`
+- `lib/i18n/generated/jobindsats-title-translations.ts`
+
+Audit output:
+
+- `docs/generated/jobindsats-title-missing.csv`
+
+Scripts:
+
+- `npm run jobindsats:translations:compile`
+- `npm run jobindsats:translations:rebuild-csv`
+- `npm run jobindsats:audit:master`
+- `npm run jobindsats:audit:translations -- --locale=<locale>`
 
 ## Translation rule
 
-- do not change the object keys
-- only translate the values
-- if a title is not translated yet, leave it out and fallback will handle it
+In `data/jobindsats-titles.csv`:
+
+- `da_key` is the Danish source title and must stay unchanged
+- `en` is the English master translation
+- the other locale columns are optional overrides
+- if a locale cell is empty, fallback will use English first and Danish after that
+
+## Workflow
+
+1. Edit `data/jobindsats-titles.csv`
+2. Run `npm run jobindsats:translations:compile`
+3. Validate with `npm run lint` or `npm run build`
+4. When new titles arrive from imports, run `npm run jobindsats:audit:master`
+5. Fill the missing rows shown in `docs/generated/jobindsats-title-missing.csv`
+
+If `data/jobindsats-titles.csv` ever becomes unreadable, rebuild it from the last clean committed locale files:
+
+- `npm run jobindsats:translations:rebuild-csv`
 
 ## Important constraint
 

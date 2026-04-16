@@ -5,7 +5,7 @@ import { Fragment } from "react";
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
-import { translateJobindsatsRepresentativeTitle } from "@/lib/i18n/jobindsats-titles";
+import { getJobindsatsTitleTranslator } from "@/lib/i18n/jobindsats-titles";
 import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import {
   buildJobnetIndustrySearchUrl,
@@ -49,11 +49,12 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   }
 
   const currentUserPromise = getCurrentUser();
-  const [municipality, dictionary, search, currentUser] = await Promise.all([
+  const [municipality, dictionary, search, currentUser, translateJobindsatsRepresentativeTitle] = await Promise.all([
     getMunicipalityBySlug(slug),
     getDictionary(locale),
     searchParams,
     currentUserPromise,
+    getJobindsatsTitleTranslator(),
   ]);
 
   if (!municipality) {

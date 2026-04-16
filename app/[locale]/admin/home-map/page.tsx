@@ -102,6 +102,12 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
               {text.visibleCount}: <span className="font-semibold text-slate-900">{visibleCount}</span>
             </p>
           </div>
+          <Link
+            href={`/${locale}/admin/jobindsats-titles`}
+            className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            {text.translationEditor}
+          </Link>
         </div>
 
         <section className="rounded-[1.5rem] border border-slate-900/10 bg-white p-4 shadow-[0_14px_40px_rgba(15,23,42,0.05)]">

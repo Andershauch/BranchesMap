@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "npm run check:encoding && next build",
+    "dev": "npm run jobindsats:translations:compile && next dev",
+    "build": "npm run jobindsats:translations:compile && npm run check:encoding && next build",
     "start": "next start",
-    "lint": "npm run check:encoding && npx eslint .",
+    "lint": "npm run jobindsats:translations:compile && npm run check:encoding && npx eslint .",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
@@ -18,6 +18,9 @@
     "jobindsats:audit:titles": "tsx ./scripts/audit-jobindsats-title-quality.ts",
     "jobindsats:audit:master": "tsx ./scripts/audit-jobindsats-title-master-coverage.ts",
     "jobindsats:audit:translations": "tsx ./scripts/audit-jobindsats-title-translations.ts",
+    "jobindsats:translations:compile": "tsx ./scripts/compile-jobindsats-title-translations.ts",
+    "jobindsats:translations:rebuild-csv": "tsx ./scripts/rebuild-jobindsats-title-csv.ts",
+    "jobindsats:translations:normalize-csv": "tsx ./scripts/normalize-jobindsats-title-csv.ts",
     "geo:build": "node ./scripts/build-sjaelland-geo.mjs",
     "check:encoding": "node ./scripts/check-encoding.mjs"
   },

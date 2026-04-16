@@ -1,10 +1,13 @@
 import "dotenv/config";
 
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
 
-import enJobindsatsTitleTranslations from "../lib/i18n/jobindsats-titles/en";
+import { enJobindsatsTitleTranslations } from "../lib/i18n/generated/jobindsats-title-translations";
 import {
   classifyJobindsatsTitle,
   normalizeJobindsatsRepresentativeTitle,
@@ -58,6 +61,10 @@ function buildNormalizedEnglishMasterSet() {
       .map((title) => normalizeJobindsatsRepresentativeTitle(title))
       .filter(Boolean),
   );
+}
+
+function escapeCsvCell(value: string) {
+  return `"${value.replace(/"/g, "\"\"")}"`;
 }
 
 async function main() {
@@ -157,11 +164,26 @@ async function main() {
     console.log(`Visible representative titles missing in en.ts: ${missingTitles.length}`);
     console.log("");
 
+    const outputPath = path.join(process.cwd(), "docs", "generated", "jobindsats-title-missing.csv");
+    mkdirSync(path.dirname(outputPath), { recursive: true });
+    const csvLines = [
+      ["da_key", "totalOpenPositions", "municipalities"].map(escapeCsvCell).join(","),
+      ...missingTitles.map((title) =>
+        [title.title, String(title.totalOpenPositions), String(title.municipalities)]
+          .map(escapeCsvCell)
+          .join(","),
+      ),
+    ];
+    writeFileSync(outputPath, `${csvLines.join("\n")}\n`, "utf8");
+
     for (const title of missingTitles) {
       console.log(
         `- ${title.title} | totalOpenPositions=${title.totalOpenPositions} | municipalities=${title.municipalities}`,
       );
     }
+
+    console.log("");
+    console.log(`Wrote missing-title CSV to ${outputPath}`);
   } finally {
     await prisma.$disconnect();
     await pool.end();
