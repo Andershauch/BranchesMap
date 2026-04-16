@@ -16,6 +16,8 @@
     "jobindsats:daily": "tsx ./scripts/run-jobindsats-daily.ts",
     "jobindsats:import:y25i07": "tsx ./scripts/import-jobindsats-y25i07.ts",
     "jobindsats:audit:titles": "tsx ./scripts/audit-jobindsats-title-quality.ts",
+    "jobindsats:audit:master": "tsx ./scripts/audit-jobindsats-title-master-coverage.ts",
+    "jobindsats:audit:translations": "tsx ./scripts/audit-jobindsats-title-translations.ts",
     "geo:build": "node ./scripts/build-sjaelland-geo.mjs",
     "check:encoding": "node ./scripts/check-encoding.mjs"
   },

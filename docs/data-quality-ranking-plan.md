@@ -55,6 +55,11 @@ The UI now also uses a stricter representative-title display filter:
 - mapped titles can still exist in the data layer
 - but broad umbrella labels are hidden from the representative title UI when better alternatives exist
 
+Imported representative titles now also have a separate translation layer:
+
+- English is the current reference translation set
+- other locales have dedicated override files and currently fall back to English, then original Danish
+
 There is now also a repeatable audit step in the repo:
 
 - `npm run jobindsats:audit:titles`

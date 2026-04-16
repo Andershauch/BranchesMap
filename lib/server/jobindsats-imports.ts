@@ -30,6 +30,24 @@ export function repairJobindsatsText(value: string) {
   return repaired.includes("\uFFFD") ? value : repaired;
 }
 
+const mojibakeRepairs = [
+  [Buffer.from([0xc3, 0x86]).toString("latin1"), "\u00C6"],
+  [Buffer.from([0xc3, 0x98]).toString("latin1"), "\u00D8"],
+  [Buffer.from([0xc3, 0x85]).toString("latin1"), "\u00C5"],
+  [Buffer.from([0xc3, 0xa6]).toString("latin1"), "\u00E6"],
+  [Buffer.from([0xc3, 0xb8]).toString("latin1"), "\u00F8"],
+  [Buffer.from([0xc3, 0xa5]).toString("latin1"), "\u00E5"],
+  ["\u00C3\u02DC", "\u00D8"],
+  ["\u00C3\u00A6", "\u00E6"],
+  ["\u00C3\u00B8", "\u00F8"],
+  ["\u00C3\u00A5", "\u00E5"],
+] as const;
+
 export function normalizeJobindsatsText(value: string) {
-  return repairJobindsatsText(value).trim().replace(/\s+/g, " ");
+  const repaired = mojibakeRepairs.reduce(
+    (current, [broken, fixed]) => current.replaceAll(broken, fixed),
+    repairJobindsatsText(value),
+  );
+
+  return repaired.trim().replace(/\s+/g, " ");
 }

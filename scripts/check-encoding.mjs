@@ -22,7 +22,22 @@ const includeExtensions = new Set([
 ]);
 const includeBasenames = new Set([".editorconfig", ".gitattributes", ".gitignore"]);
 const ignoreDirectories = new Set([".git", ".next", ".vercel", "node_modules"]);
-const suspiciousPattern = /(\u00C3.|\u00C2.|\uFFFD)/;
+const suspiciousPattern = new RegExp(
+  [
+    "\\u00C3.",
+    "\\u00C2.",
+    "\\uFFFD",
+    "\\u00D8\\u00A7\\u00D9",
+    "\\u00D9\\u2026",
+    "\\u00D9\\u201E",
+    "\\u00C3\\u00A6",
+    "\\u00C3\\u00B8",
+    "\\u00C3\\u00A5",
+    "\\u00C3\\u2020",
+    "\\u00C3\\u02DC",
+    "\\u00C3\\u2026",
+  ].join("|"),
+);
 const failures = [];
 
 function walk(currentPath) {

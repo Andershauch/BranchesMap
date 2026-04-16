@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
+import { translateJobindsatsRepresentativeTitle } from "@/lib/i18n/jobindsats-titles";
 import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import {
   buildJobnetIndustrySearchUrl,
@@ -215,7 +216,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                                 dir="auto"
                                 className="font-semibold text-[var(--md-sys-color-on-surface)] underline decoration-[var(--md-sys-color-outline)] underline-offset-2 transition hover:text-[var(--md-sys-color-primary)]"
                               >
-                                {title}
+                                {translateJobindsatsRepresentativeTitle(activeLocale, title)}
                               </a>
                             </Fragment>
                           ))}
