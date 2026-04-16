@@ -34,6 +34,21 @@ export type JobindsatsTitleClassification = {
   score: number | null;
 };
 
+const UI_REPRESENTATIVE_TITLE_EXCLUDE_PATTERNS = [
+  " akademisk arbejde",
+  " paedagogisk arbejde",
+  " paedagogisk socialt og kirkeligt arbejde",
+  " transport post lager og maskinforerarbejde",
+  " hotel restauration koekken kantine",
+  " koekken og kantinearbejde",
+  " ledelse",
+  " undervisning og vejledning",
+  " forskning og universitetsundervisning",
+  " arbejde",
+  " mv",
+  " elever",
+];
+
 type CategoryRule = {
   industryCode: ProductIndustryCode;
   keywords: string[];
@@ -520,6 +535,17 @@ export function isGenericJobindsatsRepresentativeTitle(titleLabel: string) {
     normalized.includes("elever") ||
     normalized.includes("elev")
   );
+}
+
+export function shouldHideRepresentativeTitleFromUi(titleLabel: string) {
+  const normalizedTitle = normalizeJobindsatsRepresentativeTitle(titleLabel);
+  if (!normalizedTitle) {
+    return true;
+  }
+
+  const normalized = ` ${normalizeForMatching(normalizedTitle)} `;
+
+  return UI_REPRESENTATIVE_TITLE_EXCLUDE_PATTERNS.some((pattern) => normalized.includes(pattern));
 }
 
 export function classifyJobindsatsTitle(titleLabel: string): JobindsatsTitleClassification {

@@ -50,6 +50,11 @@ The mapping layer has also been expanded to cover more of the previously weak ar
 
 The current ranking also uses recent import history to prefer industries that are stable across the latest periods instead of only reacting to a single-period spike.
 
+The UI now also uses a stricter representative-title display filter:
+
+- mapped titles can still exist in the data layer
+- but broad umbrella labels are hidden from the representative title UI when better alternatives exist
+
 There is now also a repeatable audit step in the repo:
 
 - `npm run jobindsats:audit:titles`
