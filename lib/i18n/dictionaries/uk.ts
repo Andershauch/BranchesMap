@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const ukDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
+    title: "JOBVEJ",
     description: "POC для мобільної карти муніципалітетів та галузей промисловості Зеландії.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "Мобільна карта та інформація про муніципалітети Зеландії",
+    appName: "JOBVEJ",
+    appTagline: "- ваш шлях до роботи",
     localeLabel: "Мова",
   },
   locales: {
@@ -21,7 +21,7 @@ export const ukDictionary: Dictionary = {
     de: "Німецька",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "Карта муніципалітетів з реальними кордонами Зеландії",
     intro:
       "Тепер карта використовує офіційну геометрію муніципалітетів від Dataforsyningen. Кожен муніципалітет клікабельний, а три найбільш представлені галузі відображаються у вигляді іконок поверх області.",
@@ -213,7 +213,7 @@ export const ukDictionary: Dictionary = {
     municipalityFallback: "Профіль муніципалітету",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "Адмін: головна карта муніципалітетів",
     intro:
       "Керуйте тим, які муніципалітети відображаються на головній карті, у якому порядку та як вони підписуються.",

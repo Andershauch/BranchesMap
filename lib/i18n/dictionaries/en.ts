@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const enDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
-    description: "POC for a mobile-friendly map of municipalities and industries across Zealand.",
+    title: "JOBVEJ",
+    description: "JOBVEJ - your path to work.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "Mobile-first map and municipality insights for Zealand",
+    appName: "JOBVEJ",
+    appTagline: "- your path to work",
     localeLabel: "Language",
   },
   locales: {
@@ -21,7 +21,7 @@ export const enDictionary: Dictionary = {
     de: "German",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "Municipality map with real Zealand boundaries",
     intro:
       "The map now uses official municipality geometry from Dataforsyningen. Each municipality is directly clickable, and the three most represented industries are shown as icon badges on top of the area.",
@@ -217,7 +217,7 @@ export const enDictionary: Dictionary = {
     intro:
       "Control which municipalities are shown on the home map, in which order they are prioritized, and how they can later be labelled.",
     back: "Back to the map",
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     signedInAs: "Admin is signed in",
     signOut: "Sign out",
     save: "Save",

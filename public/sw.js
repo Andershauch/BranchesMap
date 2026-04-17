@@ -1,9 +1,8 @@
-const STATIC_CACHE = "branches-map-static-v3";
+const STATIC_CACHE = "branches-map-static-v4";
 const OFFLINE_URL = "/offline.html";
 const STATIC_ASSETS = [
   OFFLINE_URL,
   "/manifest.webmanifest",
-  "/favicon.ico",
   "/icons/app-icon-192.png",
   "/icons/app-icon-512.png",
   "/icons/apple-touch-icon.png",

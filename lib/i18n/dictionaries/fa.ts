@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const faDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
+    title: "JOBVEJ",
     description: "POC برای نقشه کاربرپسند موبایل از شهرداری‌ها و صنایع در سراسر زلاند.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "نقشه اولویت‌بندی شده برای موبایل و اطلاعات شهرداری‌های زلاند",
+    appName: "JOBVEJ",
+    appTagline: "- مسیر شما به کار",
     localeLabel: "زبان",
   },
   locales: {
@@ -21,7 +21,7 @@ export const faDictionary: Dictionary = {
     de: "آلمانی",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "نقشه شهرداری‌ها با مرزهای واقعی زلاند",
     intro:
       "نقشه اکنون از هندسه رسمی شهرداری‌ها از Dataforsyningen استفاده می‌کند. هر شهرداری مستقیماً قابل کلیک است و سه صنعت پرکاربرد به صورت نشان‌های آیکون روی منطقه نمایش داده می‌شوند.",
@@ -213,7 +213,7 @@ export const faDictionary: Dictionary = {
     municipalityFallback: "پروفایل شهرداری",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "مدیریت: نقشه اصلی شهرداری‌ها",
     intro:
       "کنترل کنید کدام شهرداری‌ها روی نقشه اصلی نشان داده شوند، با چه اولویتی و چگونه برچسب‌گذاری شوند.",

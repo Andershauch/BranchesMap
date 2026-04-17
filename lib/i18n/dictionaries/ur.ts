@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const urDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
+    title: "JOBVEJ",
     description: "زیلینڈ بھر میں بلدیات اور صنعتوں کے موبائل دوستانہ نقشے کے لیے POC۔",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "زیلینڈ کے لیے موبائل فرسٹ نقشہ اور بلدیاتی معلومات",
+    appName: "JOBVEJ",
+    appTagline: "- کام تک آپ کا راستہ",
     localeLabel: "زبان",
   },
   locales: {
@@ -21,7 +21,7 @@ export const urDictionary: Dictionary = {
     de: "جرمن",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "زیلینڈ کی اصل حدود کے ساتھ بلدیاتی نقشہ",
     intro:
       "نقشہ اب Dataforsyningen سے سرکاری بلدیاتی جیومیٹری استعمال کرتا ہے۔ ہر بلدیہ براہ راست کلک کے قابل ہے، اور تین سب سے زیادہ نمائندگی کرنے والی صنعتیں علاقے کے اوپر آئیکن بیجز کے طور پر دکھائی گئی ہیں۔",
@@ -213,7 +213,7 @@ export const urDictionary: Dictionary = {
     municipalityFallback: "بلدیہ کا پروفائل",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "ایڈمن: ہوم میپ بلدیات",
     intro:
       "کنٹرول کریں کہ ہوم میپ پر کون سی بلدیات دکھائی جائیں، انہیں کس ترتیب سے ترجیح دی جائے، اور بعد میں انہیں کیسے لیبل کیا جا سکتا ہے۔",

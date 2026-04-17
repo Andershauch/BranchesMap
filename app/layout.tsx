@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  applicationName: "BranchesMap",
-  title: "BranchesMap",
-  description: "POC for et mobilvenligt kort over Sj\u00e6llands kommuner og brancher.",
+  applicationName: "JOBVEJ",
+  title: "JOBVEJ",
+  description: "JOBVEJ - din vej til arbejde.",
   manifest: "/manifest.webmanifest",
   formatDetection: {
     telephone: false,
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "BranchesMap",
+    title: "JOBVEJ",
   },
   icons: {
     icon: [
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
       { url: "/icons/app-icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.ico"],
+    shortcut: [{ url: "/icons/app-icon-192.png", sizes: "192x192", type: "image/png" }],
   },
 };
 

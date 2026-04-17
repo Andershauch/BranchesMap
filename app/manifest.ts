@@ -3,9 +3,9 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "BranchesMap",
-    short_name: "BranchesMap",
-    description: "Mobilvenligt kort over Sjællands kommuner, brancher og jobestimater.",
+    name: "JOBVEJ",
+    short_name: "JOBVEJ",
+    description: "JOBVEJ - din vej til arbejde.",
     start_url: "/da",
     scope: "/",
     display: "standalone",

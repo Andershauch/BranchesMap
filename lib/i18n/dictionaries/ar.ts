@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const arDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
+    title: "JOBVEJ",
     description: "إثبات مفهوم (POC) لخريطة تفاعلية للبلديات والصناعات في نيوزيلندا، مصممة للهواتف المحمولة.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "خريطة ورؤى للبلديات في نيوزيلندا مصممة أولاً للهاتف",
+    appName: "JOBVEJ",
+    appTagline: "- طريقك إلى العمل",
     localeLabel: "اللغة",
   },
   locales: {
@@ -21,7 +21,7 @@ export const arDictionary: Dictionary = {
     de: "الألمانية",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "خريطة البلديات بحدود زيلاند الحقيقية",
     intro:
       "تستخدم الخريطة الآن الهندسة الرسمية للبلديات من Dataforsyningen. كل بلدية قابلة للنقر مباشرة، وتظهر الصناعات الثلاث الأكثر تمثيلاً كرموز فوق المنطقة.",
@@ -213,7 +213,7 @@ export const arDictionary: Dictionary = {
     municipalityFallback: "ملف البلدية",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "المسؤول: خريطة البلديات الرئيسية",
     intro:
       "التحكم في البلديات التي تظهر على الخريطة الرئيسية، وبأي ترتيب يتم منحها الأولوية، وكيف يمكن تسميتها لاحقاً.",

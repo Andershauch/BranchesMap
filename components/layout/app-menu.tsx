@@ -138,7 +138,7 @@ export function AppMenu({
         <div className="flex items-center justify-between gap-4 pb-4">
           <div className="min-w-0 text-start">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--md-sys-color-primary)]">
-              BranchesMap
+              JOBVEJ
             </p>
             {user ? (
               <p className="mt-1 text-sm text-[var(--md-sys-color-on-surface-variant)]">

@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const plDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
+    title: "JOBVEJ",
     description: "POC dla przyjaznej dla urządzeń mobilnych mapy gmin i branż na całej Zelandii.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "Mapa mobilna i informacje o gminach Zelandii",
+    appName: "JOBVEJ",
+    appTagline: "- twoja droga do pracy",
     localeLabel: "Język",
   },
   locales: {
@@ -21,7 +21,7 @@ export const plDictionary: Dictionary = {
     de: "Niemiecki",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "Mapa gmin z rzeczywistymi granicami Zelandii",
     intro:
       "Mapa wykorzystuje teraz oficjalną geometrię gmin z Dataforsyningen. Każda gmina jest bezpośrednio klikalna, a trzy najbardziej reprezentowane branże są wyświetlane jako ikony nad danym obszarem.",
@@ -213,7 +213,7 @@ export const plDictionary: Dictionary = {
     municipalityFallback: "Profil gminy",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "Admin: mapa główna gmin",
     intro:
       "Zarządzaj tym, które gminy są wyświetlane na mapie głównej, w jakiej kolejności oraz jak mają być etykietowane.",

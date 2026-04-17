@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const daDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
-    description: "POC for et mobilvenligt kort over Sjællands kommuner og brancher.",
+    title: "JOBVEJ",
+    description: "JOBVEJ - din vej til arbejde.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "Mobile-first kort og kommunedata for Sjælland",
+    appName: "JOBVEJ",
+    appTagline: "- din vej til arbejde",
     localeLabel: "Sprog",
   },
   locales: {
@@ -21,7 +21,7 @@ export const daDictionary: Dictionary = {
     de: "Deutsch",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "Kommunekort med rigtige grænser for Sjælland",
     intro:
       "Kortet bruger nu officielle kommunegeometrier fra Dataforsyningen. Hver kommune kan klikkes direkte, og de tre mest repræsenterede brancher vises som ikonbadge oven på fladen.",
@@ -213,7 +213,7 @@ export const daDictionary: Dictionary = {
     municipalityFallback: "Kommuneprofil",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "Admin: hovedkort-kommuner",
     intro: "Styr hvilke kommuner der vises på hovedkortet, i hvilken rækkefølge de prioriteres, og hvordan de senere kan labeles.",
     back: "Tilbage til kortet",

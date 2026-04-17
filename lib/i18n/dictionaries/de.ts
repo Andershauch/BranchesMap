@@ -2,12 +2,12 @@ import type { Dictionary } from "@/lib/i18n/schema";
 
 export const deDictionary: Dictionary = {
   meta: {
-    title: "BranchesMap",
+    title: "JOBVEJ",
     description: "POC für eine mobiloptimierte Karte von Gemeinden und Branchen in ganz Seeland.",
   },
   header: {
-    appName: "BranchesMap",
-    appTagline: "Mobile-First-Karte und Gemeinde-Einblicke für Seeland",
+    appName: "JOBVEJ",
+    appTagline: "- dein Weg zur Arbeit",
     localeLabel: "Sprache",
   },
   locales: {
@@ -21,7 +21,7 @@ export const deDictionary: Dictionary = {
     de: "Deutsch",
   },
   home: {
-    kicker: "BranchesMap POC",
+    kicker: "JOBVEJ POC",
     title: "Gemeindekarte mit realen Grenzen Seelands",
     intro:
       "Die Karte nutzt jetzt offizielle Gemeindegeometrien von Dataforsyningen. Jede Gemeinde ist direkt anklickbar, und die drei am stärksten vertretenen Branchen werden als Icon-Badges über dem Gebiet angezeigt.",
@@ -213,7 +213,7 @@ export const deDictionary: Dictionary = {
     municipalityFallback: "Gemeindeprofil",
   },
   adminHomeMap: {
-    eyebrow: "BranchesMap Admin",
+    eyebrow: "JOBVEJ Admin",
     title: "Admin: Startkarten-Gemeinden",
     intro:
       "Steuere, welche Gemeinden auf der Startkarte angezeigt werden, in welcher Reihenfolge sie priorisiert werden und wie sie später beschriftet werden können.",
