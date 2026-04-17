@@ -19,6 +19,7 @@ import {
   mapJobindsatsTitleToIndustryCode,
   type ProductIndustryCode,
 } from "../lib/server/jobindsats-category-mapping";
+import { enJobindsatsTitleTranslations } from "../lib/i18n/generated/jobindsats-title-translations";
 
 const IMPORT_OUTPUT_DIR = path.join(process.cwd(), "_tmp_jobindsats", "imports", JOBINDSATS_OPEN_POSITIONS_TABLE.toLowerCase());
 const DISCOVERY_SCRIPT_PATH = path.join(process.cwd(), "scripts", "jobindsats-discovery.ps1");
@@ -150,6 +151,12 @@ function readJsonFile<T>(filePath: string): T {
 
 function createTitleKey(label: string) {
   return createHash("sha1").update(label).digest("hex").slice(0, 16);
+}
+
+function buildEnglishSeedMap() {
+  return new Map(
+    Object.entries(enJobindsatsTitleTranslations).map(([daKey, en]) => [normalizeJobindsatsText(daKey), en] as const),
+  );
 }
 
 function parseInteger(value: string | null | undefined) {
@@ -476,6 +483,39 @@ async function persistImport(
       });
     }
 
+    const englishSeedMap = buildEnglishSeedMap();
+    const importedTitles = [
+      ...new Set(
+        payloads.flatMap((payload) =>
+          payload.topTitles.map((title) => normalizeJobindsatsText(title.titleLabel)).filter(Boolean),
+        ),
+      ),
+    ];
+    const existingTranslationRows = await prisma.jobindsatsTitleTranslation.findMany({
+      where: {
+        daKey: {
+          in: importedTitles,
+        },
+      },
+      select: {
+        daKey: true,
+      },
+    });
+    const existingKeys = new Set(existingTranslationRows.map((row) => row.daKey));
+    const missingTranslationRows = importedTitles
+      .filter((title) => !existingKeys.has(title))
+      .map((title) => ({
+        daKey: title,
+        en: englishSeedMap.get(title) ?? title,
+      }));
+
+    if (missingTranslationRows.length > 0) {
+      await prisma.jobindsatsTitleTranslation.createMany({
+        data: missingTranslationRows,
+        skipDuplicates: true,
+      });
+    }
+
     await prisma.importRun.update({
       where: { id: run.id },
       data: {
@@ -484,6 +524,7 @@ async function persistImport(
         metadata: {
           municipalityCount: payloads.length,
           importedSlugs: payloads.map((payload) => payload.municipalitySlug),
+          newTranslationRows: missingTranslationRows.length,
         },
       },
     });

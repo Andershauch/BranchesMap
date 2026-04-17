@@ -34,8 +34,10 @@ type JobindsatsTranslationRow = {
 };
 
 type LocaleColumn = Exclude<AppLocale, "da">;
+type AdminFilter = "all" | "missing" | "new";
 
 const localeColumns: LocaleColumn[] = ["en", "uk", "ar", "fa", "ur", "pl", "de"];
+const masterKeySet = new Set(Object.keys(enJobindsatsTitleTranslations));
 
 async function ensureSeeded() {
   await prisma.jobindsatsTitleTranslation.createMany({
@@ -68,12 +70,16 @@ export async function listJobindsatsTitleTranslations(options?: {
   query?: string;
   page?: number;
   pageSize?: number;
+  locale?: LocaleColumn;
+  filter?: AdminFilter;
 }) {
   await ensureSeeded();
 
   const pageSize = Math.max(1, Math.min(options?.pageSize ?? 25, 100));
   const page = Math.max(1, options?.page ?? 1);
   const query = options?.query?.trim() ?? "";
+  const locale = options?.locale ?? "en";
+  const filter = options?.filter ?? "all";
 
   const where = query
     ? {
@@ -90,15 +96,25 @@ export async function listJobindsatsTitleTranslations(options?: {
       }
     : undefined;
 
-  const [total, rows] = await Promise.all([
-    prisma.jobindsatsTitleTranslation.count({ where }),
-    prisma.jobindsatsTitleTranslation.findMany({
-      where,
-      orderBy: { daKey: "asc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    }),
-  ]);
+  const allRows = await prisma.jobindsatsTitleTranslation.findMany({
+    where,
+    orderBy: { daKey: "asc" },
+  });
+
+  const filteredRows = allRows.filter((row) => {
+    if (filter === "missing") {
+      return !normalizeValue(row[locale]);
+    }
+
+    if (filter === "new") {
+      return !masterKeySet.has(row.daKey);
+    }
+
+    return true;
+  });
+
+  const total = filteredRows.length;
+  const rows = filteredRows.slice((page - 1) * pageSize, page * pageSize);
 
   return {
     rows,
@@ -107,6 +123,8 @@ export async function listJobindsatsTitleTranslations(options?: {
     pageSize,
     pageCount: Math.max(1, Math.ceil(total / pageSize)),
     query,
+    filter,
+    locale,
   };
 }
 

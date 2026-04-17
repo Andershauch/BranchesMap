@@ -20,6 +20,24 @@ function runImportStep() {
   }
 }
 
+function runTranslationSyncStep() {
+  const command = process.platform === "win32" ? "cmd.exe" : "npm";
+  const args =
+    process.platform === "win32"
+      ? ["/d", "/s", "/c", "npm run jobindsats:translations:sync-db"]
+      : ["run", "jobindsats:translations:sync-db"];
+
+  const result = spawnSync(command, args, {
+    cwd: process.cwd(),
+    stdio: "inherit",
+    env: process.env,
+  });
+
+  if (result.status !== 0) {
+    throw new Error(`Jobindsats translation sync step failed with exit code ${result.status ?? "unknown"}.`);
+  }
+}
+
 async function runFollowCheckStep() {
   const appBaseUrl = process.env.APP_BASE_URL?.trim();
   const followCheckSecret = process.env.FOLLOW_CHECK_SECRET?.trim();
@@ -60,6 +78,7 @@ async function runFollowCheckStep() {
 async function main() {
   console.log("Starting daily Jobindsats batch...");
   runImportStep();
+  runTranslationSyncStep();
   await runFollowCheckStep();
   console.log("Daily Jobindsats batch completed.");
 }

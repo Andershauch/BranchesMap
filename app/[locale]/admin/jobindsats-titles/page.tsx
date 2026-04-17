@@ -13,6 +13,8 @@ export const dynamic = "force-dynamic";
 
 const editableLocales = ["en", "uk", "ar", "fa", "ur", "pl", "de"] as const;
 type EditableLocale = (typeof editableLocales)[number];
+const editableFilters = ["all", "missing", "new"] as const;
+type EditableFilter = (typeof editableFilters)[number];
 
 const adminLocaleLabelsDa: Record<EditableLocale, string> = {
   en: "Engelsk",
@@ -54,6 +56,12 @@ function getTargetLocale(value: string | string[] | undefined): EditableLocale {
     : "ar";
 }
 
+function getFilter(value: string | string[] | undefined): EditableFilter {
+  return typeof value === "string" && editableFilters.includes(value as EditableFilter)
+    ? (value as EditableFilter)
+    : "all";
+}
+
 function summaryText(template: string, count: number, total: number) {
   return template.replace("{count}", String(count)).replace("{total}", String(total));
 }
@@ -75,6 +83,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
   const query = getStringParam(search.q);
   const page = getPageParam(search.page);
   const targetLocale = getTargetLocale(search.target);
+  const filter = getFilter(search.filter);
   const saved = getStringParam(search.saved) === "1";
 
   await requireAdminUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/admin/jobindsats-titles`)}`);
@@ -83,11 +92,14 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
     query,
     page,
     pageSize: 25,
+    locale: targetLocale,
+    filter,
   });
 
   const baseParams = new URLSearchParams();
   if (query) baseParams.set("q", query);
   if (targetLocale) baseParams.set("target", targetLocale);
+  if (filter !== "all") baseParams.set("filter", filter);
 
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-3 py-3 text-slate-900 sm:px-4 sm:py-4">
@@ -108,7 +120,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
           </Link>
         </div>
 
-        <form className="grid gap-3 rounded-[1.4rem] border border-slate-900/10 bg-slate-50/80 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto]">
+        <form className="grid gap-3 rounded-[1.4rem] border border-slate-900/10 bg-slate-50/80 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]">
           <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
             <span>{text.searchPlaceholder}</span>
             <input
@@ -131,6 +143,18 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                   {adminLocaleLabels[localeCode]}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+            <span>{text.filterLabel}</span>
+            <select
+              name="filter"
+              defaultValue={filter}
+              className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
+            >
+              <option value="all">{text.filterAll}</option>
+              <option value="missing">{text.filterMissing}</option>
+              <option value="new">{text.filterNew}</option>
             </select>
           </label>
           <div className="flex items-end">
@@ -165,6 +189,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                 <input type="hidden" name="daKey" value={row.daKey} />
                 <input type="hidden" name="query" value={query} />
                 <input type="hidden" name="page" value={String(result.page)} />
+                <input type="hidden" name="filter" value={filter} />
 
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-start">
                   <div>

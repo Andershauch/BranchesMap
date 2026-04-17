@@ -234,6 +234,10 @@ export type Dictionary = {
     back: string;
     searchPlaceholder: string;
     localeLabel: string;
+    filterLabel: string;
+    filterAll: string;
+    filterMissing: string;
+    filterNew: string;
     sourceLabel: string;
     englishLabel: string;
     translationLabel: string;

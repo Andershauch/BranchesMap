@@ -9,6 +9,7 @@ import { requireAdminAuth } from "@/lib/server/admin-auth";
 import { updateJobindsatsTitleTranslation } from "@/lib/server/jobindsats-title-translations";
 
 const editableLocales = ["en", "uk", "ar", "fa", "ur", "pl", "de"] as const;
+const editableFilters = ["all", "missing", "new"] as const;
 
 export async function updateJobindsatsTitleTranslationAction(formData: FormData) {
   await requireAdminAuth();
@@ -26,6 +27,8 @@ export async function updateJobindsatsTitleTranslationAction(formData: FormData)
   const pageValue = formData.get("page");
   const query = typeof queryValue === "string" ? queryValue : "";
   const page = typeof pageValue === "string" ? pageValue : "1";
+  const filterValue = formData.get("filter");
+  const filter = parseEnumValue(filterValue, editableFilters, "all");
 
   if (typeof daKey !== "string" || !daKey.trim()) {
     throw new Error("Danish title key is required.");
@@ -48,6 +51,7 @@ export async function updateJobindsatsTitleTranslationAction(formData: FormData)
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (targetLocale) params.set("target", targetLocale);
+  if (filter) params.set("filter", filter);
   if (page && page !== "1") params.set("page", page);
   params.set("saved", "1");
 
