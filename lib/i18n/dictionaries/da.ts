@@ -93,6 +93,8 @@ export const daDictionary: Dictionary = {
     install: "Installer app",
     installReady: "Appen kan installeres direkte herfra.",
     installHint: "Hvis installation ikke vises endnu, så genindlæs HTTPS-linket én gang og åbn menuen igen.",
+    installManual: "Hvis installationsknappen ikke vises, så brug browserens menu og vælg Installer app eller Føj til hjemmeskærm.",
+    installUnavailableDev: "PWA-installation er slået fra i lokal udvikling. Test installation på den deployede app eller via en lokal production build.",
     installed: "Appen er allerede installeret eller kører i standalone.",
   },
   authStatus: {

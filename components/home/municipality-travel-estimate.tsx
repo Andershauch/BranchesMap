@@ -102,10 +102,10 @@ export function MunicipalityTravelEstimate({
 
   return (
     <div className="mt-3 rounded-[1.2rem] bg-white/70 px-3.5 py-3 ring-1 ring-slate-900/6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{copy.title}</p>
-          <p className="mt-1 text-xs font-medium text-slate-700">
+          <p dir="auto" className="mt-1 text-xs font-medium text-slate-700">
             {status === "loading"
               ? copy.loading
               : estimate
@@ -124,7 +124,7 @@ export function MunicipalityTravelEstimate({
           type="button"
           onClick={requestLocation}
           disabled={status === "loading"}
-          className="shrink-0 rounded-full bg-slate-950 px-3 py-2 text-[11px] font-semibold text-white shadow-[0_10px_18px_rgba(15,23,42,0.14)] transition hover:bg-slate-800 disabled:cursor-wait disabled:bg-slate-400"
+          className="w-full shrink-0 rounded-full bg-slate-950 px-3 py-2 text-[11px] font-semibold text-white shadow-[0_10px_18px_rgba(15,23,42,0.14)] transition hover:bg-slate-800 disabled:cursor-wait disabled:bg-slate-400 sm:w-auto"
         >
           {status === "idle" ? copy.button : copy.retry}
         </button>

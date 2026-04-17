@@ -83,6 +83,8 @@ export type Dictionary = {
     install: string;
     installReady: string;
     installHint: string;
+    installManual: string;
+    installUnavailableDev: string;
     installed: string;
   };
   authStatus: {

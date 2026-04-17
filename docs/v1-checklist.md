@@ -9,10 +9,10 @@
 
 ## 2. UI og produktoplevelse
 
-- [ ] Topbar, menu og kommunevisninger er gennemgået på mobil og desktop
-- [ ] RTL-visninger er kontrolleret for arabisk, farsi og urdu
-- [ ] Jobnet-links og branchepills er konsistente og uden misvisende jobtal
-- [ ] Admin-flader er brugbare og læsbare
+- [x] Topbar, menu og kommunevisninger er gennemgået på mobil og desktop
+- [x] RTL-visninger er kontrolleret for arabisk, farsi og urdu
+- [x] Jobnet-links og branchepills er konsistente og uden misvisende jobtal
+- [x] Admin-flader er brugbare og læsbare
 
 ## 3. Data og produktlogik
 

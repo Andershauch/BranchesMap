@@ -93,6 +93,8 @@ export const enDictionary: Dictionary = {
     install: "Install app",
     installReady: "The app can be installed directly from here.",
     installHint: "If install is not available yet, reload the HTTPS link once and open the menu again.",
+    installManual: "If the install button does not appear, use the browser menu and choose Install app or Add to home screen.",
+    installUnavailableDev: "PWA install is disabled in local development. Test installation on the deployed app or from a local production build.",
     installed: "The app is already installed or running in standalone.",
   },
   authStatus: {

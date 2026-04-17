@@ -93,6 +93,8 @@ export const plDictionary: Dictionary = {
     install: "Zainstaluj aplikację",
     installReady: "Aplikację można zainstalować bezpośrednio stąd.",
     installHint: "Jeśli instalacja nie jest jeszcze dostępna, odśwież link HTTPS i ponownie otwórz menu.",
+    installManual: "Jeśli przycisk instalacji się nie pojawia, użyj menu przeglądarki i wybierz Install app albo Add to home screen.",
+    installUnavailableDev: "Instalacja PWA jest wyłączona w lokalnym środowisku developerskim. Testuj instalację na wdrożonej aplikacji albo z lokalnego buildu produkcyjnego.",
     installed: "Aplikacja jest już zainstalowana lub działa w trybie samodzielnym.",
   },
   authStatus: {

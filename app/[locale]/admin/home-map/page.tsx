@@ -104,7 +104,7 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
           </div>
           <Link
             href={`/${locale}/admin/jobindsats-titles`}
-            className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+            className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-slate-700"
           >
             {text.translationEditor}
           </Link>
@@ -169,9 +169,9 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
               <input type="hidden" name="slug" value={municipality.slug} />
 
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-slate-900">{municipality.name}</h2>
+                    <h2 className="truncate text-lg font-semibold text-slate-900">{municipality.name}</h2>
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                       {municipality.code}
                     </span>
@@ -236,10 +236,10 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-stretch sm:justify-end">
                 <button
                   type="submit"
-                  className="rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700"
+                  className="w-full rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 sm:w-auto"
                 >
                   {text.save}
                 </button>

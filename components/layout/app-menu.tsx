@@ -33,6 +33,10 @@ function detectStandaloneMode() {
   );
 }
 
+function isDevelopmentRuntime() {
+  return process.env.NODE_ENV !== "production";
+}
+
 function MenuLink({ href, label, onClick }: { href: string; label: string; onClick: () => void }) {
   return (
     <Link
@@ -58,6 +62,7 @@ export function AppMenu({
   const copy = getDictionarySync(locale).menu;
   const isRtl = isRtlLocale(locale);
   const displayName = user?.name?.trim() ? user.name : user?.email ?? "";
+  const isDevRuntime = isDevelopmentRuntime();
 
   useEffect(() => {
     if (!open) {
@@ -131,7 +136,7 @@ export function AppMenu({
       />
 
       <aside
-        className={`absolute inset-y-0 z-[101] flex h-full w-[min(18.5rem,calc(100vw-1.5rem))] flex-col overflow-y-auto bg-[color:rgba(255,255,255,0.86)] px-4 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.22)] backdrop-blur-2xl ${
+        className={`absolute inset-y-0 z-[101] flex h-full w-[min(19rem,calc(100vw-1.5rem))] flex-col overflow-y-auto bg-[color:rgba(255,255,255,0.86)] px-4 py-5 shadow-[0_20px_60px_rgba(15,23,42,0.22)] backdrop-blur-2xl ${
           isRtl ? "right-0 border-l" : "left-0 border-r"
         } border-white/65`}
       >
@@ -152,10 +157,10 @@ export function AppMenu({
           <button
             type="button"
             onClick={closeMenu}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/88 text-base font-semibold text-[var(--md-sys-color-on-surface)] shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition hover:bg-white"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/88 text-base font-semibold text-[var(--md-sys-color-on-surface)] shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
             aria-label={copy.close}
           >
-            X
+            ×
           </button>
         </div>
 
@@ -181,6 +186,10 @@ export function AppMenu({
               <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-start text-sm text-[var(--md-sys-color-on-surface-variant)]">
                 {copy.installed}
               </p>
+            ) : isDevRuntime ? (
+              <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-start text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+                {copy.installUnavailableDev}
+              </p>
             ) : installPromptEvent ? (
               <div className="space-y-2">
                 <button
@@ -196,7 +205,7 @@ export function AppMenu({
               </div>
             ) : (
               <p className="rounded-2xl border border-white/60 bg-white/72 px-4 py-3 text-start text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                {copy.installHint}
+                {copy.installManual}
               </p>
             )}
           </div>
@@ -235,7 +244,7 @@ export function AppMenu({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/70 text-[var(--md-sys-color-on-surface)] shadow-[0_10px_22px_rgba(15,23,42,0.1)] backdrop-blur-xl transition hover:bg-white/84 sm:h-11 sm:w-11"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/70 text-[var(--md-sys-color-on-surface)] shadow-[0_10px_22px_rgba(15,23,42,0.1)] backdrop-blur-xl transition hover:bg-white/84 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70 sm:h-11 sm:w-11"
         aria-label={copy.menu}
       >
         <span className="flex flex-col gap-[0.3rem]">

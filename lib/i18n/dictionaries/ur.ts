@@ -93,6 +93,8 @@ export const urDictionary: Dictionary = {
     install: "ایپ انسٹال کریں",
     installReady: "ایپ براہ راست یہاں سے انسٹال کی جا سکتی ہے۔",
     installHint: "اگر انسٹال ابھی دستیاب نہیں ہے تو، ایک بار HTTPS لنک کو ری لوڈ کریں اور مینو دوبارہ کھولیں۔",
+    installManual: "اگر انسٹال بٹن ظاہر نہ ہو تو براؤزر مینو میں جا کر Install app یا Add to home screen منتخب کریں۔",
+    installUnavailableDev: "مقامی development میں PWA انسٹالیشن بند ہے۔ انسٹالیشن کو deployed app یا مقامی production build پر ٹیسٹ کریں۔",
     installed: "ایپ پہلے ہی انسٹال ہے یا اسٹینڈ اکیلے موڈ میں چل رہی ہے۔",
   },
   authStatus: {

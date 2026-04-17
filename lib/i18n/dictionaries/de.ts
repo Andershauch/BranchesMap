@@ -93,6 +93,8 @@ export const deDictionary: Dictionary = {
     install: "App installieren",
     installReady: "Die App kann direkt von hier aus installiert werden.",
     installHint: "Falls die Installation noch nicht verfügbar ist, lade den HTTPS-Link einmal neu und öffne das Menü erneut.",
+    installManual: "Wenn die Installationsschaltfläche nicht erscheint, öffne das Browser-Menü und wähle Install app oder Add to home screen.",
+    installUnavailableDev: "Die PWA-Installation ist in der lokalen Entwicklung deaktiviert. Teste die Installation auf der deployten App oder mit einem lokalen Production-Build.",
     installed: "Die App ist bereits installiert oder läuft im Standalone-Modus.",
   },
   authStatus: {

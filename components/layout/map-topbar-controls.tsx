@@ -50,7 +50,7 @@ export function MapTopBarControls({
         <button
           type="button"
           onClick={() => dispatchMapControlEvent(zoomOutEvent)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/86 text-sm font-semibold text-slate-900 transition hover:bg-white"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/86 text-sm font-semibold text-slate-900 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-1"
           aria-label={copy.zoomOut}
           title={copy.zoomOut}
         >
@@ -59,7 +59,7 @@ export function MapTopBarControls({
         <button
           type="button"
           onClick={() => dispatchMapControlEvent(zoomInEvent)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-1"
           aria-label={copy.zoomIn}
           title={copy.zoomIn}
         >
@@ -69,7 +69,7 @@ export function MapTopBarControls({
         <button
           type="button"
           onClick={() => dispatchMapControlEvent(resetEvent)}
-          className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-slate-700 transition hover:bg-white/78"
+          className="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-[8px] font-semibold uppercase tracking-[0.18em] text-slate-700 transition hover:bg-white/78 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-1"
           aria-label={copy.reset}
           title={copy.reset}
         >

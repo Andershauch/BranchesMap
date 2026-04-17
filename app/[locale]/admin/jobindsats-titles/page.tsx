@@ -169,6 +169,12 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
 
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
           <p>{summaryText(text.summary, result.rows.length, result.total)}</p>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+            <span className="rounded-full bg-slate-100 px-3 py-1">{adminLocaleLabels[targetLocale]}</span>
+            <span className="rounded-full bg-slate-100 px-3 py-1">
+              {filter === "all" ? text.filterAll : filter === "missing" ? text.filterMissing : text.filterNew}
+            </span>
+          </div>
           {saved ? <p className="font-medium text-teal-700">{text.saved}</p> : null}
         </div>
 
@@ -191,14 +197,14 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                 <input type="hidden" name="page" value={String(result.page)} />
                 <input type="hidden" name="filter" value={filter} />
 
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-start">
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)_minmax(0,1.15fr)_auto] lg:items-start">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{text.sourceLabel}</p>
                     <p dir="auto" className="mt-1 text-sm font-semibold text-slate-900">{row.daKey}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{text.englishLabel}</p>
-                    <p dir="auto" className="mt-1 text-sm text-slate-700">{row.en}</p>
+                    <p dir="auto" className="mt-1 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">{row.en}</p>
                   </div>
                   <label className="flex flex-col gap-2">
                     <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -208,11 +214,11 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                       name="value"
                       dir="auto"
                       defaultValue={(row as Record<EditableLocale, string | null>)[targetLocale] ?? ""}
-                      rows={2}
-                      className="min-h-24 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none transition focus:border-teal-500"
+                      rows={3}
+                      className="min-h-28 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none transition focus:border-teal-500"
                     />
                   </label>
-                  <div className="flex lg:justify-end">
+                  <div className="flex items-start lg:justify-end">
                     <button
                       type="submit"
                       className="inline-flex rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"

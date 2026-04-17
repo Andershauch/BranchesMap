@@ -93,6 +93,8 @@ export const faDictionary: Dictionary = {
     install: "نصب اپلیکیشن",
     installReady: "اپلیکیشن را می‌توان مستقیماً از اینجا نصب کرد.",
     installHint: "اگر نصب هنوز در دسترس نیست، لینک HTTPS را یک بار رفرش کنید و منو را دوباره باز کنید.",
+    installManual: "اگر دکمه نصب ظاهر نشد، از منوی مرورگر گزینه Install app یا Add to home screen را انتخاب کنید.",
+    installUnavailableDev: "نصب PWA در محیط توسعه محلی غیرفعال است. نصب را روی نسخه deploy شده یا با یک build محلی production تست کنید.",
     installed: "اپلیکیشن قبلاً نصب شده یا در حالت مستقل در حال اجراست.",
   },
   authStatus: {

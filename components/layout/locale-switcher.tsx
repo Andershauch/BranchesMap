@@ -68,7 +68,7 @@ export function LocaleSwitcher({ currentLocale, labels, title }: LocaleSwitcherP
         onClick={() => setOpen((value) => !value)}
         aria-label={title}
         aria-expanded={open}
-        className="inline-flex h-10 items-center justify-center rounded-full border border-white/60 bg-white/72 px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface)] shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition hover:bg-white/84"
+        className="inline-flex h-10 min-w-[3.25rem] items-center justify-center rounded-full border border-white/60 bg-white/72 px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-on-surface)] shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur-xl transition hover:bg-white/84 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70"
       >
         {currentLocale}
       </button>

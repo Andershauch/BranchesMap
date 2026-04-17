@@ -1,7 +1,5 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Fragment } from "react";
-
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
@@ -177,7 +175,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
               return (
                 <article
                   key={`${municipality.slug}-${industry.slug}`}
-                  className="rounded-[1.5rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)]"
+                  className="flex h-full flex-col rounded-[1.5rem] bg-[var(--md-sys-color-surface-container)] p-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)]"
                 >
                   <div className="flex items-start gap-3">
                     <span
@@ -186,7 +184,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     >
                       {industry.icon}
                     </span>
-                    <div className="min-w-0 text-start">
+                    <div className="min-w-0 flex-1 text-start">
                       <h2 className="text-lg font-semibold text-[var(--md-sys-color-on-surface)]">
                         <a
                           href={jobnetUrl}
@@ -205,23 +203,23 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                         {dictionary.labels.estimatedRoles}
                       </p>
                       {industry.representativeTitles && industry.representativeTitles.length > 0 ? (
-                        <p className="mt-2 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
-                          {dictionary.municipalityPage.representativeTitlesPrefix}{" "}
-                          {industry.representativeTitles.map((title, index) => (
-                            <Fragment key={`${industry.slug}-${title}`}>
-                              {index > 0 ? ", " : null}
+                        <div className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+                          <p>{dictionary.municipalityPage.representativeTitlesPrefix}</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {industry.representativeTitles.map((title) => (
                               <a
+                                key={`${industry.slug}-${title}`}
                                 href={buildJobnetIndustrySearchUrl(municipality.name, industry.name, title)}
                                 target="_blank"
                                 rel="noreferrer"
                                 dir="auto"
-                                className="font-semibold text-[var(--md-sys-color-on-surface)] underline decoration-[var(--md-sys-color-outline)] underline-offset-2 transition hover:text-[var(--md-sys-color-primary)]"
+                                className="inline-flex items-center rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 font-semibold text-[var(--md-sys-color-on-surface)] underline decoration-[var(--md-sys-color-outline)] underline-offset-2 transition hover:bg-[var(--md-sys-color-surface-container-highest)] hover:text-[var(--md-sys-color-primary)]"
                               >
                                 {translateJobindsatsRepresentativeTitle(activeLocale, title)}
                               </a>
-                            </Fragment>
-                          ))}
-                        </p>
+                            ))}
+                          </div>
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -250,8 +248,11 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     >
                       {industry.icon}
                     </span>
-                    <span dir="auto">{industry.label}</span>
-                    <span dir="auto" className="text-[var(--md-sys-color-on-surface-variant)]">
+                    <span dir="auto" className="max-w-[10rem] truncate">{industry.label}</span>
+                    <span
+                      dir="auto"
+                      className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--md-sys-color-on-surface-variant)]"
+                    >
                       {formatNumber(activeLocale, industry.jobCount)}
                     </span>
                   </a>

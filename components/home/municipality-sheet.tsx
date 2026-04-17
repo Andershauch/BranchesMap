@@ -165,7 +165,7 @@ export function MunicipalitySheet({
               </div>
 
               <div className="mt-3 flex items-start justify-between gap-3">
-                <div className="min-w-0 text-start">
+                <div className="min-w-0 flex-1 text-start">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="truncate text-[1.45rem] font-semibold tracking-tight text-slate-950">
                       {municipality.name}
@@ -195,7 +195,7 @@ export function MunicipalitySheet({
                       onClose();
                     }
                   }}
-                  className="inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full bg-white/90 text-[12px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/8 transition hover:bg-white"
+                  className="inline-flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full bg-white/90 text-[12px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] ring-1 ring-slate-900/8 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-1"
                   aria-label={isExpanded ? copy.collapse : copy.close}
                 >
                   {isExpanded ? "\u2212" : "\u00d7"}
@@ -215,7 +215,7 @@ export function MunicipalitySheet({
                       isExpanded
                         ? "w-full justify-center px-2 py-1.75 text-[10px]"
                         : "w-full justify-center px-2 py-1.5 text-[9px]"
-                    } transition hover:brightness-105`}
+                    } transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-1`}
                     style={{ backgroundColor: industry.accentColor }}
                   >
                     <span
@@ -253,7 +253,7 @@ export function MunicipalitySheet({
                 {isExpanded ? (
                   <Link
                     href={`/${locale}/kommuner/${municipality.slug}`}
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/88 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-white hover:text-slate-950"
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/88 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
                   >
                     {copy.openProfile}
                   </Link>
@@ -270,7 +270,7 @@ export function MunicipalitySheet({
                     className={`inline-flex min-h-10 w-full items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_14px_24px_rgba(15,23,42,0.16)] transition ${
                       isFollowing
                         ? "cursor-default bg-slate-200 text-slate-700 shadow-none"
-                        : "bg-slate-950 text-white hover:bg-slate-800"
+                        : "bg-slate-950 text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
                     }`}
                   >
                     {isFollowing ? copy.following : copy.follow}
