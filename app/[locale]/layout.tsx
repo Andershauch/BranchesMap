@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -70,17 +71,23 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
       >
         <div className="flex h-[var(--app-header-bar-height)] w-full items-center justify-between gap-2.5 border-b border-white/45 bg-[color:rgba(248,250,247,0.62)] px-[calc(var(--safe-left)+0.8rem)] pr-[calc(var(--safe-right)+0.8rem)] shadow-[0_8px_20px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:px-[calc(var(--safe-left)+1rem)] sm:pr-[calc(var(--safe-right)+1rem)]">
           <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-            <AppMenu
-              locale={activeLocale}
-              user={user ? { email: user.email, name: user.name, role: user.role } : null}
-            />
-            <Link href={`/${locale}`} className="min-w-0">
-              <p className="truncate text-[0.94rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
-                {dictionary.header.appName}
-              </p>
-              <p className="hidden truncate text-xs text-[var(--md-sys-color-on-surface-variant)] sm:block">
-                {supportingText}
-              </p>
+            <Link href={`/${locale}`} dir="ltr" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
+              <Image
+                src="/icons/app-icon-192.png"
+                alt={`${dictionary.header.appName} icon`}
+                width={40}
+                height={40}
+                className="h-10 w-10 shrink-0 rounded-[0.95rem] border border-white/60 shadow-[0_8px_18px_rgba(15,23,42,0.08)] sm:h-11 sm:w-11"
+                priority
+              />
+              <div className="min-w-0">
+                <p className="truncate text-[0.94rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
+                  {dictionary.header.appName}
+                </p>
+                <p className="hidden truncate text-xs text-[var(--md-sys-color-on-surface-variant)] sm:block">
+                  {supportingText}
+                </p>
+              </div>
             </Link>
           </div>
 
@@ -91,6 +98,10 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               title={dictionary.header.localeLabel}
             />
             <MapTopBarControls locale={activeLocale} displayName={displayName} />
+            <AppMenu
+              locale={activeLocale}
+              user={user ? { email: user.email, name: user.name, role: user.role } : null}
+            />
           </div>
         </div>
       </header>
