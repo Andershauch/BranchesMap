@@ -228,9 +228,6 @@ export function MunicipalitySheet({
                     <span className={isExpanded ? "max-w-[4.6rem] truncate" : "max-w-[4.2rem] truncate"}>
                       <span dir="auto">{industry.name}</span>
                     </span>
-                    <span dir="auto" className="text-white/85">
-                      {formatCount(locale, industry.jobCount)}
-                    </span>
                   </a>
                 ))}
               </div>
