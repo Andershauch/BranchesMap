@@ -8,7 +8,7 @@ import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
-import { buildMunicipalitySheetProfile } from "@/lib/municipality-presentation";
+import { buildJobnetIndustrySearchUrl, buildMunicipalitySheetProfile } from "@/lib/municipality-presentation";
 
 type SheetMode = "closed" | "preview" | "expanded";
 const sheetEnterDelayMs = 16;
@@ -206,13 +206,16 @@ export function MunicipalitySheet({
             <div className={isExpanded ? "flex-1 overflow-y-auto px-5 pb-2" : "px-5 pb-2.5"}>
               <div className="grid grid-cols-3 gap-1.5">
                 {visibleIndustries.map((industry) => (
-                  <span
+                  <a
                     key={municipality.slug + "-sheet-" + industry.slug}
+                    href={buildJobnetIndustrySearchUrl(municipality.name, industry.name)}
+                    target="_blank"
+                    rel="noreferrer"
                     className={`inline-flex items-center gap-1.5 rounded-full font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${
                       isExpanded
                         ? "w-full justify-center px-2 py-1.75 text-[10px]"
                         : "w-full justify-center px-2 py-1.5 text-[9px]"
-                    }`}
+                    } transition hover:brightness-105`}
                     style={{ backgroundColor: industry.accentColor }}
                   >
                     <span
@@ -228,7 +231,7 @@ export function MunicipalitySheet({
                     <span dir="auto" className="text-white/85">
                       {formatCount(locale, industry.jobCount)}
                     </span>
-                  </span>
+                  </a>
                 ))}
               </div>
 

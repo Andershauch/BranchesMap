@@ -1,5 +1,3 @@
-import { unstable_cache as cache } from "next/cache";
-
 import type { AppLocale } from "@/lib/i18n/config";
 import {
   arJobindsatsTitleTranslations,
@@ -46,16 +44,12 @@ async function ensureSeeded() {
   });
 }
 
-const getCachedRows = cache(
-  async () => {
-    await ensureSeeded();
-    return prisma.jobindsatsTitleTranslation.findMany({
-      orderBy: { daKey: "asc" },
-    });
-  },
-  ["jobindsats-title-translation-rows"],
-  { tags: ["jobindsats-title-translations"] },
-);
+async function getRows() {
+  await ensureSeeded();
+  return prisma.jobindsatsTitleTranslation.findMany({
+    orderBy: { daKey: "asc" },
+  });
+}
 
 function normalizeValue(value: string | null | undefined) {
   const trimmed = value?.trim();
@@ -137,7 +131,7 @@ export async function updateJobindsatsTitleTranslation(input: {
 }
 
 export async function getJobindsatsTitleTranslator() {
-  const rows = await getCachedRows();
+  const rows = await getRows();
   const enIndex = makeIndex(rows, "en");
   const localeIndexes = Object.fromEntries(
     localeColumns.map((locale) => [locale, makeIndex(rows, locale)]),

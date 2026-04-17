@@ -14,6 +14,26 @@ export const dynamic = "force-dynamic";
 const editableLocales = ["en", "uk", "ar", "fa", "ur", "pl", "de"] as const;
 type EditableLocale = (typeof editableLocales)[number];
 
+const adminLocaleLabelsDa: Record<EditableLocale, string> = {
+  en: "Engelsk",
+  uk: "Ukrainsk",
+  ar: "Arabisk",
+  fa: "Farsi",
+  ur: "Urdu",
+  pl: "Polsk",
+  de: "Tysk",
+};
+
+const adminLocaleLabelsEn: Record<EditableLocale, string> = {
+  en: "English",
+  uk: "Ukrainian",
+  ar: "Arabic",
+  fa: "Farsi",
+  ur: "Urdu",
+  pl: "Polish",
+  de: "German",
+};
+
 type PageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -48,6 +68,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
 
   const pageLocale = locale as AppLocale;
   const dictionary = getDictionarySync(pageLocale);
+  const adminLocaleLabels = pageLocale === "da" ? adminLocaleLabelsDa : adminLocaleLabelsEn;
   const text = dictionary.adminJobindsatsTitles;
   const adminHomeMapText = dictionary.adminHomeMap;
   const search = await searchParams;
@@ -107,7 +128,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
             >
               {editableLocales.map((localeCode) => (
                 <option key={localeCode} value={localeCode}>
-                  {dictionary.locales[localeCode]}
+                  {adminLocaleLabels[localeCode]}
                 </option>
               ))}
             </select>
@@ -156,7 +177,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                   </div>
                   <label className="flex flex-col gap-2">
                     <span className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      {text.translationLabel} ({dictionary.locales[targetLocale]})
+                      {text.translationLabel} ({adminLocaleLabels[targetLocale]})
                     </span>
                     <textarea
                       name="value"

@@ -19,6 +19,7 @@
     "jobindsats:audit:master": "tsx ./scripts/audit-jobindsats-title-master-coverage.ts",
     "jobindsats:audit:translations": "tsx ./scripts/audit-jobindsats-title-translations.ts",
     "jobindsats:translations:compile": "tsx ./scripts/compile-jobindsats-title-translations.ts",
+    "jobindsats:translations:populate-draft": "tsx ./scripts/populate-jobindsats-title-draft.ts",
     "jobindsats:translations:rebuild-csv": "tsx ./scripts/rebuild-jobindsats-title-csv.ts",
     "jobindsats:translations:normalize-csv": "tsx ./scripts/normalize-jobindsats-title-csv.ts",
     "geo:build": "node ./scripts/build-sjaelland-geo.mjs",
