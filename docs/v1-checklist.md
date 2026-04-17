@@ -2,10 +2,10 @@
 
 ## 1. Indhold og oversættelser
 
-- [ ] Alle Jobindsats-titeloversættelser er gennemgået og godkendt i admin-editoren
-- [ ] Alle 8 sprog har fuld dækning for Jobindsats-titler i databasen
-- [ ] Alle centrale UI-tekster er gennemgået for fallback-engelsk og blandet sprog
-- [ ] Godkendt DB-tilstand er eksporteret til en versionsstyret backupfil
+- [x] Alle Jobindsats-titeloversættelser er gennemgået og godkendt i admin-editoren
+- [x] Alle 8 sprog har fuld dækning for Jobindsats-titler i databasen
+- [x] Alle centrale UI-tekster er gennemgået for fallback-engelsk og blandet sprog
+- [x] Godkendt DB-tilstand er eksporteret til en versionsstyret backupfil
 
 ## 2. UI og produktoplevelse
 
@@ -22,14 +22,14 @@
 
 ## 4. QA og release
 
-- [ ] Anonym bruger, almindelig bruger og admin er testet end-to-end
-- [ ] Login, register, follows, saved searches og admin er testet
-- [ ] Alle sprog er testet i centrale flows
-- [ ] PWA-installation og opdateringsflow er testet
+- [x] Anonym bruger, almindelig bruger og admin er testet end-to-end
+- [x] Login, register, follows, saved searches og admin er testet
+- [x] Alle sprog er testet i centrale flows
+- [x] PWA-installation og opdateringsflow er testet
 
 ## 5. Drift og ansvar
 
-- [ ] Sikkerhed/hardening v1 er verificeret mod seneste kode
-- [ ] Privacy/compliance-basis er dokumenteret
-- [ ] Deployment- og rollback-rutine er kendt
-- [ ] Driftstjekliste før release er samlet
+- [x] Sikkerhed/hardening v1 er verificeret mod seneste kode
+- [x] Privacy/compliance-basis er dokumenteret
+- [x] Deployment- og rollback-rutine er kendt
+- [x] Driftstjekliste før release er samlet
