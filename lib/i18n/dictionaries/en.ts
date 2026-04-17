@@ -52,6 +52,9 @@ export const enDictionary: Dictionary = {
     followExists: "You are already following this municipality.",
     followError: "The municipality could not be followed. Please try again.",
     representativeTitlesPrefix: "Titles typically searched for in this industry are:",
+    importedIndustryNote:
+      "The counts below come from the daily Jobindsats import. Clicking opens a related Jobnet search and may not show the same number of jobs.",
+    relatedJobnetSearchHint: "Open related Jobnet search",
     sheetProfileEmpty: "Open {municipality} to view more details.",
     sheetProfileSummary:
       "In {municipality}, the three industries with the most jobs are {industries}. Open the municipality for more details.",

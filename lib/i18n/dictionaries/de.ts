@@ -52,6 +52,9 @@ export const deDictionary: Dictionary = {
     followExists: "Du folgst dieser Gemeinde bereits.",
     followError: "Der Gemeinde konnte nicht gefolgt werden. Bitte versuche es erneut.",
     representativeTitlesPrefix: "Typische Berufsbezeichnungen in dieser Branche sind:",
+    importedIndustryNote:
+      "Die Zahlen unten stammen aus dem täglichen Jobindsats-Import. Ein Klick öffnet eine passende Jobnet-Suche und zeigt möglicherweise nicht dieselbe Anzahl an Stellen.",
+    relatedJobnetSearchHint: "Passende Jobnet-Suche öffnen",
     sheetProfileEmpty: "Öffne {municipality}, um mehr Details zu sehen.",
     sheetProfileSummary:
       "In {municipality} sind die drei Branchen mit den meisten Jobs {industries}. Öffne die Gemeinde für mehr Details.",

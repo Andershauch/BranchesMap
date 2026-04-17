@@ -16,9 +16,9 @@
 
 ## 3. Data og produktlogik
 
-- [ ] Branche-ranking og repræsentative titler er låst til V1
-- [ ] Importeret Jobindsats-data opdateres stabilt via dagligt flow
-- [ ] UI kommunikerer tydeligt forskellen mellem importerede tal og relaterede Jobnet-søgninger
+- [x] Branche-ranking og repræsentative titler er låst til V1
+- [x] Importeret Jobindsats-data opdateres stabilt via dagligt flow
+- [x] UI kommunikerer tydeligt forskellen mellem importerede tal og relaterede Jobnet-søgninger
 
 ## 4. QA og release
 

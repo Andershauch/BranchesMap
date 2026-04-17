@@ -52,6 +52,9 @@ export const arDictionary: Dictionary = {
     followExists: "أنت تتابع هذه البلدية بالفعل.",
     followError: "تعذر متابعة البلدية. يرجى المحاولة مرة أخرى.",
     representativeTitlesPrefix: "المسميات الوظيفية التي يتم البحث عنها عادة في هذه الصناعة هي:",
+    importedIndustryNote:
+      "الأعداد أدناه تأتي من استيراد Jobindsats اليومي. النقر يفتح بحثًا ذا صلة على Jobnet وقد لا يعرض العدد نفسه من الوظائف.",
+    relatedJobnetSearchHint: "افتح بحث Jobnet ذي الصلة",
     sheetProfileEmpty: "افتح {municipality} لعرض مزيد من التفاصيل.",
     sheetProfileSummary:
       "في {municipality}، الصناعات الثلاث التي تضم أكبر عدد من الوظائف هي {industries}. افتح البلدية لمزيد من التفاصيل.",

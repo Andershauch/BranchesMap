@@ -46,6 +46,8 @@ export type Dictionary = {
     followExists: string;
     followError: string;
     representativeTitlesPrefix: string;
+    importedIndustryNote: string;
+    relatedJobnetSearchHint: string;
     sheetProfileEmpty: string;
     sheetProfileSummary: string;
     topIndustriesHeading: string;

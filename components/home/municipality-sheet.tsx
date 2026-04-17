@@ -36,7 +36,8 @@ export function MunicipalitySheet({
   onCollapse: () => void;
   onClose: () => void;
 }) {
-  const copy = getDictionarySync(locale).sheet;
+  const dictionary = getDictionarySync(locale);
+  const copy = dictionary.sheet;
   const isRtl = isRtlLocale(locale);
   const touchStartYRef = useRef<number | null>(null);
   const [isEntered, setIsEntered] = useState(false);
@@ -211,6 +212,7 @@ export function MunicipalitySheet({
                     href={buildJobnetIndustrySearchUrl(municipality.name, industry.name)}
                     target="_blank"
                     rel="noreferrer"
+                    title={dictionary.municipalityPage.relatedJobnetSearchHint}
                     className={`inline-flex items-center gap-1.5 rounded-full font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${
                       isExpanded
                         ? "w-full justify-center px-2 py-1.75 text-[10px]"

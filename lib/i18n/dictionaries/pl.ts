@@ -52,6 +52,9 @@ export const plDictionary: Dictionary = {
     followExists: "Już obserwujesz tę gminę.",
     followError: "Nie udało się zaobserwować gminy. Spróbuj ponownie.",
     representativeTitlesPrefix: "Tytuły zazwyczaj wyszukiwane w tej branży to:",
+    importedIndustryNote:
+      "Poniższe liczby pochodzą z codziennego importu Jobindsats. Kliknięcie otwiera powiązane wyszukiwanie Jobnet i może nie pokazywać tej samej liczby ofert.",
+    relatedJobnetSearchHint: "Otwórz powiązane wyszukiwanie Jobnet",
     sheetProfileEmpty: "Otwórz {municipality}, aby zobaczyć więcej szczegółów.",
     sheetProfileSummary:
       "W {municipality} trzy branże z największą liczbą ofert pracy to {industries}. Otwórz gminę, aby uzyskać więcej szczegółów.",

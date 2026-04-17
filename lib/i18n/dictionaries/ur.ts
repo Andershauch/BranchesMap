@@ -52,6 +52,9 @@ export const urDictionary: Dictionary = {
     followExists: "آپ پہلے ہی اس بلدیہ کو فالو کر رہے ہیں۔",
     followError: "بلدیہ کو فالو نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔",
     representativeTitlesPrefix: "اس صنعت میں عام طور پر تلاش کیے جانے والے جاب ٹائٹلز یہ ہیں:",
+    importedIndustryNote:
+      "نیچے دیے گئے اعداد روزانہ Jobindsats امپورٹ سے آتے ہیں۔ کلک کرنے سے Jobnet میں متعلقہ تلاش کھلتی ہے اور ضروری نہیں کہ ملازمتوں کی یہی تعداد دکھائے۔",
+    relatedJobnetSearchHint: "متعلقہ Jobnet تلاش کھولیں",
     sheetProfileEmpty: "مزید تفصیلات دیکھنے کے لیے {municipality} کھولیں۔",
     sheetProfileSummary:
       "میں {municipality}، وہ تین صنعتیں جن میں سب سے زیادہ ملازمتیں ہیں {industries} ہیں۔ مزید تفصیلات کے لیے بلدیہ کھولیں۔",

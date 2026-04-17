@@ -167,6 +167,9 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
           <h2 className="text-start text-lg font-semibold text-[var(--md-sys-color-on-surface)] sm:text-xl">
             {buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}
           </h2>
+          <p className="mt-2 max-w-3xl text-start text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
+            {dictionary.municipalityPage.importedIndustryNote}
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {municipality.topIndustries.map((industry) => {
               const industryLabel = getIndustryLabel(dictionary, industry.code, industry.name);
@@ -191,6 +194,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                           target="_blank"
                           rel="noreferrer"
                           dir="auto"
+                          title={dictionary.municipalityPage.relatedJobnetSearchHint}
                           className="transition hover:text-[var(--md-sys-color-primary)]"
                         >
                           {industryLabel}
@@ -213,6 +217,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                                 target="_blank"
                                 rel="noreferrer"
                                 dir="auto"
+                                title={dictionary.municipalityPage.relatedJobnetSearchHint}
                                 className="inline-flex items-center rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-1.5 font-semibold text-[var(--md-sys-color-on-surface)] underline decoration-[var(--md-sys-color-outline)] underline-offset-2 transition hover:bg-[var(--md-sys-color-surface-container-highest)] hover:text-[var(--md-sys-color-primary)]"
                               >
                                 {translateJobindsatsRepresentativeTitle(activeLocale, title)}
@@ -240,6 +245,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                     href={industry.jobnetUrl}
                     target="_blank"
                     rel="noreferrer"
+                    title={dictionary.municipalityPage.relatedJobnetSearchHint}
                     className="inline-flex items-center gap-2 rounded-full bg-[var(--md-sys-color-surface-container-high)] px-3 py-2 text-sm font-medium text-[var(--md-sys-color-on-surface)] transition hover:bg-[var(--md-sys-color-surface-container-highest)]"
                   >
                     <span

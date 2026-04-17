@@ -52,6 +52,9 @@ export const faDictionary: Dictionary = {
     followExists: "شما قبلاً این شهرداری را دنبال کرده‌اید.",
     followError: "امکان دنبال کردن شهرداری وجود نداشت. لطفاً دوباره تلاش کنید.",
     representativeTitlesPrefix: "عناوین شغلی که معمولاً در این صنعت جستجو می‌شوند عبارتند از:",
+    importedIndustryNote:
+      "تعدادهای زیر از ایمپورت روزانه Jobindsats می‌آیند. کلیک، یک جست‌وجوی مرتبط در Jobnet باز می‌کند و لزوماً همان تعداد شغل را نشان نمی‌دهد.",
+    relatedJobnetSearchHint: "باز کردن جست‌وجوی مرتبط Jobnet",
     sheetProfileEmpty: "برای مشاهده جزئیات بیشتر {municipality} را باز کنید.",
     sheetProfileSummary:
       "در {municipality}، سه صنعتی که بیشترین شغل را دارند {industries} هستند. برای جزئیات بیشتر شهرداری را باز کنید.",

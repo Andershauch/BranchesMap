@@ -52,6 +52,9 @@ export const ukDictionary: Dictionary = {
     followExists: "Ви вже стежите за цим муніципалітетом.",
     followError: "Не вдалося підписатися на муніципалітет. Будь ласка, спробуйте ще раз.",
     representativeTitlesPrefix: "Назви посад, які зазвичай шукають у цій галузі:",
+    importedIndustryNote:
+      "Показники нижче надходять із щоденного імпорту Jobindsats. Натискання відкриває пов'язаний пошук у Jobnet і може не показувати таку саму кількість вакансій.",
+    relatedJobnetSearchHint: "Відкрити пов'язаний пошук Jobnet",
     sheetProfileEmpty: "Відкрийте {municipality}, щоб переглянути деталі.",
     sheetProfileSummary:
       "У {municipality} трьома галузями з найбільшою кількістю робочих місць є {industries}. Відкрийте муніципалітет для детальної інформації.",

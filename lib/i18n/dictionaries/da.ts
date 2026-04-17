@@ -52,6 +52,9 @@ export const daDictionary: Dictionary = {
     followExists: "Du følger allerede denne kommune.",
     followError: "Kommunen kunne ikke følges. Prøv igen.",
     representativeTitlesPrefix: "Titler der typisk søges efter i denne branche er:",
+    importedIndustryNote:
+      "Tallene nedenfor kommer fra den daglige Jobindsats-import. Klik åbner en relateret Jobnet-søgning og giver ikke nødvendigvis samme antal jobs.",
+    relatedJobnetSearchHint: "Åbn relateret Jobnet-søgning",
     sheetProfileEmpty: "Åbn {municipality} for at få flere detaljer.",
     sheetProfileSummary:
       "I {municipality} er de 3 brancher, hvor der er flest jobs: {industries}. Åbn kommunen for at få flere detaljer.",
