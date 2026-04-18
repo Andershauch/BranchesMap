@@ -13,6 +13,11 @@ type UserPosition = {
   longitude: number;
 };
 
+type FixedTravelOrigin = {
+  latitude: number;
+  longitude: number;
+};
+
 const averageCarSpeedKmh = 62;
 const routeDetourFactor = 1.28;
 
@@ -43,16 +48,51 @@ function formatMinutes(minutes: number, locale: AppLocale) {
   return rounded < 60 ? `${rounded}` : `${Math.floor(rounded / 60)}${hourSymbol} ${rounded % 60 || ""}`.trim();
 }
 
+function getKioskTravelCopy(locale: AppLocale) {
+  if (locale === "da") {
+    return {
+      prefix: "Beregnet rejsetid i bil herfra:",
+      note: "Fast V1-estimat fra receptionens placering til kommuneomraadet.",
+      and: "og",
+    };
+  }
+
+  return {
+    prefix: "Estimated driving time from here:",
+    note: "Fixed V1 estimate from the reception location to the municipality area.",
+    and: "and",
+  };
+}
+
 export function MunicipalityTravelEstimate({
   locale,
   destination,
+  fixedOrigin = null,
+  kioskMode = false,
 }: {
   locale: AppLocale;
   destination: TravelDestination | null;
+  fixedOrigin?: FixedTravelOrigin | null;
+  kioskMode?: boolean;
 }) {
   const copy = getDictionarySync(locale).travel;
   const [status, setStatus] = useState<TravelEstimateStatus>("idle");
   const [position, setPosition] = useState<UserPosition | null>(null);
+
+  const kioskEstimate = useMemo(() => {
+    if (!fixedOrigin || !destination) {
+      return null;
+    }
+
+    const directDistanceKm = getDistanceKm(fixedOrigin, destination);
+    const estimatedRouteKm = directDistanceKm * routeDetourFactor;
+    const estimatedMinutes = (estimatedRouteKm / averageCarSpeedKmh) * 60;
+
+    return {
+      distanceKm: estimatedRouteKm,
+      minutes: estimatedMinutes,
+    };
+  }, [destination, fixedOrigin]);
 
   const estimate = useMemo(() => {
     if (!position || !destination) {
@@ -97,6 +137,22 @@ export function MunicipalityTravelEstimate({
         maximumAge: 1000 * 60 * 10,
         timeout: 8000,
       },
+    );
+  }
+
+  if (kioskMode && kioskEstimate) {
+    const kioskCopy = getKioskTravelCopy(locale);
+
+    return (
+      <div className="mt-3 rounded-[1.2rem] bg-white/70 px-3.5 py-3 ring-1 ring-slate-900/6">
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-slate-500">{copy.title}</p>
+          <p dir="auto" className="mt-1 text-xs font-medium text-slate-700">
+            {kioskCopy.prefix} {formatDistance(locale, kioskEstimate.distanceKm)} km {kioskCopy.and} {formatMinutes(kioskEstimate.minutes, locale)} {copy.minutes}
+          </p>
+        </div>
+        <p className="mt-2 text-[10px] leading-4 text-slate-500">{kioskCopy.note}</p>
+      </div>
     );
   }
 

@@ -22,6 +22,7 @@ export function MunicipalitySheet({
   municipality,
   isFollowing,
   kioskMode = false,
+  kioskTravelOrigin = null,
   travelDestination,
   mode,
   onExpand,
@@ -32,6 +33,7 @@ export function MunicipalitySheet({
   municipality: MunicipalitySummary;
   isFollowing: boolean;
   kioskMode?: boolean;
+  kioskTravelOrigin?: { latitude: number; longitude: number } | null;
   travelDestination: TravelDestination | null;
   mode: SheetMode;
   onExpand: () => void;
@@ -258,7 +260,12 @@ export function MunicipalitySheet({
 
               {isExpanded ? (
                 <>
-                  <MunicipalityTravelEstimate locale={locale} destination={travelDestination} />
+                  <MunicipalityTravelEstimate
+                    locale={locale}
+                    destination={travelDestination}
+                    kioskMode={kioskMode}
+                    fixedOrigin={kioskTravelOrigin}
+                  />
 
                   <div className="mt-4 rounded-[1.35rem] bg-white/60 px-4 py-4 ring-1 ring-slate-900/5">
                     <p className="text-start text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">

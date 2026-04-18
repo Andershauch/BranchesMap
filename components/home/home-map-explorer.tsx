@@ -9,6 +9,12 @@ import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import { municipalityTravelDestinations } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
 
+type KioskTravelOrigin = {
+  latitude: number;
+  longitude: number;
+  source: "env" | "default-naestved-center";
+};
+
 const defaultInitialFocusedSlug = "naestved";
 const kioskIdleTimeoutMs = 75 * 1000;
 const kioskAttractLoopStepMs = 10 * 1000;
@@ -36,6 +42,7 @@ export function HomeMapExplorer({
   ariaLabel,
   initialFocusedSlug,
   kioskModeEnabled,
+  kioskTravelOrigin,
   handoffUrl,
   handoffQrDataUrl,
   handoffTitle,
@@ -47,6 +54,7 @@ export function HomeMapExplorer({
   ariaLabel: string;
   initialFocusedSlug?: string | null;
   kioskModeEnabled: boolean;
+  kioskTravelOrigin: KioskTravelOrigin | null;
   handoffUrl: string;
   handoffQrDataUrl: string | null;
   handoffTitle: string;
@@ -62,12 +70,15 @@ export function HomeMapExplorer({
     [sortedMunicipalities],
   );
   const kioskAttractSlugs = useMemo(() => {
+    const attractSlugs = sortedMunicipalities
+      .filter((municipality) => municipality.homeMap.useInAttractMode)
+      .map((municipality) => municipality.slug);
     const primarySlugs = sortedMunicipalities
       .filter((municipality) => municipality.homeMap.isPrimary)
       .map((municipality) => municipality.slug);
     const fallbackSlugs = sortedMunicipalities.map((municipality) => municipality.slug);
 
-    return [...new Set([...primarySlugs, ...fallbackSlugs])].slice(0, kioskAttractMunicipalityCount);
+    return [...new Set([...attractSlugs, ...primarySlugs, ...fallbackSlugs])].slice(0, kioskAttractMunicipalityCount);
   }, [sortedMunicipalities]);
 
   const safeInitialFocusedSlug =
@@ -378,6 +389,7 @@ export function HomeMapExplorer({
             !effectiveKioskIdleMode &&
             followedMunicipalitySlugs.includes(detailsMunicipality.slug)
           }
+          kioskTravelOrigin={kioskModeActive ? kioskTravelOrigin : null}
           travelDestination={municipalityTravelDestinations.get(detailsMunicipality.slug) ?? null}
           mode={sheetMode === "expanded" ? "expanded" : sheetMode === "preview" ? "preview" : "closed"}
           onExpand={() => setSheetMode("expanded")}

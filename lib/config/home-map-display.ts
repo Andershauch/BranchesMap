@@ -6,6 +6,7 @@ export type MunicipalityHomeMapLabelMode = (typeof homeMapLabelModes)[number];
 
 export type MunicipalityHomeMapConfig = {
   isPrimary: boolean;
+  useInAttractMode: boolean;
   priority: number;
   labelMode: MunicipalityHomeMapLabelMode;
   regionTag: MunicipalityHomeMapRegionTag;
@@ -50,6 +51,7 @@ const primaryConfig = new Map<string, MunicipalityHomeMapConfig>(
     slug,
     {
       isPrimary: true,
+      useInAttractMode: index < 5,
       priority: index + 1,
       labelMode: "name-icons",
       regionTag: regionTags[slug] ?? "other",
@@ -63,6 +65,7 @@ export function getMunicipalityHomeMapConfig(slug: string): MunicipalityHomeMapC
   return (
     primaryConfig.get(slug) ?? {
       isPrimary: false,
+      useInAttractMode: false,
       priority: 999,
       labelMode: "auto",
       regionTag: regionTags[slug] ?? "other",

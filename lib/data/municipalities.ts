@@ -92,6 +92,7 @@ type DatabaseHomeMapRow = {
   slug: string;
   isActive: boolean;
   homeMapVisible: boolean;
+  homeMapAttractMode: boolean;
   homeMapPriority: number;
   homeMapLabelMode: string;
   homeMapRegionTag: string;
@@ -220,6 +221,7 @@ function createHomeMapConfig(slug: string, dbRow?: DatabaseHomeMapRow): Municipa
 
   return {
     isPrimary: dbRow.homeMapVisible,
+    useInAttractMode: dbRow.homeMapAttractMode,
     priority: dbRow.homeMapPriority,
     labelMode: normalizeLabelMode(dbRow.homeMapLabelMode),
     regionTag: normalizeRegionTag(dbRow.homeMapRegionTag),
@@ -854,6 +856,7 @@ const getCachedDatabaseMunicipalityMap = unstable_cache(
           slug: true,
           isActive: true,
           homeMapVisible: true,
+          homeMapAttractMode: true,
           homeMapPriority: true,
           homeMapLabelMode: true,
           homeMapRegionTag: true,
@@ -886,6 +889,7 @@ const getCachedDatabaseMunicipalitySummaryRows = unstable_cache(
           teaser: true,
           isActive: true,
           homeMapVisible: true,
+          homeMapAttractMode: true,
           homeMapPriority: true,
           homeMapLabelMode: true,
           homeMapRegionTag: true,

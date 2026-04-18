@@ -17,6 +17,7 @@ export async function updateMunicipalityHomeMapAction(formData: FormData) {
   const locale = parseLocaleValue(formData.get("locale"));
   const slug = formData.get("slug");
   const visible = formData.get("visible") === "on";
+  const attractMode = formData.get("attractMode") === "on";
 
   if (typeof slug !== "string" || !isSimpleSlug(slug)) {
     throw new Error("Municipality slug is required.");
@@ -44,6 +45,7 @@ export async function updateMunicipalityHomeMapAction(formData: FormData) {
     where: { slug },
     data: {
       homeMapVisible: visible,
+      homeMapAttractMode: attractMode,
       homeMapPriority: priority,
       homeMapLabelMode: labelMode,
       homeMapRegionTag: regionTag,

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 
 import { HomeMapExplorer } from "@/components/home/home-map-explorer";
+import { getKioskTravelOrigin } from "@/lib/config/kiosk";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
@@ -36,6 +37,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
   ]);
   const requestedFocusSlug = getStringParam(search.focus);
   const kioskModeEnabled = getStringParam(search.kiosk) === "1";
+  const kioskTravelOrigin = kioskModeEnabled ? getKioskTravelOrigin() : null;
   const initialFocusedSlug = municipalities.some((municipality) => municipality.slug === requestedFocusSlug)
     ? requestedFocusSlug
     : null;
@@ -57,6 +59,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
         ariaLabel={dictionary.home.mapAriaLabel}
         initialFocusedSlug={initialFocusedSlug}
         kioskModeEnabled={kioskModeEnabled}
+        kioskTravelOrigin={kioskTravelOrigin}
         handoffUrl={handoffUrl.toString()}
         handoffQrDataUrl={handoffQrDataUrl}
         handoffTitle={dictionary.home.handoffTitle}

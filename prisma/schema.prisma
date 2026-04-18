@@ -21,6 +21,7 @@ model Municipality {
   teaser           String?
   isActive         Boolean                    @default(true)
   homeMapVisible   Boolean                    @default(false)
+  homeMapAttractMode Boolean                  @default(false)
   homeMapPriority  Int                        @default(999)
   homeMapLabelMode String                     @default("auto")
   homeMapRegionTag String                     @default("other")
@@ -35,6 +36,7 @@ model Municipality {
   @@index([slug])
   @@index([name])
   @@index([homeMapVisible, homeMapPriority])
+  @@index([homeMapAttractMode, homeMapPriority])
 }
 
 model Industry {

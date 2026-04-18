@@ -36,6 +36,14 @@ function regionText(region: MunicipalityHomeMapRegionTag) {
   return region;
 }
 
+function attractModeText(locale: AppLocale) {
+  return locale === "da" ? "Brug i attract mode" : "Use in attract mode";
+}
+
+function attractCountText(locale: AppLocale) {
+  return locale === "da" ? "Attract-kommuner" : "Attract municipalities";
+}
+
 function formatAdminDateTime(date: Date, locale: AppLocale) {
   return new Intl.DateTimeFormat(intlLocaleMap[locale], {
     dateStyle: "medium",
@@ -76,6 +84,7 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
     listRecentSecurityAuditEvents(20),
   ]);
   const visibleCount = municipalities.filter((municipality) => municipality.homeMap.isPrimary).length;
+  const attractCount = municipalities.filter((municipality) => municipality.homeMap.useInAttractMode).length;
   const displayName = currentUser.name?.trim() ? currentUser.name : currentUser.email;
 
   return (
@@ -100,6 +109,9 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
             <p dir="auto" className="mt-1 text-sm text-slate-600">{displayName}</p>
             <p className="mt-1 text-sm text-slate-600">
               {text.visibleCount}: <span className="font-semibold text-slate-900">{visibleCount}</span>
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {attractCountText(language)}: <span className="font-semibold text-slate-900">{attractCount}</span>
             </p>
           </div>
           <Link
@@ -181,7 +193,7 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
                   </p>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 lg:items-end">
                   <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800">
                     <input
                       type="checkbox"
@@ -190,6 +202,16 @@ export default async function AdminHomeMapPage({ params }: AdminHomeMapPageProps
                       className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
                     />
                     <span>{text.visible}</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-medium text-slate-800">
+                    <input
+                      type="checkbox"
+                      name="attractMode"
+                      defaultChecked={municipality.homeMap.useInAttractMode}
+                      className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-500"
+                    />
+                    <span>{attractModeText(language)}</span>
                   </label>
 
                   <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
