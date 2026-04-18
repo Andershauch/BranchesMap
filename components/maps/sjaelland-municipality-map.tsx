@@ -2,6 +2,7 @@
 
 import { geoMercator, geoPath } from "d3-geo";
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -27,6 +28,7 @@ const initialZoomSlug = "naestved";
 const zoomInEvent = "branches-map:zoom-in";
 const zoomOutEvent = "branches-map:zoom-out";
 const resetEvent = "branches-map:reset";
+const kioskViewportAnimationDurationMs = 1500;
 
 const labelTuning: Record<
   string,
@@ -144,8 +146,25 @@ type RenderOverlayFeature = {
   shouldAnimateUpdateMarker: boolean;
 };
 
+type ViewportAnimationMode = "instant" | "smooth";
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function easeInOutCubic(progress: number) {
+  return progress < 0.5
+    ? 4 * progress * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+}
+
+function interpolateViewBox(start: ViewBox, end: ViewBox, progress: number): ViewBox {
+  return {
+    x: start.x + (end.x - start.x) * progress,
+    y: start.y + (end.y - start.y) * progress,
+    width: start.width + (end.width - start.width) * progress,
+    height: start.height + (end.height - start.height) * progress,
+  };
 }
 
 function clampViewBox(viewBox: ViewBox): ViewBox {
@@ -332,6 +351,7 @@ export function SjaellandMunicipalityMap({
   focusedSlug,
   detailsSlug,
   focusViewportToken,
+  focusViewportAnimationMode = "instant",
   featuredSlugs,
   followedMunicipalitySlugs,
   updatedMunicipalitySlugs,
@@ -342,6 +362,7 @@ export function SjaellandMunicipalityMap({
   focusedSlug: string | null;
   detailsSlug: string | null;
   focusViewportToken?: number;
+  focusViewportAnimationMode?: ViewportAnimationMode;
   featuredSlugs: string[];
   followedMunicipalitySlugs: string[];
   updatedMunicipalitySlugs: string[];
@@ -353,12 +374,58 @@ export function SjaellandMunicipalityMap({
   const movedDuringGestureRef = useRef(false);
   const suppressClickRef = useRef(false);
   const initialViewAppliedRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
+  const currentViewBoxRef = useRef(initialViewBox);
   const [viewBox, setViewBox] = useState(initialViewBox);
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const [geoData, setGeoData] = useState<MunicipalityFeatureCollection | null>(null);
   const zoomLevel = width / viewBox.width;
+
+  useEffect(() => {
+    currentViewBoxRef.current = viewBox;
+  }, [viewBox]);
+
+  const clearViewportAnimation = useCallback(() => {
+    if (animationFrameRef.current) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+  }, []);
+
+  const applyViewBox = useCallback((nextViewBox: ViewBox) => {
+    const clampedViewBox = clampViewBox(nextViewBox);
+    currentViewBoxRef.current = clampedViewBox;
+    setViewBox(clampedViewBox);
+  }, []);
+
+  const animateViewBoxTo = useCallback((targetViewBox: ViewBox, mode: ViewportAnimationMode) => {
+    clearViewportAnimation();
+
+    if (mode === "instant") {
+      applyViewBox(targetViewBox);
+      return;
+    }
+
+    const startViewBox = currentViewBoxRef.current;
+    const nextViewBox = clampViewBox(targetViewBox);
+    const startTime = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startTime) / kioskViewportAnimationDurationMs);
+      applyViewBox(interpolateViewBox(startViewBox, nextViewBox, easeInOutCubic(progress)));
+
+      if (progress < 1) {
+        animationFrameRef.current = window.requestAnimationFrame(tick);
+        return;
+      }
+
+      animationFrameRef.current = null;
+    };
+
+    animationFrameRef.current = window.requestAnimationFrame(tick);
+  }, [applyViewBox, clearViewportAnimation]);
 
   useEffect(() => {
     let isMounted = true;
@@ -369,8 +436,9 @@ export function SjaellandMunicipalityMap({
       .catch((err) => console.error("Fejl ved indlæsning af kort:", err));
     return () => {
       isMounted = false;
+      clearViewportAnimation();
     };
-  }, []);
+  }, [clearViewportAnimation]);
 
   const mapHelpers = useMemo(() => {
     if (!geoData) return null;
@@ -549,13 +617,13 @@ export function SjaellandMunicipalityMap({
 
     initialViewAppliedRef.current = true;
     const frame = window.requestAnimationFrame(() => {
-      setViewBox(nextViewBox);
+      applyViewBox(nextViewBox);
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [featureMap, features.length, focusedSlug]);
+  }, [applyViewBox, featureMap, features.length, focusedSlug]);
 
   useEffect(() => {
     if (!initialViewAppliedRef.current || !focusedSlug) {
@@ -576,34 +644,37 @@ export function SjaellandMunicipalityMap({
         : createFeatureViewBox(feature.bounds);
 
     const frame = window.requestAnimationFrame(() => {
-      setViewBox(nextViewBox);
+      animateViewBoxTo(nextViewBox, focusViewportAnimationMode);
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [featureMap, focusViewportToken, focusedSlug]);
+  }, [animateViewBoxTo, featureMap, focusViewportAnimationMode, focusViewportToken, focusedSlug]);
 
   useEffect(() => {
     function handleZoomIn() {
-      setViewBox((current) =>
-        scaleViewBox(current, zoomStep, {
-          x: current.x + current.width / 2,
-          y: current.y + current.height / 2,
+      clearViewportAnimation();
+      applyViewBox(
+        scaleViewBox(currentViewBoxRef.current, zoomStep, {
+          x: currentViewBoxRef.current.x + currentViewBoxRef.current.width / 2,
+          y: currentViewBoxRef.current.y + currentViewBoxRef.current.height / 2,
         }),
       );
     }
 
     function handleZoomOut() {
-      setViewBox((current) =>
-        scaleViewBox(current, 1 / zoomStep, {
-          x: current.x + current.width / 2,
-          y: current.y + current.height / 2,
+      clearViewportAnimation();
+      applyViewBox(
+        scaleViewBox(currentViewBoxRef.current, 1 / zoomStep, {
+          x: currentViewBoxRef.current.x + currentViewBoxRef.current.width / 2,
+          y: currentViewBoxRef.current.y + currentViewBoxRef.current.height / 2,
         }),
       );
     }
 
     function handleReset() {
+      clearViewportAnimation();
       gestureRef.current = null;
       pointersRef.current.clear();
       movedDuringGestureRef.current = false;
@@ -611,14 +682,14 @@ export function SjaellandMunicipalityMap({
 
       const initialFeature = featureMap.get(initialZoomSlug);
       if (!initialFeature) {
-        setViewBox(initialViewBox);
+        applyViewBox(initialViewBox);
         return;
       }
 
       const initialZoomLevel =
         window.innerWidth >= initialDesktopBreakpoint ? initialDesktopZoomLevel : initialMobileZoomLevel;
 
-      setViewBox(createFixedZoomFeatureViewBox(initialFeature.bounds, initialZoomLevel));
+      applyViewBox(createFixedZoomFeatureViewBox(initialFeature.bounds, initialZoomLevel));
       onMunicipalityPress(initialZoomSlug);
     }
 
@@ -631,7 +702,7 @@ export function SjaellandMunicipalityMap({
       window.removeEventListener(zoomOutEvent, handleZoomOut);
       window.removeEventListener(resetEvent, handleReset);
     };
-  }, [featureMap, onMunicipalityPress]);
+  }, [applyViewBox, clearViewportAnimation, featureMap, onMunicipalityPress]);
 
   function activateMunicipality(slug: string) {
     const feature = featureMap.get(slug);
@@ -640,7 +711,8 @@ export function SjaellandMunicipalityMap({
     }
 
     if (focusedSlug !== slug) {
-      setViewBox(createFeatureViewBox(feature.bounds));
+      clearViewportAnimation();
+      applyViewBox(createFeatureViewBox(feature.bounds));
     }
 
     onMunicipalityPress(slug);
@@ -648,6 +720,7 @@ export function SjaellandMunicipalityMap({
 
   function handleWheel(event: WheelEvent<SVGSVGElement>) {
     event.preventDefault();
+    clearViewportAnimation();
 
     const svg = svgRef.current;
     if (!svg) {
@@ -656,7 +729,7 @@ export function SjaellandMunicipalityMap({
 
     const center = getSvgPoint(svg, event.clientX, event.clientY, viewBox);
     const factor = event.deltaY < 0 ? zoomStep : 1 / zoomStep;
-    setViewBox((current) => scaleViewBox(current, factor, center));
+    applyViewBox(scaleViewBox(currentViewBoxRef.current, factor, center));
   }
 
   function beginDrag(pointerId: number, snapshot: PointerSnapshot, startSlug: string | null) {
@@ -691,6 +764,8 @@ export function SjaellandMunicipalityMap({
     if (!svg) {
       return;
     }
+
+    clearViewportAnimation();
 
     const startSlug = getEventMunicipalitySlug(event.target);
 

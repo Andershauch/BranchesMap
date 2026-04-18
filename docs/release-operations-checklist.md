@@ -52,3 +52,4 @@ Date: 2026-04-18
 For V1 security event review and thresholds, use:
 
 - `docs/v1-security-monitoring-thresholds.md`
+- `docs/v1-monitoring-checklist.md`

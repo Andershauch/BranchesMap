@@ -104,3 +104,16 @@ Operational notes:
 - login works
 - admin home-map works
 - translation editor works
+
+## Monitoring reference
+
+Use these documents for recurring operational review after deployment:
+
+- `docs/v1-monitoring-checklist.md`
+- `docs/v1-security-monitoring-thresholds.md`
+
+## Drill reference
+
+Use this document for the required V1 rehearsal of release and rollback readiness:
+
+- `docs/v1-release-and-rollback-drill.md`

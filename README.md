@@ -63,6 +63,14 @@ Kør udviklingsserver:
 npm run dev
 ```
 
+Hvis `next dev` på din maskine vokser voldsomt i memory eller crasher med `JavaScript heap out of memory`, så brug webpack-baseret dev i stedet:
+
+```bash
+npm run dev:webpack
+```
+
+Det påvirker ikke production-builden. Det er kun en lokal fallback til mere stabil udvikling, hvis Next 16/Turbopack opfører sig dårligt på din maskine.
+
 Kør på lokalnet til telefon-test:
 
 ```bash

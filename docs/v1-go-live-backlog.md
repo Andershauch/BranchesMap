@@ -51,45 +51,55 @@ Goal:
 ### P1-01 V1 scope note
 
 - Owner: `Product`
-- Status: `todo`
+- Status: `done`
 - Task:
   - write a one-page V1 scope note
   - list the allowed V1 user journeys
   - list the explicit non-goals
 - Output:
   - approved scope note in `docs/`
+- Current V1 coverage:
+  - scope is documented in `docs/v1-scope-note.md`
+  - in-scope journeys, in-scope data, success criteria, and non-goals are explicit
 - Done when:
   - no open scope questions remain for V1 release
 
 ### P1-02 Ownership map
 
-- Owner: `Product`
-- Status: `todo`
+- Owner: `Næstved Kommune`
+- Status: `blocked`
 - Task:
   - assign named owners for system, admin, operations, and support
   - record who approves release and rollback
 - Output:
   - owner matrix in `docs/`
+- Current V1 coverage:
+  - ownership structure is documented in `docs/v1-ownership-map.md`
+  - required roles and responsibility boundaries are explicit
+  - final status is still blocked until `TBD` entries are replaced with named humans
 - Done when:
   - every critical flow has a named human owner
 
 ### P1-03 Canonical production origin
 
 - Owner: `Engineering`
-- Status: `todo`
+- Status: `done`
 - Task:
   - choose the single production domain
   - document it as the canonical app origin
   - verify QR codes, auth redirects, and app links all target that origin
 - Output:
   - canonical origin documented
+- Current V1 coverage:
+  - canonical origin is documented in `docs/v1-canonical-origin.md`
+  - current V1 canonical production origin is `https://branches-map.vercel.app`
 - Done when:
   - there is one production URL and no ambiguity about which one is official
 
 ### P1-04 Reception deployment note
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - define physical touch-screen setup
   - define browser/app mode
@@ -97,6 +107,9 @@ Goal:
   - define who can access device settings
 - Output:
   - reception deployment note in `docs/`
+- Current V1 coverage:
+  - reception deployment model is documented in `docs/v1-reception-deployment-note.md`
+  - kiosk start URL, browser-mode assumptions, touch assumptions, and physical-access expectations are explicit
 - Done when:
   - the physical runtime environment is explicitly described
 
@@ -191,7 +204,7 @@ Goal:
 ### P1-10 Runtime dependency map
 
 - Owner: `Engineering`
-- Status: `todo`
+- Status: `done`
 - Task:
   - document all runtime dependencies
   - document failure impact and fallback behavior
@@ -204,13 +217,16 @@ Goal:
   - daily import flow
 - Output:
   - dependency map document
+- Current V1 coverage:
+  - runtime dependencies and failure impact are documented in `docs/v1-runtime-dependency-map.md`
+  - hard versus degradable dependencies are made explicit
 - Done when:
   - every critical dependency has an owner and a known failure mode
 
 ### P1-11 Background job ownership
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - define owner and review cadence for:
     - daily imports
@@ -218,19 +234,25 @@ Goal:
     - translation sync workflows
 - Output:
   - operations ownership table
+- Current V1 coverage:
+  - recurring job ownership is documented in `docs/v1-background-job-ownership.md`
+  - review cadence and escalation expectations are explicit
 - Done when:
   - no automated job exists without an operational owner
 
 ### P1-12 Backup and restore note
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - document DB backup approach
   - document restore path
   - document who can initiate restore
 - Output:
   - backup/restore note
+- Current V1 coverage:
+  - backup/restore decision model is documented in `docs/v1-backup-and-restore-note.md`
+  - restore authorization and post-restore checks are explicit
 - Done when:
   - restore is documented clearly enough to execute under pressure
 
@@ -290,19 +312,23 @@ Goal:
 ### P1-15 Touch usability review
 
 - Owner: `Product`
-- Status: `todo`
+- Status: `done`
 - Task:
   - review tap target sizes
   - review readability at standing distance
   - review touch-only interaction assumptions
   - review whether critical actions are too small or hidden
+- Current V1 coverage:
+  - touch review is documented in `docs/v1-touch-usability-review.md`
+  - kiosk flow is considered usable for V1 without keyboard or mouse
+  - the remaining issues are documented as `P2` polish, not release blockers
 - Done when:
   - the kiosk experience is usable without keyboard, mouse, or staff instruction
 
 ### P1-16 Mobile continuation verification
 
 - Owner: `Engineering`
-- Status: `in_progress`
+- Status: `done`
 - Task:
   - verify QR opens the correct page
   - verify kiosk route does not leak kiosk behavior into the normal mobile route
@@ -310,8 +336,8 @@ Goal:
   - verify register/login/follow flows are practical on phone
 - Current verification state:
   - local route verification is documented in `docs/v1-mobile-continuation-verification.md`
-  - kiosk route and normal mobile route are isolated correctly in local verification
-  - real-device phone QA is still required before this item can be marked done
+  - kiosk route and normal mobile route are isolated correctly
+  - deployed QR and kiosk behavior have been manually verified
 - Done when:
   - kiosk-to-phone continuation works end-to-end on a real device
 
@@ -390,17 +416,24 @@ Goal:
 ### P1-20 Monitoring checklist
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - define where deployment, app, and job failures are checked
   - define daily and weekly review tasks
+- Output:
+  - `docs/v1-monitoring-checklist.md`
+- Current V1 coverage:
+  - Vercel deployment review is included
+  - GitHub Actions daily import monitoring is included
+  - security event review cadence is included
+  - daily, weekly, and release-day checks are defined
 - Done when:
   - recurring checks exist and are assigned
 
 ### P1-21 Support playbook
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - write support steps for:
     - user cannot log in
@@ -408,17 +441,31 @@ Goal:
     - kiosk is stuck
     - import data is wrong
     - admin route is inaccessible
+- Output:
+  - `docs/v1-support-playbook.md`
+- Current V1 coverage:
+  - the defined support incidents now have first-response steps
+  - escalation conditions are defined
+  - deletion handling is aligned with the existing deletion script
+  - monitoring and deployment checks are linked into support handling
 - Done when:
   - common incidents can be handled without improvisation
 
 ### P1-22 Release and rollback drill
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - rehearse release checklist
   - rehearse rollback path
   - record what information must be captured during release
+- Output:
+  - `docs/v1-release-and-rollback-drill.md`
+- Current V1 coverage:
+  - release rehearsal steps are documented
+  - rollback decision paths are documented
+  - required drill outputs and pass criteria are documented
+  - preferred V1 rollback method is made explicit
 - Done when:
   - rollback has been practiced once and not only documented
 
@@ -441,7 +488,7 @@ Goal:
 ### P1-23 End-to-end pilot QA
 
 - Owner: `Engineering`
-- Status: `todo`
+- Status: `in_progress`
 - Task:
   - anonymous browse
   - municipality detail
@@ -455,13 +502,17 @@ Goal:
   - admin verification
 - Output:
   - pilot QA report
+- Current V1 coverage:
+  - pilot QA report is documented in `docs/v1-pilot-qa-report.md`
+  - anonymous browse, municipality detail, kiosk isolation, QR scan, and mobile open are green
+  - authenticated citizen and admin flows still need one recorded pilot pass
 - Done when:
   - all critical V1 journeys are green on real devices
 
 ### P1-24 Security verification in deployed environment
 
 - Owner: `Engineering`
-- Status: `todo`
+- Status: `in_progress`
 - Task:
   - verify production headers
   - verify cookies
@@ -469,17 +520,27 @@ Goal:
   - verify throttling behavior
 - Output:
   - deployed security verification note
+- Current V1 coverage:
+  - deployed verification is documented in `docs/v1-deployed-security-verification.md`
+  - headers, origin rejection, canonical redirects, anonymous admin protection, and rate limiting are verified live
+  - authenticated session-cookie and authenticated role-separation spot-checks are still pending
 - Done when:
   - production hardening is verified in the real environment, not only locally
 
 ### P1-25 Soft-launch watch plan
 
 - Owner: `Ops`
-- Status: `todo`
+- Status: `done`
 - Task:
   - define first-week watch windows
   - define what metrics/events are checked daily
   - define who can pause rollout if needed
+- Output:
+  - `docs/v1-soft-launch-watch-plan.md`
+- Current V1 coverage:
+  - first-week daily watch cadence is defined
+  - daily checks for deployment, kiosk route, QR flow, import status, and security events are defined
+  - pause conditions and escalation owners are defined
 - Done when:
   - the first week after launch has an active observation plan
 

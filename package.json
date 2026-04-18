@@ -5,6 +5,8 @@
   "scripts": {
     "prebuild": "tsx ./scripts/prepare-geojson.ts",
     "dev": "npm run prebuild && npm run jobindsats:translations:compile && next dev",
+    "dev:webpack": "npm run prebuild && npm run jobindsats:translations:compile && next dev --webpack",
+    "dev:trace:windows": "npm run prebuild && npm run jobindsats:translations:compile && set NEXT_TURBOPACK_TRACING=1 && next dev",
     "build": "npm run prebuild && npm run jobindsats:translations:compile && npm run check:encoding && next build",
     "start": "next start",
     "lint": "npm run prebuild && npm run jobindsats:translations:compile && npm run check:encoding && npx eslint .",

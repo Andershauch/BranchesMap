@@ -21,6 +21,7 @@ export function MunicipalitySheet({
   locale,
   municipality,
   isFollowing,
+  kioskMode = false,
   travelDestination,
   mode,
   onExpand,
@@ -30,6 +31,7 @@ export function MunicipalitySheet({
   locale: AppLocale;
   municipality: MunicipalitySummary;
   isFollowing: boolean;
+  kioskMode?: boolean;
   travelDestination: TravelDestination | null;
   mode: SheetMode;
   onExpand: () => void;
@@ -213,21 +215,41 @@ export function MunicipalitySheet({
                     target="_blank"
                     rel="noreferrer"
                     title={dictionary.municipalityPage.relatedJobnetSearchHint}
-                    className={`inline-flex items-center gap-1.5 rounded-full font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${
-                      isExpanded
-                        ? "w-full justify-center px-2 py-1.75 text-[10px]"
-                        : "w-full justify-center px-2 py-1.5 text-[9px]"
+                    className={`inline-flex items-center rounded-full font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${
+                      kioskMode
+                        ? isExpanded
+                          ? "min-h-11 w-full justify-center gap-2 px-3 py-2 text-[12px]"
+                          : "min-h-10 w-full justify-center gap-2 px-3 py-1.75 text-[11px]"
+                        : isExpanded
+                          ? "w-full justify-center gap-1.5 px-2 py-1.75 text-[10px]"
+                          : "w-full justify-center gap-1.5 px-2 py-1.5 text-[9px]"
                     } transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-1`}
                     style={{ backgroundColor: industry.accentColor }}
                   >
                     <span
                       className={`inline-flex shrink-0 aspect-square items-center justify-center overflow-hidden rounded-full leading-none ${
-                        isExpanded ? "h-4 w-4 text-[10px]" : "h-3.5 w-3.5 text-[9px]"
+                        kioskMode
+                          ? isExpanded
+                            ? "h-5.5 w-5.5 text-[13px]"
+                            : "h-5 w-5 text-[12px]"
+                          : isExpanded
+                            ? "h-4 w-4 text-[10px]"
+                            : "h-3.5 w-3.5 text-[9px]"
                       }`}
                     >
                       {industry.icon}
                     </span>
-                    <span className={isExpanded ? "max-w-[4.6rem] truncate" : "max-w-[4.2rem] truncate"}>
+                    <span
+                      className={
+                        kioskMode
+                          ? isExpanded
+                            ? "max-w-[7.2rem] truncate"
+                            : "max-w-[6.4rem] truncate"
+                          : isExpanded
+                            ? "max-w-[4.6rem] truncate"
+                            : "max-w-[4.2rem] truncate"
+                      }
+                    >
                       <span dir="auto">{industry.name}</span>
                     </span>
                   </a>

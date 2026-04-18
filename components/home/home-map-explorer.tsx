@@ -317,6 +317,7 @@ export function HomeMapExplorer({
           focusedSlug={focusedSlug}
           detailsSlug={detailsSlug}
           focusViewportToken={mapFocusToken}
+          focusViewportAnimationMode={effectiveKioskIdleMode ? "smooth" : "instant"}
           featuredSlugs={featuredSlugs}
           followedMunicipalitySlugs={visibleFollowedMunicipalitySlugs}
           updatedMunicipalitySlugs={visibleUpdatedMunicipalitySlugs}
@@ -372,6 +373,7 @@ export function HomeMapExplorer({
           key={`${renderedDetailsSlug ?? "sheet"}-${sheetSession}`}
           locale={locale}
           municipality={detailsMunicipality}
+          kioskMode={kioskModeActive}
           isFollowing={
             !effectiveKioskIdleMode &&
             followedMunicipalitySlugs.includes(detailsMunicipality.slug)

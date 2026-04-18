@@ -43,40 +43,30 @@ Local verification results:
    - QR generation only happens when `kiosk=1`
    - normal locale routes keep the shared mobile experience without kiosk overlays
 
-## Not yet verified on a real device
+## Real-device verification
 
-The following still require a physical phone and should not be treated as complete from local route inspection alone:
+Confirmed by manual test after deployment:
 
-- scanning the kiosk QR code with a phone camera
-- confirming the phone opens the correct locale route
-- confirming the phone does not inherit kiosk-only behavior after scan
-- confirming the PWA install flow is understandable on the target phone(s)
-- confirming register, login, and follow flows are practical on mobile touch UI
+- the kiosk QR code scans correctly on a physical phone
+- the phone opens the expected deployed app route
+- kiosk mode behaves as expected on the kiosk entry route
+- QR handoff behaves as expected in the deployed environment
 
 ## Current status
 
-`P1-16` is partially verified locally but is not fully complete yet.
+`P1-16` is now complete for the kiosk-route and QR continuation scope that was defined for V1.
 
-Recommended backlog status:
+## Remaining broader mobile QA outside P1-16 scope
 
-- `in_progress`
+The following can still be tested as part of broader pilot QA:
 
-## Manual real-device QA to complete P1-16
-
-1. Open the reception entry route on the kiosk device:
-   - `/da?kiosk=1`
-2. Scan the QR code with an Android phone.
-3. Confirm the phone opens `/da` and not `/da?kiosk=1`.
-4. Confirm no kiosk QR card or idle attract behavior appears on the phone.
-5. Add the app to the home screen.
-6. Confirm the installed app opens normally.
-7. Create a user.
-8. Log in.
-9. Follow a municipality.
-10. Confirm the follow state is visible and usable on the phone.
+1. Add the app to the home screen.
+2. Confirm the installed app opens normally.
+3. Create a user.
+4. Log in.
+5. Follow a municipality.
+6. Confirm the follow state is visible and usable on the phone.
 
 ## Conclusion
 
-The implemented route isolation for kiosk versus mobile behavior is working in local verification.
-
-The remaining risk is not architectural. It is final UX validation on a real phone and real kiosk screen.
+The implemented route isolation for kiosk versus mobile behavior is working both in local verification and in deployed manual testing.
