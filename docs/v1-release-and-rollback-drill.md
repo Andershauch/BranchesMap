@@ -152,6 +152,79 @@ The drill output should capture:
 - any ambiguities or missing permissions/tools discovered
 - follow-up actions required
 
+## Drill log template
+
+Use the template below for the first V1 drill and for later refresh drills.
+
+```md
+# JOBVEJ V1 Release And Rollback Drill Log
+
+Date:
+Participants:
+Drill type: tabletop | live
+
+## Release rehearsal
+
+- Release commit SHA:
+- Production deployment URL:
+- Deployment timestamp:
+- Local gates checked:
+  - [ ] npm run lint
+  - [ ] npx tsc --noEmit
+  - [ ] npx next build
+- Production config checked:
+  - [ ] APP_BASE_URL
+  - [ ] AUTH_SECRET
+  - [ ] ADMIN_USER_EMAILS
+
+## Post-deploy checks
+
+- [ ] /da
+- [ ] /da?kiosk=1
+- [ ] municipality page
+- [ ] login page
+- [ ] admin page
+- [ ] /manifest.webmanifest
+- [ ] /sw.js
+- [ ] npm run security:report -- --hours 4
+
+Notes:
+
+## Rollback rehearsal
+
+- Preferred rollback method:
+- Last known good deployment identified:
+- Bad commit identification path:
+- Revert path described:
+- Post-rollback checks reviewed:
+  - [ ] /da
+  - [ ] /da?kiosk=1
+  - [ ] QR only on kiosk route
+  - [ ] login page
+  - [ ] admin page
+  - [ ] healthy production deployment visible in Vercel
+
+## Timings
+
+- Time to identify rollback target:
+- Time to describe execution path:
+
+## Findings
+
+- Ambiguities:
+- Missing permissions or tools:
+- Follow-up actions:
+
+## Result
+
+- Drill result: pass | pass with follow-up | fail
+- Approved by:
+```
+
+## Current V1 decision
+
+For V1 pilot readiness, a documented drill log using the template above is accepted as the minimum operational artifact if a live rollback rehearsal is not performed before pilot start.
+
 ## Minimum success criteria
 
 `P1-22` should be considered complete when:
@@ -161,6 +234,7 @@ The drill output should capture:
 - the team can identify the bad commit quickly
 - the post-release and post-rollback checks are explicit
 - any permission or ownership gaps discovered in the drill are documented
+- a drill log exists, even if the first V1 pass is tabletop rather than live
 
 ## Expected V1 decision rule
 

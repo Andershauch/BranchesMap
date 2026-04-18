@@ -67,7 +67,7 @@ Goal:
 ### P1-02 Ownership map
 
 - Owner: `Næstved Kommune`
-- Status: `blocked`
+- Status: `done`
 - Task:
   - assign named owners for system, admin, operations, and support
   - record who approves release and rollback
@@ -76,7 +76,7 @@ Goal:
 - Current V1 coverage:
   - ownership structure is documented in `docs/v1-ownership-map.md`
   - required roles and responsibility boundaries are explicit
-  - final status is still blocked until `TBD` entries are replaced with named humans
+  - named ownership is now assigned to `Anders Djurhuus - Næstved Kommune` for the defined V1 operational roles
 - Done when:
   - every critical flow has a named human owner
 
@@ -466,6 +466,7 @@ Goal:
   - rollback decision paths are documented
   - required drill outputs and pass criteria are documented
   - preferred V1 rollback method is made explicit
+  - a drill-log template is now included for the accepted V1 tabletop-or-live drill form
 - Done when:
   - rollback has been practiced once and not only documented
 

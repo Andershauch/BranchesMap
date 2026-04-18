@@ -21,18 +21,16 @@ The following roles must be assigned to named humans before go-live:
 
 ## Ownership matrix
 
-Fill in the actual names before pilot release.
-
 | Responsibility | Required named owner | Notes |
 |---|---|---|
-| System ownership | `TBD` | Overall accountability for V1 operation |
-| Product scope approval | `TBD` | Approves V1 scope changes and non-goals |
-| Release approval | `TBD` | Approves releases to production |
-| Rollback approval | `TBD` | Approves rollback decision when needed |
-| Operations monitoring | `TBD` | Owns daily/weekly monitoring cadence |
-| Admin access review | `TBD` | Owns admin allowlist review |
-| Engineering incident response | `TBD` | Handles technical diagnosis and fixes |
-| Support handling | `TBD` | Owns first-line support process |
+| System ownership | `Anders Djurhuus - Næstved Kommune` | Overall accountability for V1 operation |
+| Product scope approval | `Anders Djurhuus - Næstved Kommune` | Approves V1 scope changes and non-goals |
+| Release approval | `Anders Djurhuus - Næstved Kommune` | Approves releases to production |
+| Rollback approval | `Anders Djurhuus - Næstved Kommune` | Approves rollback decision when needed |
+| Operations monitoring | `Anders Djurhuus - Næstved Kommune` | Owns daily/weekly monitoring cadence |
+| Admin access review | `Anders Djurhuus - Næstved Kommune` | Owns admin allowlist review |
+| Engineering incident response | `Anders Djurhuus - Næstved Kommune` | Handles technical diagnosis and fixes |
+| Support handling | `Anders Djurhuus - Næstved Kommune` | Owns first-line support process |
 
 ## Minimum role expectations
 
@@ -97,7 +95,13 @@ The following decisions must not be left implicit:
 
 ## Current status
 
-This document is structurally complete, but it is not operationally complete until all `TBD` entries are replaced with named humans.
+This document is operationally complete for V1 pilot use.
+
+Current V1 decision:
+
+- the named operational owner across system, release, rollback, monitoring, admin review, engineering response, and support handling is `Anders Djurhuus - Næstved Kommune`
+
+This is acceptable for V1, but it also means operational concentration risk exists because many responsibilities sit with one named person.
 
 ## Related documents
 
