@@ -172,7 +172,7 @@ export function AppMenu({
             <MenuLink href={`/${locale}`} label={copy.home} onClick={closeMenu} />
             <MenuLink href={`/${locale}/follows`} label={copy.follows} onClick={closeMenu} />
             {user?.role === "admin" ? (
-              <MenuLink href={`/${locale}/admin/home-map`} label={copy.admin} onClick={closeMenu} />
+              <MenuLink href={`/${locale}/admin`} label={copy.admin} onClick={closeMenu} />
             ) : null}
           </nav>
         </div>

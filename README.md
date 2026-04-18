@@ -131,6 +131,30 @@ Aktuel V1-adfærd i kiosk-mode:
 
 Det næste vigtige QA-punkt er stadig at verificere det faktiske kiosk-til-mobil-flow på en rigtig telefon.
 
+## Admin-værktøjer
+
+Admin er nu opdelt i selvstændige arbejdssider:
+
+- `/{locale}/admin` for overblik og hurtige indgange
+- `/{locale}/admin/home-map` for kortstyring og attract-mode-kommuner
+- `/{locale}/admin/security` for sikkerhedshændelser
+- `/{locale}/admin/app-texts` for frontend-systemtekster
+- `/{locale}/admin/jobindsats-titles` for Jobindsats-titeloversættelser
+
+### Systemtekster
+
+Frontend-systemtekster kan redigeres direkte i databasen via `admin/app-texts`.
+
+Det vigtige designprincip er:
+
+- filbaserede dictionaries er stadig baseline
+- databasen fungerer som runtime-override for godkendte frontend-grupper
+- admin kan ikke redigere vilkårlige systemtekster, som kode afhænger af
+- placeholders som `{municipality}` og `{industries}` valideres ved gem
+- ændringer og reset bliver audit-logget
+
+Se [docs/admin-system-text-workflow.md](docs/admin-system-text-workflow.md) for den fulde arbejdsgang.
+
 ## Follow checks
 
 Fase 4A bruger et server-side snapshot af kommuneindholdet til at afgøre om en fulgt kommune har ændret sig.
