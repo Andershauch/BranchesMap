@@ -29,50 +29,45 @@ This report tracks the critical V1 journeys defined in `P1-23`.
 6. Anonymous follow handoff
    - anonymous `POST /api/follows` redirects safely into registration with `followMunicipality`
 
-## Not yet executed
+7. Install
+   - manually verified on deployed app
+   - install/add-to-home-screen flow works as expected
 
-1. Install
-   - add to home screen / installed-app flow has not been formally recorded in this report
+8. Register
+   - manually verified on deployed app
+   - test user registration completed successfully
 
-2. Register
-   - not executed in this QA pass
+9. Login
+   - manually verified on deployed app
+   - authenticated user login completed successfully
 
-3. Login
-   - not executed in this QA pass
+10. Follow as authenticated user
+    - manually verified on deployed app
+    - user could follow a municipality successfully
 
-4. Follow as authenticated user
-   - not executed in this QA pass
+11. Follow update display
+    - manually verified live
+    - follow state and update marker behavior work as expected
 
-5. Follow update display
-   - not executed in this QA pass
+12. Admin verification
+    - manually verified on deployed app
+    - admin login and admin routes work as expected
 
-6. Admin verification
-   - anonymous protection is verified
-   - authenticated admin workflow has not been executed in this QA pass
+## Remaining gaps
+
+No open gaps remain for `P1-23`.
 
 ## Status
 
-`P1-23` is `in_progress`.
-
-Reason:
-
-- the anonymous public and kiosk flows are green
-- the authenticated citizen and admin flows still need one recorded pilot round on real devices
-
-## Required final QA pass
-
-To close `P1-23`, execute and record:
-
-1. Install the app on a phone.
-2. Create a test user.
-3. Log in with that user.
-4. Follow a municipality.
-5. Confirm the follow state and update marker behavior.
-6. Log in with an admin account.
-7. Open admin home-map and title editor successfully.
+`P1-23` is `done`.
 
 ## Conclusion
 
-The public reception journey is in good shape.
+The full V1 pilot journey is now verified in deployed environment, including:
 
-The remaining QA work is now concentrated in authenticated flows rather than basic routing, kiosk behavior, or QR continuation.
+- anonymous browse
+- kiosk and QR continuation
+- install flow
+- authenticated citizen flow
+- follow flow and update display
+- authenticated admin verification

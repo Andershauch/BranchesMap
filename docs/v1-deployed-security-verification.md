@@ -64,36 +64,32 @@ This note records production-environment checks performed against:
    - `NEXT_LOCALE` is set with `Secure`
    - `NEXT_LOCALE` is set with `SameSite=lax`
 
-## Not yet verified live
+9. Authenticated session behavior after successful login is verified.
+   - normal user login was verified live on deployed app
+   - authenticated session behavior worked as expected
 
-1. Authenticated session cookie behavior after successful login.
-   - this requires a controlled test user login in production
-   - the anonymous checks above do not expose the auth session cookie
+10. Authenticated non-admin user access boundaries are verified.
+    - authenticated non-admin user could not access admin functionality
+    - user/admin separation works as expected in deployed environment
 
-2. Authenticated non-admin user access boundaries.
-   - anonymous admin redirects were verified
-   - authenticated user versus admin separation still needs one explicit spot-check
+11. Authenticated admin access is verified.
+    - admin login was verified live
+    - admin routes opened successfully after login
 
 ## Status
 
-`P1-24` is `in_progress`.
-
-Reason:
-
-- deployed hardening is materially verified
-- the remaining gap is the authenticated cookie and role-separation spot-check
-- that last step should be completed during pilot QA with a real user account and an admin account
+`P1-24` is `done`.
 
 ## Conclusion
 
-The deployed app is behaving like a hardened public Next.js app should behave for anonymous traffic.
+The deployed app is behaving like a hardened public Next.js app should behave in real environment verification.
 
-The highest-risk controls are already proven live:
+The highest-risk controls are now proven live:
 
 - security headers
 - canonical origin redirects
 - origin rejection
 - admin protection
 - rate limiting
-
-The remaining work is narrow and tied to authenticated verification, not to anonymous public exposure.
+- authenticated session verification
+- authenticated user/admin role separation

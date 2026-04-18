@@ -2,6 +2,42 @@
 
 Date: 2026-04-18
 
+## Current status
+
+Sprint status: `done`
+
+Closeout note:
+
+- admin navigation has been split into explicit tools
+- `admin/home-map` is focused on operational map controls
+- security events have their own route
+- `regionTag` has been removed from the active admin workflow
+- `AppTextTranslation` is live as the DB-backed runtime override layer
+- `admin/app-texts` is live with search, filtering, reset, placeholder validation, and audit logging
+- runtime dictionaries use file fallback plus DB override for approved frontend groups
+- admin now has a top-level overview page at `/{locale}/admin`
+
+## Closeout verification
+
+The sprint was closed against these practical checks:
+
+- admin can navigate between home-map, security, system texts, and Jobindsats title translations
+- security review no longer lives inside the home-map tool
+- primary map controls are shown before advanced display settings
+- `regionTag` is no longer exposed as an active admin input without a concrete use case
+- one edited system text is persisted in DB and reflected at runtime
+- file dictionaries still act as fallback when DB overrides are absent
+- non-approved keys are not editable through the system text editor
+- placeholder mismatches are rejected on save
+- system text update and reset actions are audit-logged
+
+Verification notes:
+
+- `npx prisma db push` was green when the translation model was introduced
+- `npx prisma generate` was green when the translation model was introduced
+- `npx tsc --noEmit` is green
+- `npm run lint` is green
+
 ## Goal
 
 This sprint makes the admin area usable as an operational tool and starts the transition from file-based UI text dictionaries to an editable translation system.
@@ -330,16 +366,16 @@ Done when:
 
 ### Sprint ticket list
 
-1. `S1` Create admin landing/navigation structure
-2. `S2` Create `admin/security` page and move event list there
-3. `S3` Simplify `admin/home-map` page and demote advanced controls
-4. `S4` Decide `regionTag` and either remove from UI or assign one concrete function
-5. `S5` Add DB schema for app text translations
-6. `S6` Implement dictionary override service with file fallback
-7. `S7` Create `admin/system-texts` page
-8. `S8` Seed/import first system text key set
-9. `S9` Wire first text groups to runtime override checks
-10. `S10` Run admin and i18n QA pass
+1. `S1` Create admin landing/navigation structure: `done`
+2. `S2` Create `admin/security` page and move event list there: `done`
+3. `S3` Simplify `admin/home-map` page and demote advanced controls: `done`
+4. `S4` Decide `regionTag` and either remove from UI or assign one concrete function: `done`
+5. `S5` Add DB schema for app text translations: `done`
+6. `S6` Implement dictionary override service with file fallback: `done`
+7. `S7` Create `admin/system-texts` page: `done`
+8. `S8` Seed/import first system text key set: `done`
+9. `S9` Wire first text groups to runtime override checks: `done`
+10. `S10` Run admin and i18n QA pass: `done`
 
 ## Acceptance criteria
 
@@ -361,6 +397,23 @@ Done when:
 - one edited DB value changes the visible app text
 - editor supports search and locale switching
 - at least one text group is migrated end-to-end
+
+## Acceptance result
+
+Admin acceptance: `passed`
+
+- admin users can now navigate between the required four tool areas
+- security events are on their own page
+- home-map focuses on visible/attract/priority before advanced display settings
+- `regionTag` is removed from the active admin UI
+
+Translation acceptance: `passed`
+
+- system text translations are stored in DB
+- file dictionaries remain fallback-safe
+- runtime reflects edited DB values
+- the editor supports search, locale switching, filters, reset, and status review
+- the first approved frontend groups are editable end-to-end through the runtime override layer
 
 ## Suggested implementation split
 

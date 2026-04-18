@@ -488,7 +488,7 @@ Goal:
 ### P1-23 End-to-end pilot QA
 
 - Owner: `Engineering`
-- Status: `in_progress`
+- Status: `done`
 - Task:
   - anonymous browse
   - municipality detail
@@ -505,14 +505,14 @@ Goal:
 - Current V1 coverage:
   - pilot QA report is documented in `docs/v1-pilot-qa-report.md`
   - anonymous browse, municipality detail, kiosk isolation, QR scan, and mobile open are green
-  - authenticated citizen and admin flows still need one recorded pilot pass
+  - install, register, login, follow, follow update display, and admin verification are now verified live
 - Done when:
   - all critical V1 journeys are green on real devices
 
 ### P1-24 Security verification in deployed environment
 
 - Owner: `Engineering`
-- Status: `in_progress`
+- Status: `done`
 - Task:
   - verify production headers
   - verify cookies
@@ -523,7 +523,7 @@ Goal:
 - Current V1 coverage:
   - deployed verification is documented in `docs/v1-deployed-security-verification.md`
   - headers, origin rejection, canonical redirects, anonymous admin protection, and rate limiting are verified live
-  - authenticated session-cookie and authenticated role-separation spot-checks are still pending
+  - authenticated session behavior, non-admin access boundaries, and authenticated admin access are now verified live
 - Done when:
   - production hardening is verified in the real environment, not only locally
 
