@@ -2,41 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
-import { isValidLocale, type AppLocale } from "@/lib/i18n/config";
+import type { AppLocale } from "@/lib/i18n/config";
 
 const serviceWorkerPath = "/sw.js";
 const updateCheckIntervalMs = 15 * 60 * 1000;
-
-const pwaCopy = {
-  da: {
-    offlineTitle: "Du er offline",
-    offlineBody: "App-skallen virker stadig, men live data kan mangle.",
-    updateTitle: "Ny app-version er klar",
-    updateBody: "Opdatér nu for at hente den seneste version.",
-    updateAction: "Opdatér",
-    updateLater: "Senere",
-    updating: "Opdaterer...",
-  },
-  en: {
-    offlineTitle: "You are offline",
-    offlineBody: "The app shell is still available, but live data may be missing.",
-    updateTitle: "A new app version is ready",
-    updateBody: "Refresh now to load the latest version.",
-    updateAction: "Refresh",
-    updateLater: "Later",
-    updating: "Refreshing...",
-  },
-} as const;
-void pwaCopy;
-
-function detectLocale(): AppLocale {
-  if (typeof window === "undefined") {
-    return "da";
-  }
-
-  const [, maybeLocale] = window.location.pathname.split("/");
-  return isValidLocale(maybeLocale) ? maybeLocale : "da";
-}
 
 function PwaStatusBanner({
   locale,
@@ -63,8 +32,14 @@ function PwaStatusBanner({
   const body = isOffline ? copy.offlineBody : copy.updateBody;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--app-header-height)+0.6rem)] z-[140] flex justify-center px-[max(0.85rem,var(--safe-left))] pr-[max(0.85rem,var(--safe-right))]">
-      <div className="pointer-events-auto w-full max-w-sm rounded-[1.35rem] border border-slate-200/80 bg-white/88 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+    <div
+      className="pointer-events-none fixed inset-x-0 top-[calc(var(--app-header-height)+0.6rem)] z-[140] flex justify-center px-[max(0.85rem,var(--safe-left))] pr-[max(0.85rem,var(--safe-right))]"
+    >
+      <div
+        role="status"
+        aria-live="polite"
+        className="pointer-events-auto w-full max-w-sm rounded-[1.35rem] border border-slate-200/80 bg-white/88 p-3 shadow-[0_16px_40px_rgba(15,23,42,0.14)] backdrop-blur-xl"
+      >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">{title}</p>
@@ -102,8 +77,7 @@ function PwaStatusBanner({
   );
 }
 
-export function ServiceWorkerRegistration() {
-  const [locale] = useState<AppLocale>(detectLocale);
+export function ServiceWorkerRegistration({ locale = "da" }: { locale?: AppLocale }) {
   const [isOffline, setIsOffline] = useState(
     () => (typeof window !== "undefined" ? !window.navigator.onLine : false),
   );

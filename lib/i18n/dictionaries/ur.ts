@@ -25,6 +25,9 @@ export const urDictionary: Dictionary = {
     title: "زیلینڈ کی اصل حدود کے ساتھ بلدیاتی نقشہ",
     intro:
       "نقشہ اب Dataforsyningen سے سرکاری بلدیاتی جیومیٹری استعمال کرتا ہے۔ ہر بلدیہ براہ راست کلک کے قابل ہے، اور تین سب سے زیادہ نمائندگی کرنے والی صنعتیں علاقے کے اوپر آئیکن بیجز کے طور پر دکھائی گئی ہیں۔",
+    handoffTitle: "JOBVEJ فون پر کھولیں",
+    handoffBody: "کوڈ اسکین کریں تاکہ یہی ابتدائی صفحہ آپ کے فون پر کھلے۔ وہاں سے ایپ انسٹال کی جا سکتی ہے۔",
+    handoffScanLabel: "فون کے لیے اسکین کریں",
     municipalitiesBadge: "نقشے پر بلدیات",
     boundariesBadge: "سرکاری بلدیاتی حدود",
     geometryBadge: "جیومیٹری از Dataforsyningen/DAWA",

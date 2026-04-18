@@ -2,6 +2,16 @@ import "server-only";
 
 import type { NextRequest } from "next/server";
 
+import { getTrustedAppOrigin } from "@/lib/server/request-origin";
+
+/**
+ * Minimal same-origin guard for state-changing requests.
+ *
+ * The guard compares the request Origin header to the canonical app origin.
+ * Missing Origin headers are currently allowed because some same-site form POSTs
+ * and local workflows can omit it, but malformed or mismatched origins are
+ * rejected by callers and should be treated as security-relevant events.
+ */
 function normalizeOrigin(value: string | null) {
   if (!value) {
     return null;
@@ -14,15 +24,6 @@ function normalizeOrigin(value: string | null) {
   }
 }
 
-function getRequestOrigin(request: NextRequest) {
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const host = forwardedHost ?? request.headers.get("host") ?? request.nextUrl.host;
-  const protocol = forwardedProto === "https" ? "https" : request.nextUrl.protocol.replace(":", "") || "http";
-
-  return normalizeOrigin(`${protocol}://${host}`);
-}
-
 export function isTrustedMutationRequest(request: NextRequest) {
   const origin = normalizeOrigin(request.headers.get("origin"));
 
@@ -30,5 +31,5 @@ export function isTrustedMutationRequest(request: NextRequest) {
     return true;
   }
 
-  return origin === getRequestOrigin(request);
+  return origin === getTrustedAppOrigin(request);
 }

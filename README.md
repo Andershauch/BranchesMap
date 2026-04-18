@@ -9,7 +9,51 @@ Mobil-first POC for et interaktivt kort over Sjællands kommuner, brancher og jo
 - PWA-baseline med manifest, app-ikoner og service worker
 - installerbar på Android
 - follow-spor med første version af change detection og in-app status
+- kiosk-mode kan aktiveres eksplicit med `?kiosk=1` for reception-touchskærme
+- kiosk-mode viser QR-handoff og attract-mode uden at påvirke normal mobilbrug
 - roadmap og sprintstatus vedligeholdes i `roadmap.md`
+
+## Runtime-overblik
+
+Appen kører som en `Next.js` App Router-løsning med tre primære lag:
+
+- `app/` leverer ruter, layouts og server-renderede entrypoints
+- `components/` leverer den interaktive klientoplevelse, herunder kort, sheets og kiosk-adfærd
+- `lib/server/` samler auth, origin checks, sikkerhedsheaders, persistence, rate limiting og integrationslogik
+- `prisma/` definerer persistence-modellen for brugere, follows, saved searches, audit og rate-limit buckets
+- `scripts/` håndterer import, dataklargøring og operationelle hjælpekommandoer uden for runtime-pathen
+
+V1-arkitekturen kan læses som fem konkrete spor:
+
+- route-lag: locale-ruter, API-ruter og server-renderede entrypoints
+- klient-lag: kort, sheets, kiosk/QR-flow og anden brugerinteraktion
+- server-lag: auth, validation, redirects, origin guards, rate limiting og sikkerhedsheaders
+- persistence-lag: Postgres via Prisma
+- job/ops-lag: GeoJSON-prep, Jobindsats-import, follow-checks og supportkommandoer
+
+Det offentlige standard-entrypoint er locale-ruten, fx `/da`.
+Reception/kiosk-entrypoint er den samme rute med eksplicit kiosk-flag:
+
+```text
+/da?kiosk=1
+```
+
+Det er bevidst, så kiosk-specifik adfærd ikke påvirker normal mobil- eller desktopbrug.
+
+## Miljøvariabler
+
+V1 kræver, at runtime-konfigurationen er eksplicit og ens på tværs af drift og QA.
+
+Kritiske produktionsvariabler:
+
+- `DATABASE_URL` for Postgres
+- `APP_BASE_URL` som canonical origin for redirects, auth og QR-relaterede links
+- `AUTH_SECRET` til signerede sessioner
+- `ADMIN_USER_EMAILS` som allowlist for navngivne admin-konti
+- `FOLLOW_CHECK_SECRET` til operationel adgang til follow-check endpointet
+- `JOBINDSATS_API_TOKEN` til import af Jobindsats-data
+
+Se også `.env.example` og driftsnoterne i `docs/` for miljøspecifikke krav.
 
 ## Lokalt
 
@@ -32,6 +76,12 @@ npm run build
 npm run start
 ```
 
+Kør og test kiosk-entry lokalt:
+
+```text
+http://localhost:3000/da?kiosk=1
+```
+
 ## PWA-noter
 
 PWA-sporet er bevidst konservativt lige nu:
@@ -52,6 +102,26 @@ PWA-sporet er bevidst konservativt lige nu:
 - om selve kortskallen skal kunne åbne offline i POC'en
 - endelig iPhone standalone-QA
 - fuld dokumentation af opdateringsflow mellem builds
+
+## Kiosk-mode
+
+Kiosk-mode er lavet til reception-touchskærme og er kun aktiv, når siden åbnes med `?kiosk=1`.
+
+Det betyder:
+
+- QR-handoff-card vises kun i kiosk-mode
+- attract-mode og idle reset kører kun i kiosk-mode
+- almindelig mobilversion får ikke automatisk idle reset eller QR-overlay
+- QR peger på den normale locale-rute, så borgeren fortsætter på mobil uden kiosk-flag
+
+Aktuel V1-adfærd i kiosk-mode:
+
+- efter cirka `75` sekunders inaktivitet går forsiden i attract-mode
+- attract-mode looper mellem op til `5` kommuner
+- hver kommune vises i cirka `10` sekunder med skuffen åben
+- første touch vækker skærmen og nulstiller tilbage til normal starttilstand
+
+Det næste vigtige QA-punkt er stadig at verificere det faktiske kiosk-til-mobil-flow på en rigtig telefon.
 
 ## Follow checks
 
@@ -166,5 +236,6 @@ Forventet resultat:
 ```bash
 npm run check:encoding
 npm run lint
+npx tsc --noEmit
 npm run build
 ```

@@ -25,6 +25,9 @@ export const daDictionary: Dictionary = {
     title: "Kommunekort med rigtige grænser for Sjælland",
     intro:
       "Kortet bruger nu officielle kommunegeometrier fra Dataforsyningen. Hver kommune kan klikkes direkte, og de tre mest repræsenterede brancher vises som ikonbadge oven på fladen.",
+    handoffTitle: "Tag JOBVEJ med paa mobilen",
+    handoffBody: "Scan koden og aabn samme indgang paa din telefon. Derefter kan appen installeres derfra.",
+    handoffScanLabel: "Scan for mobilversion",
     municipalitiesBadge: "kommuner i kortet",
     boundariesBadge: "officielle kommunegrænser",
     geometryBadge: "Geometri fra Dataforsyningen/DAWA",

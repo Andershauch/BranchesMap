@@ -1,0 +1,389 @@
+[
+  {
+    "code": "0165",
+    "name": "Albertslund",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "albertslund",
+    "longitude": 12.351032031840022,
+    "latitude": 55.67952663119994
+  },
+  {
+    "code": "0201",
+    "name": "Allerød",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "allerod",
+    "longitude": 12.321143168721628,
+    "latitude": 55.85557674217011
+  },
+  {
+    "code": "0151",
+    "name": "Ballerup",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "ballerup",
+    "longitude": 12.360034088950936,
+    "latitude": 55.733052228954726
+  },
+  {
+    "code": "0153",
+    "name": "Brøndby",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "brondby",
+    "longitude": 12.415789798506848,
+    "latitude": 55.643233102238575
+  },
+  {
+    "code": "0155",
+    "name": "Dragør",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "dragor",
+    "longitude": 12.62115741763306,
+    "latitude": 55.582025189291336
+  },
+  {
+    "code": "0240",
+    "name": "Egedal",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "egedal",
+    "longitude": 12.233252053983161,
+    "latitude": 55.77065598862193
+  },
+  {
+    "code": "0320",
+    "name": "Faxe",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "faxe",
+    "longitude": 12.059711779502399,
+    "latitude": 55.28831412130431
+  },
+  {
+    "code": "0210",
+    "name": "Fredensborg",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "fredensborg",
+    "longitude": 12.443613876947374,
+    "latitude": 55.950507735033455
+  },
+  {
+    "code": "0147",
+    "name": "Frederiksberg",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "frederiksberg",
+    "longitude": 12.523559306005051,
+    "latitude": 55.679990187593106
+  },
+  {
+    "code": "0250",
+    "name": "Frederikssund",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "frederikssund",
+    "longitude": 12.013109278868516,
+    "latitude": 55.818579048293316
+  },
+  {
+    "code": "0190",
+    "name": "Furesø",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "fureso",
+    "longitude": 12.366958382535122,
+    "latitude": 55.79554188739516
+  },
+  {
+    "code": "0157",
+    "name": "Gentofte",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "gentofte",
+    "longitude": 12.552971969990175,
+    "latitude": 55.75055433619432
+  },
+  {
+    "code": "0159",
+    "name": "Gladsaxe",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "gladsaxe",
+    "longitude": 12.469726568206442,
+    "latitude": 55.74744026965072
+  },
+  {
+    "code": "0161",
+    "name": "Glostrup",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "glostrup",
+    "longitude": 12.405224361666107,
+    "latitude": 55.683345445788525
+  },
+  {
+    "code": "0253",
+    "name": "Greve",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "greve",
+    "longitude": 12.246135130347506,
+    "latitude": 55.590442564462464
+  },
+  {
+    "code": "0270",
+    "name": "Gribskov",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "gribskov",
+    "longitude": 12.232921686621529,
+    "latitude": 56.049484284834136
+  },
+  {
+    "code": "0260",
+    "name": "Halsnæs",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "halsnaes",
+    "longitude": 12.003098980854755,
+    "latitude": 55.97015761994759
+  },
+  {
+    "code": "0217",
+    "name": "Helsingør",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "helsingor",
+    "longitude": 12.497083413935112,
+    "latitude": 56.03844664964528
+  },
+  {
+    "code": "0163",
+    "name": "Herlev",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "herlev",
+    "longitude": 12.427583166724407,
+    "latitude": 55.735001527526656
+  },
+  {
+    "code": "0219",
+    "name": "Hillerød",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "hillerod",
+    "longitude": 12.238768074125549,
+    "latitude": 55.92906479119537
+  },
+  {
+    "code": "0316",
+    "name": "Holbæk",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "holbaek",
+    "longitude": 11.617496501973543,
+    "latitude": 55.660349067045
+  },
+  {
+    "code": "0167",
+    "name": "Hvidovre",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "hvidovre",
+    "longitude": 12.468671099081375,
+    "latitude": 55.63024819667876
+  },
+  {
+    "code": "0169",
+    "name": "Høje-Taastrup",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "hoje-taastrup",
+    "longitude": 12.2389228109236,
+    "latitude": 55.65917517869107
+  },
+  {
+    "code": "0223",
+    "name": "Hørsholm",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "horsholm",
+    "longitude": 12.485463087387524,
+    "latitude": 55.88330478111918
+  },
+  {
+    "code": "0183",
+    "name": "Ishøj",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "ishoj",
+    "longitude": 12.309572208771339,
+    "latitude": 55.621167665869
+  },
+  {
+    "code": "0326",
+    "name": "Kalundborg",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "kalundborg",
+    "longitude": 11.231064148467192,
+    "latitude": 55.62812763627856
+  },
+  {
+    "code": "0101",
+    "name": "København",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "kobenhavn",
+    "longitude": 12.55331542266613,
+    "latitude": 55.67581226523556
+  },
+  {
+    "code": "0259",
+    "name": "Køge",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "koge",
+    "longitude": 12.070896604764124,
+    "latitude": 55.456147378493476
+  },
+  {
+    "code": "0350",
+    "name": "Lejre",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "lejre",
+    "longitude": 11.917416190727618,
+    "latitude": 55.635027136077554
+  },
+  {
+    "code": "0173",
+    "name": "Lyngby-Taarbæk",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "lyngby-taarbaek",
+    "longitude": 12.509060068955481,
+    "latitude": 55.786003595088324
+  },
+  {
+    "code": "0370",
+    "name": "Næstved",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "naestved",
+    "longitude": 11.731735691875995,
+    "latitude": 55.2595177512555
+  },
+  {
+    "code": "0306",
+    "name": "Odsherred",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "odsherred",
+    "longitude": 11.554782507245191,
+    "latitude": 55.8542673194875
+  },
+  {
+    "code": "0329",
+    "name": "Ringsted",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "ringsted",
+    "longitude": 11.817529923977544,
+    "latitude": 55.457246105275175
+  },
+  {
+    "code": "0265",
+    "name": "Roskilde",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "roskilde",
+    "longitude": 12.103255965941827,
+    "latitude": 55.63739918673327
+  },
+  {
+    "code": "0230",
+    "name": "Rudersdal",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "rudersdal",
+    "longitude": 12.48872123339776,
+    "latitude": 55.834326098786754
+  },
+  {
+    "code": "0175",
+    "name": "Rødovre",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "rodovre",
+    "longitude": 12.448582135579047,
+    "latitude": 55.687496012948486
+  },
+  {
+    "code": "0330",
+    "name": "Slagelse",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "slagelse",
+    "longitude": 11.341819183349106,
+    "latitude": 55.34261612845482
+  },
+  {
+    "code": "0269",
+    "name": "Solrød",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "solrod",
+    "longitude": 12.173898625422769,
+    "latitude": 55.53729623754965
+  },
+  {
+    "code": "0340",
+    "name": "Sorø",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "soro",
+    "longitude": 11.558538555631477,
+    "latitude": 55.48561667714925
+  },
+  {
+    "code": "0336",
+    "name": "Stevns",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "stevns",
+    "longitude": 12.307884648569498,
+    "latitude": 55.33239789724362
+  },
+  {
+    "code": "0185",
+    "name": "Tårnby",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "taarnby",
+    "longitude": 12.64012777604378,
+    "latitude": 55.615161053368205
+  },
+  {
+    "code": "0187",
+    "name": "Vallensbæk",
+    "regionCode": "1084",
+    "regionName": "Region Hovedstaden",
+    "slug": "vallensbaek",
+    "longitude": 12.373058931924472,
+    "latitude": 55.632848505587816
+  },
+  {
+    "code": "0390",
+    "name": "Vordingborg",
+    "regionCode": "1085",
+    "regionName": "Region Sjælland",
+    "slug": "vordingborg",
+    "longitude": 12.097657651128424,
+    "latitude": 55.026313582032735
+  }
+]

@@ -22,6 +22,9 @@ export type Dictionary = {
     kicker: string;
     title: string;
     intro: string;
+    handoffTitle: string;
+    handoffBody: string;
+    handoffScanLabel: string;
     municipalitiesBadge: string;
     boundariesBadge: string;
     geometryBadge: string;

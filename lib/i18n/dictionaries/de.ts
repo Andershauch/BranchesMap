@@ -25,6 +25,9 @@ export const deDictionary: Dictionary = {
     title: "Gemeindekarte mit realen Grenzen Seelands",
     intro:
       "Die Karte nutzt jetzt offizielle Gemeindegeometrien von Dataforsyningen. Jede Gemeinde ist direkt anklickbar, und die drei am stärksten vertretenen Branchen werden als Icon-Badges über dem Gebiet angezeigt.",
+    handoffTitle: "JOBVEJ auf dem Handy nutzen",
+    handoffBody: "Scanne den Code, um denselben Einstiegspunkt auf deinem Handy zu öffnen. Von dort kann die App installiert werden.",
+    handoffScanLabel: "Für Mobil scannen",
     municipalitiesBadge: "Gemeinden auf der Karte",
     boundariesBadge: "Offizielle Gemeindegrenzen",
     geometryBadge: "Geometrie von Dataforsyningen/DAWA",

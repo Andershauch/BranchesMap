@@ -4,6 +4,17 @@ import { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/server/prisma";
 
+/**
+ * Shared rate-limit primitives.
+ *
+ * The file exposes two storage models:
+ * - in-memory buckets for cheap process-local throttles
+ * - database-backed buckets for throttles that must survive across instances
+ *
+ * Security note:
+ * - request headers are treated as hints for client identity, not as strong identity
+ * - limits should therefore be layered with auth, origin checks, and auditing
+ */
 type RateLimitWindow = {
   count: number;
   resetAt: number;
@@ -112,6 +123,8 @@ export async function consumeDistributedRateLimit(
   key: string,
   { limit, windowMs }: { limit: number; windowMs: number },
 ) {
+  // The UPSERT keeps the hot path in the database so rate limits remain coherent
+  // across multiple server instances in production.
   const resetAt = new Date(Date.now() + windowMs);
 
   const rows = await prisma.$queryRaw<Array<{ count: number; resetAt: Date }>>(Prisma.sql`

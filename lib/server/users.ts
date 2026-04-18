@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getConfiguredAdminEmailSet } from "@/lib/server/auth-config";
 import { prisma } from "@/lib/server/prisma";
 import { hashPassword, verifyPassword } from "@/lib/server/password";
 
@@ -8,12 +9,7 @@ function normalizeEmail(email: string) {
 }
 
 function getAdminEmailSet() {
-  return new Set(
-    (process.env.ADMIN_USER_EMAILS ?? "")
-      .split(",")
-      .map((value) => normalizeEmail(value))
-      .filter(Boolean),
-  );
+  return getConfiguredAdminEmailSet();
 }
 
 function resolveRoleForEmail(email: string) {

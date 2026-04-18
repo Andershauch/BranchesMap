@@ -14,6 +14,15 @@ import { recordSecurityEvent } from "@/lib/server/security-events";
 import { jsonSecurityResponse } from "@/lib/server/security";
 import { deleteSavedSearch, saveMunicipalitySearch } from "@/lib/server/saved-searches";
 
+/**
+ * Form-post endpoint for saved-search mutations.
+ *
+ * It mirrors the follow route structure:
+ * - reject untrusted origins
+ * - redirect anonymous users into login
+ * - validate IDs and slugs before storage writes
+ * - record audit events for create/delete actions
+ */
 function redirect303(url: URL) {
   return NextResponse.redirect(url, 303);
 }

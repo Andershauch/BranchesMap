@@ -75,8 +75,7 @@ This means the app processes personal data. In a municipal context, that require
 
 Current risk:
 
-- there is no complete documented retention/deletion policy in the product flow
-- there is no documented privacy notice or data handling statement in the app flow
+- V1 retention/deletion and privacy notes now exist, but are still operational documents rather than fully embedded product flows
 - there is no documented data inventory tied to legal basis and purpose limitation
 
 Impact:

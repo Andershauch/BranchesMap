@@ -6,6 +6,17 @@ import { recordSecurityEvent } from "@/lib/server/security-events";
 import { checkActiveSearchFollows, checkSearchFollow } from "@/lib/server/search-follows";
 import { jsonSecurityResponse } from "@/lib/server/security";
 
+/**
+ * Admin/operations endpoint for follow change detection.
+ *
+ * Access model:
+ * - local development requests are allowed for QA convenience
+ * - production requires either the follow-check secret or an authenticated admin
+ *
+ * Operational note:
+ * - the endpoint is rate-limited because it can trigger expensive batch work
+ * - responses are JSON so scripts and scheduled jobs can call it directly
+ */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

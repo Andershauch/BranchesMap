@@ -25,6 +25,9 @@ export const arDictionary: Dictionary = {
     title: "خريطة البلديات بحدود زيلاند الحقيقية",
     intro:
       "تستخدم الخريطة الآن الهندسة الرسمية للبلديات من Dataforsyningen. كل بلدية قابلة للنقر مباشرة، وتظهر الصناعات الثلاث الأكثر تمثيلاً كرموز فوق المنطقة.",
+    handoffTitle: "خذ JOBVEJ معك على الهاتف",
+    handoffBody: "امسح الرمز لفتح نفس نقطة البداية على هاتفك. ومن هناك يمكن تثبيت التطبيق.",
+    handoffScanLabel: "امسح للهاتف",
     municipalitiesBadge: "البلديات على الخريطة",
     boundariesBadge: "حدود البلدية الرسمية",
     geometryBadge: "الهندسة من Dataforsyningen/DAWA",

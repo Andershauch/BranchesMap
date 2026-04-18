@@ -25,6 +25,9 @@ export const plDictionary: Dictionary = {
     title: "Mapa gmin z rzeczywistymi granicami Zelandii",
     intro:
       "Mapa wykorzystuje teraz oficjalną geometrię gmin z Dataforsyningen. Każda gmina jest bezpośrednio klikalna, a trzy najbardziej reprezentowane branże są wyświetlane jako ikony nad danym obszarem.",
+    handoffTitle: "Zabierz JOBVEJ na telefon",
+    handoffBody: "Zeskanuj kod, aby otworzyć ten sam ekran startowy na telefonie. Stamtąd aplikację można zainstalować.",
+    handoffScanLabel: "Skanuj na telefon",
     municipalitiesBadge: "gminy na mapie",
     boundariesBadge: "oficjalne granice gmin",
     geometryBadge: "Geometria z Dataforsyningen/DAWA",

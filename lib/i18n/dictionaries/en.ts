@@ -25,6 +25,9 @@ export const enDictionary: Dictionary = {
     title: "Municipality map with real Zealand boundaries",
     intro:
       "The map now uses official municipality geometry from Dataforsyningen. Each municipality is directly clickable, and the three most represented industries are shown as icon badges on top of the area.",
+    handoffTitle: "Take JOBVEJ on your phone",
+    handoffBody: "Scan the code to open the same entry point on your phone. The app can then be installed from there.",
+    handoffScanLabel: "Scan for mobile",
     municipalitiesBadge: "municipalities on the map",
     boundariesBadge: "official municipality boundaries",
     geometryBadge: "Geometry from Dataforsyningen/DAWA",

@@ -1,8 +1,11 @@
 # Security Authorization Audit
 
-Date: 2026-04-15
+Date: 2026-04-18
 
 This note documents the current route-by-route authorization posture after the Auth.js migration and the first hardening passes.
+
+It now reflects the current V1 state after origin hardening, auth/session review,
+privacy retention work, security monitoring thresholds, and kiosk/mobile flow isolation.
 
 ## Current route classification
 
@@ -75,12 +78,17 @@ This note documents the current route-by-route authorization posture after the A
 ## Supporting controls now in place
 
 - Auth.js session-based authentication
+- citizen session lifetime is capped and explicitly configured in code
+- canonical production redirects and absolute URLs are anchored to `APP_BASE_URL`
 - role-based admin authorization
+- named admin allowlist via `ADMIN_USER_EMAILS`
 - origin checks for cookie-authenticated mutation routes
 - `no-store` on private pages
 - CSP and baseline security headers
 - distributed database-backed rate limiting on sensitive routes
 - centralized input parsing/validation for key form flows
+- documented operational deletion path via `npm run user:delete -- --email user@example.com`
+- documented manual security review path via `npm run security:report -- --hours 24`
 - explicit security audit events for:
   - auth throttling
   - auth failures
@@ -108,20 +116,27 @@ These are acceptable for local QA, but they should remain development-only.
 
 ### Remaining gaps
 
-1. Security event visibility is still database-only.
+1. Security event visibility is still manual-first.
    - We now write audit rows for important abuse/security events.
-   - We do not yet have alerting, dashboards, or retention policy around them.
+   - We now have review thresholds and a reporting script.
+   - We still do not have automated alerting or dashboards.
 
-2. Auth throttling is still not request-IP aware.
-   - Server actions do not expose the raw request.
-   - Current throttling is global + identity-based, which is better than before but not ideal.
+2. Auth throttling still depends on header-derived client identity.
+   - Current throttling uses request headers plus per-identity keys.
+   - That is appropriate for V1, but it is not a strong anti-abuse identity model.
 
 3. Auth.js transport route is delegated to the framework.
    - That is expected.
    - Any future custom callback logic should be reviewed carefully if added.
 
+4. Kiosk-mode is now isolated by route flag rather than deployment boundary.
+   - This is the correct V1 choice for reuse of the shared home experience.
+   - It must still be verified on the real reception entry URL during pilot QA.
+
 ## Recommended next steps
 
 1. Add observability around `security.*` audit events.
-2. Move high-risk auth flows to route handlers if per-IP + per-identity throttling becomes necessary.
-3. Re-run this audit whenever a new admin feature, write route, or background operational endpoint is introduced.
+   - V1 manual review thresholds now live in `docs/v1-security-monitoring-thresholds.md`
+2. Complete real-device verification of the kiosk-to-phone flow for the `?kiosk=1` entry route.
+3. Move high-risk auth flows to route handlers if stricter per-IP controls become necessary.
+4. Re-run this audit whenever a new admin feature, write route, or background operational endpoint is introduced.

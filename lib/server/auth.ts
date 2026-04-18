@@ -4,6 +4,14 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
 
+/**
+ * Server-only helpers for reading and enforcing the authenticated session.
+ *
+ * These helpers are the narrow bridge between Auth.js session data and the rest
+ * of the application. Downstream code should use these helpers instead of
+ * reading Auth.js objects directly so role checks and redirect behavior remain
+ * consistent.
+ */
 export type AuthUser = {
   id: string;
   email: string;

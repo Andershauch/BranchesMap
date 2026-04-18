@@ -18,6 +18,18 @@ import {
   markSearchFollowNotificationSeen,
 } from "@/lib/server/search-follows";
 
+/**
+ * Form-post endpoint for follow mutations.
+ *
+ * Responsibilities:
+ * - enforce same-origin POSTs
+ * - require an authenticated user for write operations
+ * - preserve locale-safe redirects for browser form flows
+ * - record audit events for follow lifecycle changes
+ *
+ * The route intentionally returns redirects instead of JSON because the primary
+ * caller is server-rendered forms in the citizen UI.
+ */
 function redirect303(url: URL) {
   return NextResponse.redirect(url, 303);
 }
@@ -48,6 +60,8 @@ export async function POST(request: NextRequest) {
   const intent = formData.get("intent");
 
   if (!user) {
+    // Anonymous users are redirected into auth with a safe follow handoff so the
+    // intended municipality action can continue after login or registration.
     if (intent === "follow-municipality") {
       const municipalitySlug = formData.get("municipalitySlug");
       const registerUrl = buildAppUrl(request, `/${locale}/register`);

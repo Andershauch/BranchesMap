@@ -1,12 +1,10 @@
 import "server-only";
 
 import { getCurrentAdminUser } from "@/lib/server/auth";
+import { getConfiguredAdminEmails } from "@/lib/server/auth-config";
 
 function hasConfiguredAdminUsers() {
-  return (process.env.ADMIN_USER_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim())
-    .some(Boolean);
+  return getConfiguredAdminEmails().length > 0;
 }
 
 export function isAdminConfigured() {

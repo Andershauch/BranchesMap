@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { MunicipalitySheet } from "@/components/home/municipality-sheet";
 import { SjaellandMunicipalityMap } from "@/components/maps/sjaelland-municipality-map";
@@ -9,6 +10,10 @@ import { municipalityTravelDestinations } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
 
 const defaultInitialFocusedSlug = "naestved";
+const kioskIdleTimeoutMs = 75 * 1000;
+const kioskAttractLoopStepMs = 10 * 1000;
+const kioskAttractMunicipalityCount = 5;
+
 type SheetMode = "closed" | "preview" | "expanded";
 
 function sortMunicipalities(items: MunicipalitySummary[]) {
@@ -30,11 +35,23 @@ export function HomeMapExplorer({
   locale,
   ariaLabel,
   initialFocusedSlug,
+  kioskModeEnabled,
+  handoffUrl,
+  handoffQrDataUrl,
+  handoffTitle,
+  handoffBody,
+  handoffScanLabel,
 }: {
   municipalities: MunicipalitySummary[];
   locale: AppLocale;
   ariaLabel: string;
   initialFocusedSlug?: string | null;
+  kioskModeEnabled: boolean;
+  handoffUrl: string;
+  handoffQrDataUrl: string | null;
+  handoffTitle: string;
+  handoffBody: string;
+  handoffScanLabel: string;
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
   const featuredSlugs = useMemo(
@@ -44,6 +61,14 @@ export function HomeMapExplorer({
         .map((municipality) => municipality.slug),
     [sortedMunicipalities],
   );
+  const kioskAttractSlugs = useMemo(() => {
+    const primarySlugs = sortedMunicipalities
+      .filter((municipality) => municipality.homeMap.isPrimary)
+      .map((municipality) => municipality.slug);
+    const fallbackSlugs = sortedMunicipalities.map((municipality) => municipality.slug);
+
+    return [...new Set([...primarySlugs, ...fallbackSlugs])].slice(0, kioskAttractMunicipalityCount);
+  }, [sortedMunicipalities]);
 
   const safeInitialFocusedSlug =
     initialFocusedSlug && sortedMunicipalities.some((municipality) => municipality.slug === initialFocusedSlug)
@@ -57,18 +82,83 @@ export function HomeMapExplorer({
   const [renderedDetailsSlug, setRenderedDetailsSlug] = useState<string | null>(safeInitialFocusedSlug);
   const [sheetSession, setSheetSession] = useState(0);
   const [sheetMode, setSheetMode] = useState<SheetMode>(safeInitialFocusedSlug ? "preview" : "closed");
+  const [mapFocusToken, setMapFocusToken] = useState(0);
+  const [isKioskIdleMode, setKioskIdleMode] = useState(false);
+  const [kioskAttractIndex, setKioskAttractIndex] = useState(0);
   const [followedMunicipalitySlugs, setFollowedMunicipalitySlugs] = useState<string[]>([]);
   const [updatedMunicipalitySlugs, setUpdatedMunicipalitySlugs] = useState<string[]>([]);
   const closeTimeoutRef = useRef<number | null>(null);
+  const idleTimerRef = useRef<number | null>(null);
+  const attractTimerRef = useRef<number | null>(null);
+  const isKioskIdleModeRef = useRef(false);
   const detailsMunicipality = renderedDetailsSlug
     ? sortedMunicipalities.find((municipality) => municipality.slug === renderedDetailsSlug) ?? null
     : null;
+  const kioskModeActive = kioskModeEnabled;
+  const effectiveKioskIdleMode = kioskModeActive && isKioskIdleMode;
+  const visibleFollowedMunicipalitySlugs = effectiveKioskIdleMode ? [] : followedMunicipalitySlugs;
+  const visibleUpdatedMunicipalitySlugs = effectiveKioskIdleMode ? [] : updatedMunicipalitySlugs;
+
+  function clearCloseTimeout() {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  }
+
+  function clearIdleTimers() {
+    if (idleTimerRef.current) {
+      window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+
+    if (attractTimerRef.current) {
+      window.clearTimeout(attractTimerRef.current);
+      attractTimerRef.current = null;
+    }
+  }
+
+  function resetInteractiveState() {
+    clearCloseTimeout();
+    setKioskAttractIndex(0);
+    setFocusedSlug(safeInitialFocusedSlug);
+    setDetailsSlug(safeInitialFocusedSlug);
+    setRenderedDetailsSlug(safeInitialFocusedSlug);
+    setSheetMode(safeInitialFocusedSlug ? "preview" : "closed");
+    setMapFocusToken((current) => current + 1);
+  }
+
+  const scheduleIdleMode = useCallback(() => {
+    clearIdleTimers();
+
+    if (!kioskModeActive || kioskAttractSlugs.length === 0) {
+      return;
+    }
+
+    idleTimerRef.current = window.setTimeout(() => {
+      setKioskIdleMode(true);
+      setKioskAttractIndex(0);
+    }, kioskIdleTimeoutMs);
+  }, [kioskAttractSlugs.length, kioskModeActive]);
+
+  function wakeFromIdleMode() {
+    if (!kioskModeActive) {
+      return;
+    }
+
+    setKioskIdleMode(false);
+    resetInteractiveState();
+    scheduleIdleMode();
+  }
+
+  useEffect(() => {
+    isKioskIdleModeRef.current = effectiveKioskIdleMode;
+  }, [effectiveKioskIdleMode]);
 
   useEffect(() => {
     return () => {
-      if (closeTimeoutRef.current) {
-        window.clearTimeout(closeTimeoutRef.current);
-      }
+      clearCloseTimeout();
+      clearIdleTimers();
     };
   }, []);
 
@@ -114,11 +204,81 @@ export function HomeMapExplorer({
     };
   }, []);
 
-  function handleMunicipalityPress(slug: string) {
-    if (closeTimeoutRef.current) {
-      window.clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
+  useEffect(() => {
+    if (!kioskModeActive) {
+      clearIdleTimers();
+      return;
     }
+
+    scheduleIdleMode();
+
+    function handleActivity() {
+      if (isKioskIdleModeRef.current) {
+        return;
+      }
+
+      scheduleIdleMode();
+    }
+
+    window.addEventListener("pointerdown", handleActivity, { passive: true });
+    window.addEventListener("pointermove", handleActivity, { passive: true });
+    window.addEventListener("wheel", handleActivity, { passive: true });
+    window.addEventListener("keydown", handleActivity);
+
+    return () => {
+      window.removeEventListener("pointerdown", handleActivity);
+      window.removeEventListener("pointermove", handleActivity);
+      window.removeEventListener("wheel", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+    };
+  }, [kioskModeActive, scheduleIdleMode]);
+
+  useEffect(() => {
+    if (!effectiveKioskIdleMode) {
+      if (attractTimerRef.current) {
+        window.clearTimeout(attractTimerRef.current);
+        attractTimerRef.current = null;
+      }
+
+      return;
+    }
+
+    const slug = kioskAttractSlugs[kioskAttractIndex];
+    if (!slug) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      clearCloseTimeout();
+      setSheetSession((current) => current + 1);
+      setFocusedSlug(slug);
+      setDetailsSlug(slug);
+      setRenderedDetailsSlug(slug);
+      setSheetMode("expanded");
+      setMapFocusToken((current) => current + 1);
+    });
+
+    attractTimerRef.current = window.setTimeout(() => {
+      setKioskAttractIndex((current) => (current + 1) % kioskAttractSlugs.length);
+    }, kioskAttractLoopStepMs);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+
+      if (attractTimerRef.current) {
+        window.clearTimeout(attractTimerRef.current);
+        attractTimerRef.current = null;
+      }
+    };
+  }, [effectiveKioskIdleMode, kioskAttractIndex, kioskAttractSlugs]);
+
+  function handleMunicipalityPress(slug: string) {
+    if (effectiveKioskIdleMode) {
+      return;
+    }
+
+    clearCloseTimeout();
+    scheduleIdleMode();
 
     if (sheetMode === "closed") {
       setSheetSession((current) => current + 1);
@@ -137,11 +297,9 @@ export function HomeMapExplorer({
   }
 
   function handleDismissDetails() {
+    scheduleIdleMode();
     setSheetMode("closed");
-
-    if (closeTimeoutRef.current) {
-      window.clearTimeout(closeTimeoutRef.current);
-    }
+    clearCloseTimeout();
 
     closeTimeoutRef.current = window.setTimeout(() => {
       setDetailsSlug(null);
@@ -158,19 +316,66 @@ export function HomeMapExplorer({
           ariaLabel={ariaLabel}
           focusedSlug={focusedSlug}
           detailsSlug={detailsSlug}
+          focusViewportToken={mapFocusToken}
           featuredSlugs={featuredSlugs}
-          followedMunicipalitySlugs={followedMunicipalitySlugs}
-          updatedMunicipalitySlugs={updatedMunicipalitySlugs}
+          followedMunicipalitySlugs={visibleFollowedMunicipalitySlugs}
+          updatedMunicipalitySlugs={visibleUpdatedMunicipalitySlugs}
           onMunicipalityPress={handleMunicipalityPress}
         />
       </div>
+
+      {kioskModeActive && handoffQrDataUrl ? (
+        <aside className="pointer-events-none absolute left-3 top-[calc(var(--app-header-height)+0.75rem)] z-30 max-w-[11rem] sm:left-4 sm:max-w-[12rem]">
+          <div className="pointer-events-auto rounded-[1.5rem] border border-white/70 bg-white/88 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-primary)]">
+              {handoffScanLabel}
+            </p>
+            <h2 className="mt-2 text-sm font-semibold leading-5 text-slate-950">{handoffTitle}</h2>
+            <p className="mt-1.5 text-xs leading-5 text-slate-600">{handoffBody}</p>
+
+            <div className="mt-3 rounded-[1.1rem] bg-white p-2 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+              <Image
+                src={handoffQrDataUrl}
+                alt={handoffScanLabel}
+                width={220}
+                height={220}
+                unoptimized
+                className="block h-auto w-full rounded-[0.9rem]"
+              />
+            </div>
+
+            <p className="mt-2 truncate text-[11px] font-medium text-slate-500">
+              {handoffUrl.replace(/^https?:\/\//, "")}
+            </p>
+          </div>
+        </aside>
+      ) : null}
+
+      {effectiveKioskIdleMode ? (
+        <button
+          type="button"
+          aria-label="Wake kiosk and return to the interactive map"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            wakeFromIdleMode();
+          }}
+          onClick={(event) => {
+            event.preventDefault();
+            wakeFromIdleMode();
+          }}
+          className="absolute inset-0 z-40 bg-transparent"
+        />
+      ) : null}
 
       {detailsMunicipality ? (
         <MunicipalitySheet
           key={`${renderedDetailsSlug ?? "sheet"}-${sheetSession}`}
           locale={locale}
           municipality={detailsMunicipality}
-          isFollowing={followedMunicipalitySlugs.includes(detailsMunicipality.slug)}
+          isFollowing={
+            !effectiveKioskIdleMode &&
+            followedMunicipalitySlugs.includes(detailsMunicipality.slug)
+          }
           travelDestination={municipalityTravelDestinations.get(detailsMunicipality.slug) ?? null}
           mode={sheetMode === "expanded" ? "expanded" : sheetMode === "preview" ? "preview" : "closed"}
           onExpand={() => setSheetMode("expanded")}

@@ -9,6 +9,16 @@ import {
 import { recordSecurityEvent } from "@/lib/server/security-events";
 import { jsonSecurityResponse } from "@/lib/server/security";
 
+/**
+ * Lightweight authenticated home-state API for the map UI.
+ *
+ * Returned data is intentionally narrow:
+ * - whether the request is authenticated
+ * - municipality slugs the user follows
+ * - municipality slugs with unread follow updates
+ *
+ * The response is always `no-store` because it reflects user-specific state.
+ */
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 

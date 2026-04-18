@@ -1,14 +1,37 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 
+import {
+  citizenSessionMaxAgeSeconds,
+  citizenSessionUpdateAgeSeconds,
+  getConfiguredAuthSecret,
+} from "@/lib/server/auth-config";
+import { getTrustedAppBaseUrl } from "@/lib/server/request-origin";
 import { authenticateUser } from "@/lib/server/users";
+
+/**
+ * Central Auth.js configuration for citizen and admin sessions.
+ *
+ * Security assumptions:
+ * - production must provide a canonical app origin through APP_BASE_URL
+ * - AUTH_SECRET is expected in production so JWT sessions are signed consistently
+ * - credentials auth delegates password verification to lib/server/users
+ *
+ * Risk points:
+ * - redirect handling is security-sensitive and must stay aligned with the canonical origin model
+ * - any provider added here must preserve the same session shape used across server helpers
+ */
+const trustedAuthBaseUrl = getTrustedAppBaseUrl();
+const trustedAuthBaseUrlString = trustedAuthBaseUrl.toString().replace(/\/$/, "");
+const configuredAuthSecret = getConfiguredAuthSecret();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  secret: configuredAuthSecret ?? undefined,
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60 * 24 * 14,
-    updateAge: 60 * 60 * 24,
+    maxAge: citizenSessionMaxAgeSeconds,
+    updateAge: citizenSessionUpdateAgeSeconds,
   },
   useSecureCookies: process.env.NODE_ENV === "production",
   providers: [
@@ -67,21 +90,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
+        return `${trustedAuthBaseUrlString}${url}`;
       }
 
       try {
         const target = new URL(url);
         const origin = new URL(baseUrl);
 
-        if (target.origin === origin.origin) {
+        if (target.origin === trustedAuthBaseUrl.origin || target.origin === origin.origin) {
           return target.toString();
         }
       } catch {
-        return baseUrl;
+        return trustedAuthBaseUrlString || baseUrl;
       }
 
-      return baseUrl;
+      return trustedAuthBaseUrlString || baseUrl;
     },
   },
 });

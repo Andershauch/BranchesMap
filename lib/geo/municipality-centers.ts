@@ -1,6 +1,4 @@
-import { geoCentroid } from "d3-geo";
-
-import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
+import { sjaellandMunicipalityProperties } from "@/lib/geo/sjaelland";
 
 export type TravelDestination = {
   latitude: number;
@@ -9,14 +7,12 @@ export type TravelDestination = {
 };
 
 export const municipalityTravelDestinations = new Map<string, TravelDestination>(
-  sjaellandMunicipalityFeatureCollection.features.map((feature) => {
-    const [longitude, latitude] = geoCentroid(feature as never);
-
+  sjaellandMunicipalityProperties.map((props) => {
     return [
-      feature.properties.slug,
+      props.slug,
       {
-        latitude,
-        longitude,
+        latitude: props.latitude,
+        longitude: props.longitude,
         precision: "municipality-center-v1",
       },
     ];

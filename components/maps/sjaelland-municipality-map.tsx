@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
-import { sjaellandMunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
+import { fetchSjaellandGeoJSON, type MunicipalityFeatureCollection } from "@/lib/geo/sjaelland";
 
 const width = 900;
 const height = 1600;
@@ -68,16 +68,6 @@ const labelTuning: Record<
   vallensbaek: { dx: -12, dy: 8 },
   vordingborg: { dx: 0, dy: -10 },
 };
-
-const projection = geoMercator().fitExtent(
-  [
-    [42, 42],
-    [width - 42, height - 42],
-  ],
-  sjaellandMunicipalityFeatureCollection as never,
-);
-
-const path = geoPath(projection);
 
 type ViewBox = typeof initialViewBox;
 
@@ -341,6 +331,7 @@ export function SjaellandMunicipalityMap({
   ariaLabel,
   focusedSlug,
   detailsSlug,
+  focusViewportToken,
   featuredSlugs,
   followedMunicipalitySlugs,
   updatedMunicipalitySlugs,
@@ -350,6 +341,7 @@ export function SjaellandMunicipalityMap({
   ariaLabel: string;
   focusedSlug: string | null;
   detailsSlug: string | null;
+  focusViewportToken?: number;
   featuredSlugs: string[];
   followedMunicipalitySlugs: string[];
   updatedMunicipalitySlugs: string[];
@@ -365,12 +357,39 @@ export function SjaellandMunicipalityMap({
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
+  const [geoData, setGeoData] = useState<MunicipalityFeatureCollection | null>(null);
   const zoomLevel = width / viewBox.width;
 
+  useEffect(() => {
+    let isMounted = true;
+    fetchSjaellandGeoJSON()
+      .then((data) => {
+        if (isMounted) setGeoData(data);
+      })
+      .catch((err) => console.error("Fejl ved indlæsning af kort:", err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const mapHelpers = useMemo(() => {
+    if (!geoData) return null;
+    const proj = geoMercator().fitExtent(
+      [
+        [42, 42],
+        [width - 42, height - 42],
+      ],
+      geoData as never,
+    );
+    return { projection: proj, path: geoPath(proj) };
+  }, [geoData]);
+
   const features = useMemo(() => {
+    if (!geoData || !mapHelpers) return [];
+    const { path } = mapHelpers;
     const municipalityMap = new Map(municipalities.map((municipality) => [municipality.code, municipality]));
 
-    return sjaellandMunicipalityFeatureCollection.features
+    return geoData.features
       .map((feature) => {
         const municipality = municipalityMap.get(feature.properties.code);
         const pathData = path(feature as never);
@@ -400,7 +419,7 @@ export function SjaellandMunicipalityMap({
         } satisfies MapFeature;
       })
       .filter((value): value is NonNullable<typeof value> => Boolean(value));
-  }, [municipalities]);
+  }, [municipalities, geoData, mapHelpers]);
 
   const featuredSlugSet = useMemo(() => new Set(featuredSlugs), [featuredSlugs]);
   const followedSlugSet = useMemo(() => new Set(followedMunicipalitySlugs), [followedMunicipalitySlugs]);
@@ -537,6 +556,33 @@ export function SjaellandMunicipalityMap({
       window.cancelAnimationFrame(frame);
     };
   }, [featureMap, features.length, focusedSlug]);
+
+  useEffect(() => {
+    if (!initialViewAppliedRef.current || !focusedSlug) {
+      return;
+    }
+
+    const feature = featureMap.get(focusedSlug);
+    if (!feature) {
+      return;
+    }
+
+    const nextViewBox =
+      focusedSlug === initialZoomSlug
+        ? createFixedZoomFeatureViewBox(
+            feature.bounds,
+            window.innerWidth >= initialDesktopBreakpoint ? initialDesktopZoomLevel : initialMobileZoomLevel,
+          )
+        : createFeatureViewBox(feature.bounds);
+
+    const frame = window.requestAnimationFrame(() => {
+      setViewBox(nextViewBox);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [featureMap, focusViewportToken, focusedSlug]);
 
   useEffect(() => {
     function handleZoomIn() {
@@ -774,6 +820,14 @@ export function SjaellandMunicipalityMap({
 
   function handlePointerCancel(event: PointerEvent<SVGSVGElement>) {
     finishPointerInteraction(event);
+  }
+
+  if (!geoData || !mapHelpers) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_24%_12%,#eef7fb_0%,#d8eaf0_34%,#b9d0d8_68%,#93adb9_100%)]">
+        <div className="text-sm font-medium text-[var(--md-sys-color-on-surface-variant)] opacity-70">Indlæser kort...</div>
+      </div>
+    );
   }
 
   return (

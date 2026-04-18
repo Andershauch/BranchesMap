@@ -1,10 +1,8 @@
-import sjaellandMunicipalities from "@/data/geo/sjaelland-municipalities.json";
+import sjaellandProperties from "@/data/geo/sjaelland-properties.json";
 
 type Position = [number, number];
 type PolygonCoordinates = Position[][];
 type MultiPolygonCoordinates = Position[][][];
-
-const minRingArea = 0.000001;
 
 export type MunicipalityGeometry = {
   type: "Polygon" | "MultiPolygon";
@@ -31,80 +29,22 @@ export type MunicipalityFeatureCollection = {
   features: MunicipalityFeature[];
 };
 
-function ringArea(ring: Position[]) {
-  let sum = 0;
-
-  for (let index = 0; index < ring.length - 1; index += 1) {
-    const [x1, y1] = ring[index];
-    const [x2, y2] = ring[index + 1];
-    sum += x1 * y2 - x2 * y1;
+/**
+ * Asynkront fetch af den pre-kalkulerede og normaliserede GeoJSON-fil.
+ * Hentes over netværket på klientsiden i stedet for at bundle det ind i JS-koden.
+ */
+export async function fetchSjaellandGeoJSON(): Promise<MunicipalityFeatureCollection> {
+  const response = await fetch("/geo/sjaelland-normalized.json");
+  if (!response.ok) {
+    throw new Error("Kunne ikke hente Sjællandskort data");
   }
-
-  return sum / 2;
+  return response.json();
 }
 
-function reverseRing(ring: Position[]) {
-  return [...ring].reverse();
-}
-
-function normalizePolygonRings(rings: PolygonCoordinates): PolygonCoordinates | null {
-  const [outerRing, ...holeRings] = rings;
-
-  if (!outerRing) {
-    return null;
-  }
-
-  const outerArea = ringArea(outerRing);
-  if (Math.abs(outerArea) <= minRingArea) {
-    return null;
-  }
-
-  const normalizedOuterRing = outerArea > 0 ? reverseRing(outerRing) : outerRing;
-  const normalizedHoleRings = holeRings
-    .map((ring) => ({ ring, area: ringArea(ring) }))
-    .filter(({ area }) => Math.abs(area) > minRingArea)
-    .map(({ ring, area }) => (area < 0 ? reverseRing(ring) : ring));
-
-  return [normalizedOuterRing, ...normalizedHoleRings];
-}
-
-function normalizeGeometry(geometry: MunicipalityGeometry): MunicipalityGeometry | null {
-  // The simplified GeoJSON contains some near-zero-area island fragments around
-  // coastal municipalities. D3 can interpret those as globe-sized polygons, so
-  // we drop degenerate rings and orient outer rings/holes independently.
-  if (geometry.type === "Polygon") {
-    const normalizedRings = normalizePolygonRings(geometry.coordinates as PolygonCoordinates);
-    return normalizedRings ? { type: "Polygon", coordinates: normalizedRings } : null;
-  }
-
-  const normalizedPolygons = (geometry.coordinates as MultiPolygonCoordinates)
-    .map((polygon) => normalizePolygonRings(polygon))
-    .filter((polygon): polygon is PolygonCoordinates => Boolean(polygon));
-
-  return normalizedPolygons.length
-    ? { type: "MultiPolygon", coordinates: normalizedPolygons }
-    : null;
-}
-
-const rawFeatureCollection = sjaellandMunicipalities as MunicipalityFeatureCollection;
-
-export const sjaellandMunicipalityFeatureCollection = {
-  ...rawFeatureCollection,
-  features: rawFeatureCollection.features
-    .map((feature) => {
-      const geometry = normalizeGeometry(feature.geometry);
-
-      if (!geometry) {
-        return null;
-      }
-
-      return {
-        ...feature,
-        geometry,
-      };
-    })
-    .filter((feature): feature is MunicipalityFeature => Boolean(feature)),
-} satisfies MunicipalityFeatureCollection;
-
-export const sjaellandMunicipalityProperties =
-  sjaellandMunicipalityFeatureCollection.features.map(({ properties }) => properties);
+/**
+ * Synkront tilgængelige metadata og pre-kalkulerede centerpunkter.
+ * Genereret af scripts/prepare-geojson.ts for at undgå at parse hele kortet runtime.
+ */
+export const sjaellandMunicipalityProperties = sjaellandProperties as Array<
+  MunicipalityFeature["properties"] & { longitude: number; latitude: number }
+>;

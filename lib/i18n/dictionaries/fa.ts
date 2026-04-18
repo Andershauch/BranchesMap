@@ -25,6 +25,9 @@ export const faDictionary: Dictionary = {
     title: "نقشه شهرداری‌ها با مرزهای واقعی زلاند",
     intro:
       "نقشه اکنون از هندسه رسمی شهرداری‌ها از Dataforsyningen استفاده می‌کند. هر شهرداری مستقیماً قابل کلیک است و سه صنعت پرکاربرد به صورت نشان‌های آیکون روی منطقه نمایش داده می‌شوند.",
+    handoffTitle: "JOBVEJ را روی گوشی باز کنید",
+    handoffBody: "کد را اسکن کنید تا همان نقطه شروع روی گوشی شما باز شود. سپس می‌توان اپ را از آنجا نصب کرد.",
+    handoffScanLabel: "اسکن برای موبایل",
     municipalitiesBadge: "شهرداری روی نقشه",
     boundariesBadge: "مرزهای رسمی شهرداری",
     geometryBadge: "هندسه از Dataforsyningen/DAWA",

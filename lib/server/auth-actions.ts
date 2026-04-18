@@ -21,6 +21,18 @@ import {
 import { recordSecurityEvent } from "@/lib/server/security-events";
 import { authenticateUser, registerUser } from "@/lib/server/users";
 
+/**
+ * Server actions for login, registration, and logout flows.
+ *
+ * These actions are responsible for:
+ * - parsing untrusted form input
+ * - applying auth-specific rate limits
+ * - recording audit and security events
+ * - preserving safe post-auth redirects
+ *
+ * They intentionally redirect on both success and failure so user-facing auth
+ * pages can stay simple and locale-aware.
+ */
 function withParams(pathname: string, params: Record<string, string | null | undefined>) {
   const search = new URLSearchParams();
 
@@ -73,6 +85,8 @@ function consumeAuthFailureLimit(namespace: string, email: string, requestHeader
 }
 
 export async function loginAction(formData: FormData) {
+  // Login is throttled on both IP and email dimensions to make low-volume abuse
+  // more expensive without blocking normal reception traffic.
   const locale = parseLocaleValue(formData.get("locale"));
   const redirectTo = parseSafeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
   const email = parseNormalizedEmail(formData.get("email"));
@@ -186,6 +200,8 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function registerAction(formData: FormData) {
+  // Registration follows the same pattern as login so security monitoring can
+  // reason about auth flows consistently.
   const locale = parseLocaleValue(formData.get("locale"));
   const redirectTo = parseSafeRedirectPath(locale, formData.get("redirectTo"), `/${locale}/follows`);
   const email = parseNormalizedEmail(formData.get("email"));

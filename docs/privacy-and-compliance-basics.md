@@ -1,6 +1,6 @@
 # JOBVEJ Privacy and Compliance Basics
 
-Date: 2026-04-17
+Date: 2026-04-18
 
 ## Purpose
 
@@ -16,6 +16,7 @@ It is not a full municipal DPIA or legal package. It is the minimum operational 
 - optional display name
 - role (`user` / `admin`)
 - password hash
+- Auth.js session state backed by a signed secret
 
 Purpose:
 - authentication
@@ -61,14 +62,41 @@ Purpose:
 
 ## Minimum retention position for V1
 
-This project does not yet implement a full automated retention/deletion lifecycle in product code.
+The concrete V1 retention and deletion policy now lives in:
+
+- `docs/v1-data-retention-and-deletion.md`
+
+This project still does not implement a full automated retention/deletion lifecycle in product code.
 
 For V1, the operational position is:
 
 - user accounts are retained until explicitly removed
 - follows and saved searches are retained until user deletion or explicit cleanup
-- audit/security events are retained for operational review
+- audit/security events are retained for operational review with a 180-day default retention window
 - imported Jobindsats data is retained as product data, not user data
+
+Current operational deletion handling:
+
+- no self-service deletion exists in the UI yet
+- operations can process a deletion request with `npm run user:delete -- --email user@example.com`
+- the deletion script defaults to dry-run and requires explicit execution
+
+## Authentication and admin position for V1
+
+- citizen sessions use a 7-day maximum lifetime
+- session refresh/update window is 12 hours
+- secure cookies are required in production
+- `APP_BASE_URL` is required in production so redirects and same-origin checks use one canonical origin
+- `AUTH_SECRET` is a production requirement and must be managed as a deployment secret
+- admin access is allowlist-based through `ADMIN_USER_EMAILS`
+- admin access must only be granted to named individual accounts, never shared accounts
+
+## Reception and kiosk privacy position
+
+- reception browsing is public and should not require login
+- kiosk-specific behavior is only enabled on the explicit kiosk route with `?kiosk=1`
+- QR handoff must send the citizen to the normal mobile route without kiosk mode
+- idle reset is part of the privacy posture because it reduces the chance that one visitor leaves confusing UI state for the next visitor
 
 ## V1 limitations
 
@@ -76,7 +104,7 @@ The following still remain outside the current V1 baseline:
 
 - formal legal-basis mapping per data category
 - full retention and deletion automation
-- formal privacy notice inside the product flow
+- formal privacy notice inside the product UI flow
 - supplier/data-processor review pack
 - incident response governance beyond engineering notes
 
@@ -92,3 +120,6 @@ For V1, the app should be treated as:
 - `docs/compliance-and-security-assessment.md`
 - `docs/security-authorization-audit.md`
 - `docs/v1-hardening-verification.md`
+- `docs/v1-data-retention-and-deletion.md`
+- `docs/v1-privacy-notice.md`
+- `docs/v1-security-monitoring-thresholds.md`
