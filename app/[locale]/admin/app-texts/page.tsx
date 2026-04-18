@@ -43,6 +43,10 @@ function getFilter(value: string | string[] | undefined): EditableFilter {
     : "all";
 }
 
+function getGroup(value: string | string[] | undefined) {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
 function summaryText(template: string, count: number, total: number) {
   return template.replace("{count}", String(count)).replace("{total}", String(total));
 }
@@ -52,13 +56,19 @@ function buildDefaultCopy(locale: AppLocale) {
     return {
       title: "Admin: systemtekster",
       intro:
-        "Redigér appens tekster direkte i databasen. Brug dette som runtime-kilde i stedet for at være afhængig af versionsfiler for små rettelser.",
+        "Rediger appens tekster direkte i databasen. Brug dette som runtime-kilde i stedet for at være afhængig af versionsfiler for små rettelser.",
       searchPlaceholder: "Søg efter nøgle eller tekst",
       localeLabel: "Sprog",
       filterLabel: "Filter",
       filterAll: "Alle",
       filterMissing: "Mangler værdi",
       filterOverridden: "Afviger fra fil",
+      groupAll: "Alle grupper",
+      statusLabel: "Status",
+      statusMatches: "Matcher fil",
+      statusOverridden: "Afviger",
+      statusMissing: "Mangler værdi",
+      placeholdersLabel: "Placeholders",
       keyLabel: "Nøgle",
       groupLabel: "Gruppe",
       baseValueLabel: "Filværdi",
@@ -83,6 +93,12 @@ function buildDefaultCopy(locale: AppLocale) {
     filterAll: "All",
     filterMissing: "Missing value",
     filterOverridden: "Differs from file",
+    groupAll: "All groups",
+    statusLabel: "Status",
+    statusMatches: "Matches file",
+    statusOverridden: "Overridden",
+    statusMissing: "Missing value",
+    placeholdersLabel: "Placeholders",
     keyLabel: "Key",
     groupLabel: "Group",
     baseValueLabel: "File value",
@@ -107,13 +123,18 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
 
   const pageLocale = locale as AppLocale;
   const dictionary = await getRuntimeDictionary(pageLocale);
-  const text = dictionary.adminAppTexts ?? buildDefaultCopy(pageLocale);
+  const text = {
+    ...buildDefaultCopy(pageLocale),
+    ...(dictionary.adminAppTexts ?? {}),
+  };
   const search = await searchParams;
   const query = getStringParam(search.q);
   const page = getPageParam(search.page);
   const targetLocale = getTargetLocale(search.target);
   const filter = getFilter(search.filter);
+  const group = getGroup(search.group);
   const saved = getStringParam(search.saved) === "1";
+  const errorMessage = getStringParam(search.error);
 
   const currentUser = await requireAdminUser(
     `/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/admin/app-texts`)}`,
@@ -126,12 +147,14 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
     pageSize: 25,
     locale: targetLocale,
     filter,
+    group,
   });
 
   const baseParams = new URLSearchParams();
   if (query) baseParams.set("q", query);
   if (targetLocale) baseParams.set("target", targetLocale);
   if (filter !== "all") baseParams.set("filter", filter);
+  if (group) baseParams.set("group", group);
 
   return (
     <AdminShell
@@ -142,7 +165,7 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
       displayName={displayName}
       copyOverride={dictionary.adminHomeMap}
     >
-      <form className="grid gap-3 rounded-[1.4rem] border border-slate-900/10 bg-slate-50/80 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_10rem_12rem_auto]">
+      <form className="grid gap-3 rounded-[1.4rem] border border-slate-900/10 bg-slate-50/80 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_10rem_12rem_12rem_auto]">
         <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
           <span>{text.searchPlaceholder}</span>
           <input
@@ -179,6 +202,21 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
             <option value="overridden">{text.filterOverridden}</option>
           </select>
         </label>
+        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+          <span>{text.groupLabel}</span>
+          <select
+            name="group"
+            defaultValue={group}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
+          >
+            <option value="">{text.groupAll}</option>
+            {result.availableGroups.map((entry) => (
+              <option key={entry.key} value={entry.key}>
+                {entry.key}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="flex items-end">
           <button
             type="submit"
@@ -196,9 +234,49 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
           <span className="rounded-full bg-slate-100 px-3 py-1">
             {filter === "all" ? text.filterAll : filter === "missing" ? text.filterMissing : text.filterOverridden}
           </span>
+          {group ? <span className="rounded-full bg-slate-100 px-3 py-1">{group}</span> : null}
         </div>
         {saved ? <p className="font-medium text-teal-700">{text.saved}</p> : null}
       </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/${locale}/admin/app-texts?${new URLSearchParams({
+            ...Object.fromEntries(baseParams.entries()),
+            group: "",
+          }).toString()}`}
+          className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+            !group ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
+        >
+          {text.groupAll}
+        </Link>
+        {result.availableGroups.map((entry) => {
+          const params = new URLSearchParams(Object.fromEntries(baseParams.entries()));
+          params.set("group", entry.key);
+
+          return (
+            <Link
+              key={entry.key}
+              href={`/${locale}/admin/app-texts?${params.toString()}`}
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                group === entry.key ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              <span>{entry.key}</span>
+              <span className={`rounded-full px-1.5 py-0.5 ${group === entry.key ? "bg-white/18" : "bg-white"}`}>
+                {entry.count}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {errorMessage ? (
+        <div className="rounded-[1.35rem] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
 
       {result.rows.length === 0 ? (
         <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5 text-sm text-slate-600">
@@ -218,6 +296,7 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
               <input type="hidden" name="query" value={query} />
               <input type="hidden" name="page" value={String(result.page)} />
               <input type="hidden" name="filter" value={filter} />
+              <input type="hidden" name="group" value={group} />
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_minmax(0,1.15fr)_auto] lg:items-start">
                 <div>
@@ -226,6 +305,21 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
                   <p className="mt-2 text-xs text-slate-500">
                     {text.groupLabel}: <span className="font-medium text-slate-700">{row.group}</span>
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-semibold">
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                      {text.statusLabel}:{" "}
+                      {row.isMissing
+                        ? text.statusMissing
+                        : row.isOverridden
+                          ? text.statusOverridden
+                          : text.statusMatches}
+                    </span>
+                    {row.placeholders.length > 0 ? (
+                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-800">
+                        {text.placeholdersLabel}: {row.placeholders.join(" ")}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{text.baseValueLabel}</p>
@@ -242,7 +336,13 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
                     dir="auto"
                     defaultValue={row[targetLocale]}
                     rows={3}
-                    className="min-h-28 rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none transition focus:border-teal-500"
+                    className={`min-h-28 rounded-xl border bg-white px-3 py-3 text-sm outline-none transition focus:border-teal-500 ${
+                      row.isMissing
+                        ? "border-amber-300"
+                        : row.isOverridden
+                          ? "border-teal-300"
+                          : "border-slate-300"
+                    }`}
                   />
                 </label>
                 <div className="flex items-start lg:justify-end">

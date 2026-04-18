@@ -25,6 +25,26 @@ type AppTextTranslationRow = {
   de: string;
 };
 
+const editableAppTextGroups = [
+  "home",
+  "municipality",
+  "municipalityPage",
+  "labels",
+  "industries",
+  "menu",
+  "authStatus",
+  "mapControls",
+  "pwa",
+  "sheet",
+  "travel",
+  "followsPage",
+  "loginPage",
+  "registerPage",
+  "savedSearchesPage",
+] as const;
+
+const editableAppTextGroupSet = new Set<string>(editableAppTextGroups);
+
 function flattenDictionary(
   value: Record<string, unknown>,
   prefix = "",
@@ -86,6 +106,31 @@ const seededTranslations = Object.keys(baseFlatDictionaries.da)
     de: baseFlatDictionaries.de[key] ?? "",
   }));
 
+function isEditableAppTextKey(key: string) {
+  const group = key.split(".")[0] ?? "";
+  return editableAppTextGroupSet.has(group);
+}
+
+function getPlaceholders(value: string) {
+  return Array.from(new Set(value.match(/\{[a-zA-Z0-9_]+\}/g) ?? [])).sort();
+}
+
+function validatePlaceholderCompatibility(key: string, locale: EditableLocale, value: string) {
+  const baseValue = getAppTextBaseValue(locale, key);
+  const expected = getPlaceholders(baseValue);
+  const received = getPlaceholders(value);
+
+  if (expected.length !== received.length) {
+    throw new Error("Placeholder mismatch: count differs from base text.");
+  }
+
+  for (let index = 0; index < expected.length; index += 1) {
+    if (expected[index] !== received[index]) {
+      throw new Error("Placeholder mismatch: placeholders must match the base text.");
+    }
+  }
+}
+
 async function ensureSeeded() {
   await prisma.appTextTranslation.createMany({
     data: seededTranslations,
@@ -116,17 +161,32 @@ export async function listAppTextTranslations(options?: {
   pageSize?: number;
   locale?: EditableLocale;
   filter?: AdminFilter;
+  group?: string;
 }) {
   const pageSize = Math.max(1, Math.min(options?.pageSize ?? 25, 100));
   const page = Math.max(1, options?.page ?? 1);
   const query = options?.query?.trim().toLowerCase() ?? "";
   const locale = options?.locale ?? "da";
   const filter = options?.filter ?? "all";
-  const rows = (await listAllAppTextTranslationsCached()) as AppTextTranslationRow[];
+  const selectedGroup = options?.group?.trim() ?? "";
+  const rows = ((await listAllAppTextTranslationsCached()) as AppTextTranslationRow[]).filter((row) =>
+    isEditableAppTextKey(row.key),
+  );
+
+  const groupCounts = Object.fromEntries(
+    editableAppTextGroups.map((group) => [
+      group,
+      rows.filter((row) => row.group === group).length,
+    ]),
+  ) as Record<(typeof editableAppTextGroups)[number], number>;
 
   const filteredRows = rows.filter((row) => {
     const baseValue = getAppTextBaseValue(locale, row.key);
     const targetValue = row[locale];
+
+     if (selectedGroup && row.group !== selectedGroup) {
+      return false;
+    }
 
     if (query) {
       const haystacks = [row.key, row.group, row.da, row.en, row.uk, row.ar, row.fa, row.ur, row.pl, row.de]
@@ -156,6 +216,9 @@ export async function listAppTextTranslations(options?: {
     rows: pagedRows.map((row) => ({
       ...row,
       baseValue: getAppTextBaseValue(locale, row.key),
+      isMissing: !row[locale].trim(),
+      isOverridden: row[locale] !== getAppTextBaseValue(locale, row.key),
+      placeholders: getPlaceholders(getAppTextBaseValue(locale, row.key)),
     })),
     total,
     page,
@@ -164,6 +227,11 @@ export async function listAppTextTranslations(options?: {
     query,
     filter,
     locale,
+    group: selectedGroup,
+    availableGroups: editableAppTextGroups.map((group) => ({
+      key: group,
+      count: groupCounts[group],
+    })),
   };
 }
 
@@ -179,12 +247,36 @@ export async function updateAppTextTranslation(input: {
     throw new Error("Translation key is required.");
   }
 
+  if (!isEditableAppTextKey(key)) {
+    throw new Error("This text key is not editable in admin.");
+  }
+
+  validatePlaceholderCompatibility(key, input.locale, input.value);
+
+  const existing = await prisma.appTextTranslation.findUnique({
+    where: { key },
+  });
+
+  if (!existing) {
+    throw new Error("Translation key was not found.");
+  }
+
+  const nextValue = input.value.trim();
+
   await prisma.appTextTranslation.update({
     where: { key },
     data: {
-      [input.locale]: input.value.trim(),
+      [input.locale]: nextValue,
     },
   });
+
+  return {
+    key,
+    group: existing.group,
+    locale: input.locale,
+    previousValue: existing[input.locale],
+    nextValue,
+  };
 }
 
 export async function getRuntimeDictionary(locale: AppLocale): Promise<Dictionary> {
@@ -192,6 +284,10 @@ export async function getRuntimeDictionary(locale: AppLocale): Promise<Dictionar
   const rows = (await listAllAppTextTranslationsCached()) as AppTextTranslationRow[];
 
   for (const row of rows) {
+    if (!isEditableAppTextKey(row.key)) {
+      continue;
+    }
+
     const value = row[locale];
     if (!value) {
       continue;
@@ -201,4 +297,8 @@ export async function getRuntimeDictionary(locale: AppLocale): Promise<Dictionar
   }
 
   return baseDictionary;
+}
+
+export function getEditableAppTextGroups() {
+  return [...editableAppTextGroups];
 }

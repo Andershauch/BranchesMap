@@ -273,6 +273,12 @@ export type Dictionary = {
     filterAll: string;
     filterMissing: string;
     filterOverridden: string;
+    groupAll?: string;
+    statusLabel?: string;
+    statusMatches?: string;
+    statusOverridden?: string;
+    statusMissing?: string;
+    placeholdersLabel?: string;
     keyLabel: string;
     groupLabel: string;
     baseValueLabel: string;
