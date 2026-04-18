@@ -8,7 +8,10 @@ import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { requireAdminUser } from "@/lib/server/auth";
 import { listAppTextTranslations } from "@/lib/server/app-text-translations";
 
-import { updateAppTextTranslationAction } from "./actions";
+import {
+  resetAppTextTranslationAction,
+  updateAppTextTranslationAction,
+} from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +77,7 @@ function buildDefaultCopy(locale: AppLocale) {
       baseValueLabel: "Filværdi",
       valueLabel: "Runtime-værdi",
       save: "Gem",
+      reset: "Nulstil til filværdi",
       search: "Søg",
       saved: "Systemtekst gemt.",
       empty: "Ingen systemtekster matcher filteret.",
@@ -104,6 +108,7 @@ function buildDefaultCopy(locale: AppLocale) {
     baseValueLabel: "File value",
     valueLabel: "Runtime value",
     save: "Save",
+    reset: "Reset to file value",
     search: "Search",
     saved: "System text saved.",
     empty: "No system texts match the current filter.",
@@ -346,12 +351,23 @@ export default async function AdminAppTextsPage({ params, searchParams }: PagePr
                   />
                 </label>
                 <div className="flex items-start lg:justify-end">
-                  <button
-                    type="submit"
-                    className="inline-flex rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-                  >
-                    {text.save}
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="submit"
+                      className="inline-flex rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+                    >
+                      {text.save}
+                    </button>
+                    {row.isOverridden || row.isMissing ? (
+                      <button
+                        type="submit"
+                        formAction={resetAppTextTranslationAction}
+                        className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:text-slate-900"
+                      >
+                        {text.reset}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </form>

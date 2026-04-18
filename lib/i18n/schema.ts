@@ -284,6 +284,7 @@ export type Dictionary = {
     baseValueLabel: string;
     valueLabel: string;
     save: string;
+    reset?: string;
     search: string;
     saved: string;
     empty: string;

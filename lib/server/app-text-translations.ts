@@ -279,6 +279,19 @@ export async function updateAppTextTranslation(input: {
   };
 }
 
+export async function resetAppTextTranslation(input: {
+  key: string;
+  locale: EditableLocale;
+}) {
+  const baseValue = getAppTextBaseValue(input.locale, input.key);
+
+  return updateAppTextTranslation({
+    key: input.key,
+    locale: input.locale,
+    value: baseValue,
+  });
+}
+
 export async function getRuntimeDictionary(locale: AppLocale): Promise<Dictionary> {
   const baseDictionary = cloneDictionary(baseDictionaries[locale]);
   const rows = (await listAllAppTextTranslationsCached()) as AppTextTranslationRow[];
