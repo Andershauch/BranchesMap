@@ -1,5 +1,6 @@
 import type { AppLocale } from "@/lib/i18n/config";
 import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import type { Dictionary } from "@/lib/i18n/schema";
 
 export type PresentedIndustry = {
   code: string;
@@ -41,8 +42,9 @@ export function buildMunicipalitySheetProfile(
   locale: AppLocale,
   municipalityName: string,
   industries: PresentedIndustry[],
+  dictionaryOverride?: Dictionary,
 ) {
-  const dictionary = getDictionarySync(locale);
+  const dictionary = dictionaryOverride ?? getDictionarySync(locale);
   const names = industries.slice(0, 3).map((industry) => industry.name);
 
   if (names.length === 0) {
@@ -57,20 +59,32 @@ export function buildMunicipalitySheetProfile(
   });
 }
 
-export function buildMunicipalityTopIndustriesHeading(locale: AppLocale, municipalityName: string) {
-  return replaceToken(getDictionarySync(locale).municipalityPage.topIndustriesHeading, {
+export function buildMunicipalityTopIndustriesHeading(
+  locale: AppLocale,
+  municipalityName: string,
+  dictionaryOverride?: Dictionary,
+) {
+  return replaceToken((dictionaryOverride ?? getDictionarySync(locale)).municipalityPage.topIndustriesHeading, {
     municipality: municipalityName,
   });
 }
 
-export function buildMunicipalityAdditionalIndustriesHeading(locale: AppLocale, municipalityName: string) {
-  return replaceToken(getDictionarySync(locale).municipalityPage.additionalIndustriesHeading, {
+export function buildMunicipalityAdditionalIndustriesHeading(
+  locale: AppLocale,
+  municipalityName: string,
+  dictionaryOverride?: Dictionary,
+) {
+  return replaceToken((dictionaryOverride ?? getDictionarySync(locale)).municipalityPage.additionalIndustriesHeading, {
     municipality: municipalityName,
   });
 }
 
-export function buildMunicipalityPocStatus(locale: AppLocale, sources: PresentedSources) {
-  const dictionary = getDictionarySync(locale);
+export function buildMunicipalityPocStatus(
+  locale: AppLocale,
+  sources: PresentedSources,
+  dictionaryOverride?: Dictionary,
+) {
+  const dictionary = dictionaryOverride ?? getDictionarySync(locale);
   if (
     sources.totalJobs === "jobindsats_y25i07_import" &&
     sources.topIndustries === "jobindsats_y25i07_category_mapping"

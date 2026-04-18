@@ -1,31 +1,13 @@
-import { defaultLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
-import { arDictionary } from "@/lib/i18n/dictionaries/ar";
-import { daDictionary } from "@/lib/i18n/dictionaries/da";
-import { deDictionary } from "@/lib/i18n/dictionaries/de";
-import { enDictionary } from "@/lib/i18n/dictionaries/en";
-import { faDictionary } from "@/lib/i18n/dictionaries/fa";
-import { plDictionary } from "@/lib/i18n/dictionaries/pl";
-import { ukDictionary } from "@/lib/i18n/dictionaries/uk";
-import { urDictionary } from "@/lib/i18n/dictionaries/ur";
+import { type AppLocale } from "@/lib/i18n/config";
+import { baseDictionaries, getBaseDictionarySync } from "@/lib/i18n/base-dictionaries";
 import type { Dictionary } from "@/lib/i18n/schema";
-
-const dictionaries: Record<AppLocale, Dictionary> = {
-  da: daDictionary,
-  en: enDictionary,
-  uk: ukDictionary,
-  ar: arDictionary,
-  fa: faDictionary,
-  ur: urDictionary,
-  pl: plDictionary,
-  de: deDictionary,
-};
 
 export type { Dictionary };
 
 export async function getDictionary(locale: AppLocale): Promise<Dictionary> {
-  return dictionaries[locale];
+  return baseDictionaries[locale];
 }
 
 export function getDictionarySync(locale: AppLocale | string): Dictionary {
-  return dictionaries[isValidLocale(locale) ? locale : defaultLocale];
+  return getBaseDictionarySync(locale);
 }

@@ -3,11 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
 import { AppMenu } from "@/components/layout/app-menu";
+import { DictionaryProvider } from "@/components/i18n/dictionary-provider";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { MapTopBarControls } from "@/components/layout/map-topbar-controls";
 import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
-import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { getCurrentUser } from "@/lib/server/auth";
 
 type LocaleLayoutProps = {
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
     return {};
   }
 
-  const dictionary = await getDictionary(locale);
+  const dictionary = await getRuntimeDictionary(locale);
 
   return {
     title: {
@@ -59,58 +61,61 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   }
 
   const activeLocale = locale as AppLocale;
-  const [dictionary, user] = await Promise.all([getDictionary(locale), getCurrentUser()]);
+  const [dictionary, user] = await Promise.all([getRuntimeDictionary(activeLocale), getCurrentUser()]);
   const displayName = user?.name?.trim() ? user.name : user?.email ?? null;
   const supportingText = dictionary.header.appTagline;
   const direction = isRtlLocale(activeLocale) ? "rtl" : "ltr";
 
   return (
-    <div lang={locale} dir={direction} className="flex min-h-screen flex-col text-[var(--md-sys-color-on-surface)]">
-      <header
-        className="sticky top-0 z-50 h-[var(--app-header-height)] pt-[var(--safe-top)]"
-      >
-        <div className="flex h-[var(--app-header-bar-height)] w-full items-center justify-between gap-2 border-b border-white/45 bg-[color:rgba(248,250,247,0.62)] px-[calc(var(--safe-left)+0.8rem)] pr-[calc(var(--safe-right)+0.8rem)] shadow-[0_8px_20px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-3 sm:px-[calc(var(--safe-left)+1rem)] sm:pr-[calc(var(--safe-right)+1rem)]">
-          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-            <Link
-              href={`/${locale}`}
-              dir="ltr"
-              className="flex min-w-0 max-w-[min(48vw,16rem)] items-center gap-2.5 sm:max-w-[22rem] sm:gap-3"
-            >
-              <Image
-                src="/icons/app-icon-192.png"
-                alt={`${dictionary.header.appName} icon`}
-                width={40}
-                height={40}
-                className="h-9 w-9 shrink-0 rounded-[0.95rem] border border-white/60 shadow-[0_8px_18px_rgba(15,23,42,0.08)] sm:h-11 sm:w-11"
-                priority
+    <DictionaryProvider locale={activeLocale} dictionary={dictionary}>
+      <div lang={locale} dir={direction} className="flex min-h-screen flex-col text-[var(--md-sys-color-on-surface)]">
+        <ServiceWorkerRegistration />
+        <header
+          className="sticky top-0 z-50 h-[var(--app-header-height)] pt-[var(--safe-top)]"
+        >
+          <div className="flex h-[var(--app-header-bar-height)] w-full items-center justify-between gap-2 border-b border-white/45 bg-[color:rgba(248,250,247,0.62)] px-[calc(var(--safe-left)+0.8rem)] pr-[calc(var(--safe-right)+0.8rem)] shadow-[0_8px_20px_rgba(15,23,42,0.06)] backdrop-blur-xl sm:gap-3 sm:px-[calc(var(--safe-left)+1rem)] sm:pr-[calc(var(--safe-right)+1rem)]">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <Link
+                href={`/${locale}`}
+                dir="ltr"
+                className="flex min-w-0 max-w-[min(48vw,16rem)] items-center gap-2.5 sm:max-w-[22rem] sm:gap-3"
+              >
+                <Image
+                  src="/icons/app-icon-192.png"
+                  alt={`${dictionary.header.appName} icon`}
+                  width={40}
+                  height={40}
+                  className="h-9 w-9 shrink-0 rounded-[0.95rem] border border-white/60 shadow-[0_8px_18px_rgba(15,23,42,0.08)] sm:h-11 sm:w-11"
+                  priority
+                />
+                <div className="min-w-0 max-w-full">
+                  <p className="truncate text-[0.96rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
+                    {dictionary.header.appName}
+                  </p>
+                  <p className="hidden truncate text-xs text-[var(--md-sys-color-on-surface-variant)] md:block">
+                    {supportingText}
+                  </p>
+                </div>
+              </Link>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <LocaleSwitcher
+                currentLocale={activeLocale}
+                labels={dictionary.locales}
+                title={dictionary.header.localeLabel}
               />
-              <div className="min-w-0 max-w-full">
-                <p className="truncate text-[0.96rem] font-semibold tracking-tight text-[var(--md-sys-color-on-surface)] sm:text-lg">
-                  {dictionary.header.appName}
-                </p>
-                <p className="hidden truncate text-xs text-[var(--md-sys-color-on-surface-variant)] md:block">
-                  {supportingText}
-                </p>
-              </div>
-            </Link>
+              <MapTopBarControls locale={activeLocale} displayName={displayName} />
+              <AppMenu
+                locale={activeLocale}
+                user={user ? { email: user.email, name: user.name, role: user.role } : null}
+              />
+            </div>
           </div>
+        </header>
 
-          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <LocaleSwitcher
-              currentLocale={activeLocale}
-              labels={dictionary.locales}
-              title={dictionary.header.localeLabel}
-            />
-            <MapTopBarControls locale={activeLocale} displayName={displayName} />
-            <AppMenu
-              locale={activeLocale}
-              user={user ? { email: user.email, name: user.name, role: user.role } : null}
-            />
-          </div>
-        </div>
-      </header>
-
-      <div className="flex-1">{children}</div>
-    </div>
+        <div className="flex-1">{children}</div>
+      </div>
+    </DictionaryProvider>
   );
 }

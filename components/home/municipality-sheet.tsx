@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type TouchEvent } from "react";
 
+import { useDictionary } from "@/components/i18n/dictionary-provider";
 import { MunicipalityTravelEstimate } from "@/components/home/municipality-travel-estimate";
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { buildJobnetIndustrySearchUrl, buildMunicipalitySheetProfile } from "@/lib/municipality-presentation";
 
 type SheetMode = "closed" | "preview" | "expanded";
@@ -40,7 +40,7 @@ export function MunicipalitySheet({
   onCollapse: () => void;
   onClose: () => void;
 }) {
-  const dictionary = getDictionarySync(locale);
+  const dictionary = useDictionary();
   const copy = dictionary.sheet;
   const isRtl = isRtlLocale(locale);
   const touchStartYRef = useRef<number | null>(null);
@@ -272,7 +272,7 @@ export function MunicipalitySheet({
                       {copy.teaserLabel}
                     </p>
                     <p className="mt-2 text-start text-sm leading-6 text-slate-600">
-                      {buildMunicipalitySheetProfile(locale, municipality.name, municipality.topIndustries)}
+                      {buildMunicipalitySheetProfile(locale, municipality.name, municipality.topIndustries, dictionary)}
                     </p>
                   </div>
                 </>

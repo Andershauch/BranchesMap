@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { registerAction } from "@/lib/server/auth-actions";
 import { getCurrentUser } from "@/lib/server/auth";
 import { isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 
 type RegisterPageProps = {
   params: Promise<{
@@ -37,8 +37,8 @@ export default async function RegisterPage({ params, searchParams }: RegisterPag
 
   const activeLocale = locale as AppLocale;
   const isRtl = isRtlLocale(activeLocale);
-  const copy = getDictionarySync(activeLocale).registerPage;
-  const user = await getCurrentUser();
+  const [dictionary, user] = await Promise.all([getRuntimeDictionary(activeLocale), getCurrentUser()]);
+  const copy = dictionary.registerPage;
   const search = await searchParams;
   const redirectTo = normalizeRedirect(locale, getStringParam(search.redirectTo), `/${locale}/follows`);
   const followMunicipality = getStringParam(search.followMunicipality);

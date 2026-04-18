@@ -3,7 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { intlLocaleMap, isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { requireCurrentUser } from "@/lib/server/auth";
 import { listSearchFollowsForUser } from "@/lib/server/search-follows";
 
@@ -42,8 +42,11 @@ export default async function FollowsPage({ params, searchParams }: FollowsPageP
 
   const activeLocale = locale as AppLocale;
   const isRtl = isRtlLocale(activeLocale);
-  const copy = getDictionarySync(activeLocale).followsPage;
-  const user = await requireCurrentUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/follows`)}`);
+  const [dictionary, user] = await Promise.all([
+    getRuntimeDictionary(activeLocale),
+    requireCurrentUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/follows`)}`),
+  ]);
+  const copy = dictionary.followsPage;
   const query = await searchParams;
   const follows = await listSearchFollowsForUser(user.id);
   const displayName = user.name?.trim() ? user.name : user.email;

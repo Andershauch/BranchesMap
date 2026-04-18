@@ -1,13 +1,13 @@
 import Link from "next/link";
 
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { logoutAction } from "@/lib/server/auth-actions";
 import { getCurrentUser } from "@/lib/server/auth";
 
 export async function AuthStatus({ locale }: { locale: AppLocale }) {
-  const user = await getCurrentUser();
-  const copy = getDictionarySync(locale).authStatus;
+  const [user, dictionary] = await Promise.all([getCurrentUser(), getRuntimeDictionary(locale)]);
+  const copy = dictionary.authStatus;
   const isRtl = isRtlLocale(locale);
 
   if (!user) {

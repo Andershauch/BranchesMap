@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
+import { AdminShell } from "@/components/admin/admin-shell";
 import { isValidLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { requireAdminUser } from "@/lib/server/auth";
 import { listJobindsatsTitleTranslations } from "@/lib/server/jobindsats-title-translations";
 
@@ -75,10 +75,9 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
   }
 
   const pageLocale = locale as AppLocale;
-  const dictionary = getDictionarySync(pageLocale);
+  const dictionary = await getRuntimeDictionary(pageLocale);
   const adminLocaleLabels = pageLocale === "da" ? adminLocaleLabelsDa : adminLocaleLabelsEn;
   const text = dictionary.adminJobindsatsTitles;
-  const adminHomeMapText = dictionary.adminHomeMap;
   const search = await searchParams;
   const query = getStringParam(search.q);
   const page = getPageParam(search.page);
@@ -86,7 +85,10 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
   const filter = getFilter(search.filter);
   const saved = getStringParam(search.saved) === "1";
 
-  await requireAdminUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/admin/jobindsats-titles`)}`);
+  const currentUser = await requireAdminUser(
+    `/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/admin/jobindsats-titles`)}`,
+  );
+  const displayName = currentUser.name?.trim() ? currentUser.name : currentUser.email;
 
   const result = await listJobindsatsTitleTranslations({
     query,
@@ -102,81 +104,71 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
   if (filter !== "all") baseParams.set("filter", filter);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#f7f5ef_0%,#eef4f3_100%)] px-3 py-3 text-slate-900 sm:px-4 sm:py-4">
-      <section className="mx-auto flex w-full max-w-6xl flex-col gap-4 rounded-[2rem] border border-slate-900/10 bg-white/92 p-4 shadow-[0_20px_80px_rgba(15,23,42,0.08)] backdrop-blur sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-700">
-              {adminHomeMapText.eyebrow}
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">{text.title}</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{text.intro}</p>
-          </div>
-          <Link
-            href={`/${locale}/admin/home-map`}
-            className="inline-flex items-center rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+    <AdminShell
+      locale={pageLocale}
+      currentSection="jobindsats-titles"
+      title={text.title}
+      intro={text.intro}
+      displayName={displayName}
+      copyOverride={dictionary.adminHomeMap}
+    >
+      <form className="grid gap-3 rounded-[1.4rem] border border-slate-900/10 bg-slate-50/80 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]">
+        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+          <span>{text.searchPlaceholder}</span>
+          <input
+            type="search"
+            name="q"
+            defaultValue={query}
+            placeholder={text.searchPlaceholder}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
+          />
+        </label>
+        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+          <span>{text.localeLabel}</span>
+          <select
+            name="target"
+            defaultValue={targetLocale}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
           >
-            {text.back}
-          </Link>
+            {editableLocales.map((localeCode) => (
+              <option key={localeCode} value={localeCode}>
+                {adminLocaleLabels[localeCode]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+          <span>{text.filterLabel}</span>
+          <select
+            name="filter"
+            defaultValue={filter}
+            className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
+          >
+            <option value="all">{text.filterAll}</option>
+            <option value="missing">{text.filterMissing}</option>
+            <option value="new">{text.filterNew}</option>
+          </select>
+        </label>
+        <div className="flex items-end">
+          <button
+            type="submit"
+            className="inline-flex rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+          >
+            {text.search}
+          </button>
         </div>
+      </form>
 
-        <form className="grid gap-3 rounded-[1.4rem] border border-slate-900/10 bg-slate-50/80 px-4 py-4 sm:grid-cols-[minmax(0,1fr)_12rem_12rem_auto]">
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-            <span>{text.searchPlaceholder}</span>
-            <input
-              type="search"
-              name="q"
-              defaultValue={query}
-              placeholder={text.searchPlaceholder}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-            <span>{text.localeLabel}</span>
-            <select
-              name="target"
-              defaultValue={targetLocale}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
-            >
-              {editableLocales.map((localeCode) => (
-                <option key={localeCode} value={localeCode}>
-                  {adminLocaleLabels[localeCode]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-            <span>{text.filterLabel}</span>
-            <select
-              name="filter"
-              defaultValue={filter}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-3 outline-none transition focus:border-teal-500"
-            >
-              <option value="all">{text.filterAll}</option>
-              <option value="missing">{text.filterMissing}</option>
-              <option value="new">{text.filterNew}</option>
-            </select>
-          </label>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              className="inline-flex rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-            >
-              {text.search}
-            </button>
-          </div>
-        </form>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
-          <p>{summaryText(text.summary, result.rows.length, result.total)}</p>
-          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-            <span className="rounded-full bg-slate-100 px-3 py-1">{adminLocaleLabels[targetLocale]}</span>
-            <span className="rounded-full bg-slate-100 px-3 py-1">
-              {filter === "all" ? text.filterAll : filter === "missing" ? text.filterMissing : text.filterNew}
-            </span>
-          </div>
-          {saved ? <p className="font-medium text-teal-700">{text.saved}</p> : null}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+        <p>{summaryText(text.summary, result.rows.length, result.total)}</p>
+        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+          <span className="rounded-full bg-slate-100 px-3 py-1">{adminLocaleLabels[targetLocale]}</span>
+          <span className="rounded-full bg-slate-100 px-3 py-1">
+            {filter === "all" ? text.filterAll : filter === "missing" ? text.filterMissing : text.filterNew}
+          </span>
         </div>
+        {saved ? <p className="font-medium text-teal-700">{text.saved}</p> : null}
+      </div>
 
         {result.rows.length === 0 ? (
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-5 text-sm text-slate-600">
@@ -236,7 +228,7 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
           <div className="flex items-center justify-between gap-3">
             <div>
               {result.page > 1 ? (
-                <Link
+                <a
                   href={`/${locale}/admin/jobindsats-titles?${new URLSearchParams({
                     ...Object.fromEntries(baseParams.entries()),
                     page: String(result.page - 1),
@@ -244,12 +236,12 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                   className="inline-flex rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
                 >
                   {text.previous}
-                </Link>
+                </a>
               ) : null}
             </div>
             <div>
               {result.page < result.pageCount ? (
-                <Link
+                <a
                   href={`/${locale}/admin/jobindsats-titles?${new URLSearchParams({
                     ...Object.fromEntries(baseParams.entries()),
                     page: String(result.page + 1),
@@ -257,12 +249,11 @@ export default async function AdminJobindsatsTitlesPage({ params, searchParams }
                   className="inline-flex rounded-full bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
                 >
                   {text.next}
-                </Link>
+                </a>
               ) : null}
             </div>
           </div>
         ) : null}
-      </section>
-    </main>
+    </AdminShell>
   );
 }

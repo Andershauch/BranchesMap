@@ -3,7 +3,7 @@ import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 
 import { intlLocaleMap, isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { requireCurrentUser } from "@/lib/server/auth";
 import { listSavedSearchesForUser } from "@/lib/server/saved-searches";
 
@@ -30,8 +30,11 @@ export default async function SavedSearchesPage({ params }: SavedSearchesPagePro
 
   const activeLocale = locale as AppLocale;
   const isRtl = isRtlLocale(activeLocale);
-  const copy = getDictionarySync(activeLocale).savedSearchesPage;
-  const user = await requireCurrentUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/saved-searches`)}`);
+  const [dictionary, user] = await Promise.all([
+    getRuntimeDictionary(activeLocale),
+    requireCurrentUser(`/${locale}/login?redirectTo=${encodeURIComponent(`/${locale}/saved-searches`)}`),
+  ]);
+  const copy = dictionary.savedSearchesPage;
   const savedSearches = await listSavedSearchesForUser(user.id);
   const displayName = user.name?.trim() ? user.name : user.email;
 

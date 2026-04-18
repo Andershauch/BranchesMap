@@ -35,12 +35,6 @@ export async function updateMunicipalityHomeMapAction(formData: FormData) {
     "auto",
   );
 
-  const regionTag = parseEnumValue(
-    formData.get("regionTag"),
-    ["west", "south", "central", "north", "metro", "other"] as const,
-    "other",
-  );
-
   await prisma.municipality.update({
     where: { slug },
     data: {
@@ -48,7 +42,6 @@ export async function updateMunicipalityHomeMapAction(formData: FormData) {
       homeMapAttractMode: attractMode,
       homeMapPriority: priority,
       homeMapLabelMode: labelMode,
-      homeMapRegionTag: regionTag,
     },
   });
 

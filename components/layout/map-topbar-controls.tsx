@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
+import { useDictionary } from "@/components/i18n/dictionary-provider";
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
 
 const zoomInEvent = "branches-map:zoom-in";
@@ -21,7 +21,7 @@ export function MapTopBarControls({
   displayName: string | null;
 }) {
   const pathname = usePathname();
-  const copy = getDictionarySync(locale).mapControls;
+  const copy = useDictionary().mapControls;
   const isRtl = isRtlLocale(locale);
   const isHomeRoute = pathname === `/${locale}` || pathname === `/${locale}/`;
 

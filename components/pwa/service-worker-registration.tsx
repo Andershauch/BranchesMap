@@ -1,28 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
-import type { AppLocale } from "@/lib/i18n/config";
+import { useDictionary } from "@/components/i18n/dictionary-provider";
 
 const serviceWorkerPath = "/sw.js";
 const updateCheckIntervalMs = 15 * 60 * 1000;
 
 function PwaStatusBanner({
-  locale,
   isOffline,
   updateReady,
   isApplyingUpdate,
   onApplyUpdate,
   onDismissUpdate,
 }: {
-  locale: AppLocale;
   isOffline: boolean;
   updateReady: boolean;
   isApplyingUpdate: boolean;
   onApplyUpdate: () => void;
   onDismissUpdate: () => void;
 }) {
-  const copy = getDictionarySync(locale).pwa;
+  const copy = useDictionary().pwa;
 
   if (!isOffline && !updateReady) {
     return null;
@@ -77,7 +74,7 @@ function PwaStatusBanner({
   );
 }
 
-export function ServiceWorkerRegistration({ locale = "da" }: { locale?: AppLocale }) {
+export function ServiceWorkerRegistration() {
   const [isOffline, setIsOffline] = useState(
     () => (typeof window !== "undefined" ? !window.navigator.onLine : false),
   );
@@ -244,7 +241,6 @@ export function ServiceWorkerRegistration({ locale = "da" }: { locale?: AppLocal
 
   return (
     <PwaStatusBanner
-      locale={locale}
       isOffline={isOffline}
       updateReady={shouldShowUpdate}
       isApplyingUpdate={isApplyingUpdate}

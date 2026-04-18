@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
-import { getDictionary } from "@/lib/i18n/dictionaries";
 import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
 import { getJobindsatsTitleTranslator } from "@/lib/i18n/jobindsats-titles";
 import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import {
   buildJobnetIndustrySearchUrl,
   buildMunicipalityAdditionalIndustriesHeading,
@@ -49,7 +49,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
   const currentUserPromise = getCurrentUser();
   const [municipality, dictionary, search, currentUser, translateJobindsatsRepresentativeTitle] = await Promise.all([
     getMunicipalityBySlug(slug),
-    getDictionary(locale),
+    getRuntimeDictionary(locale as AppLocale),
     searchParams,
     currentUserPromise,
     getJobindsatsTitleTranslator(),
@@ -157,7 +157,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                 {dictionary.municipality.pocStatusTitle}
               </p>
               <p className="mt-3 text-sm leading-6 sm:text-base">
-                {buildMunicipalityPocStatus(activeLocale, municipality.sources)}
+                {buildMunicipalityPocStatus(activeLocale, municipality.sources, dictionary)}
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
 
         <section className="rounded-[1.75rem] bg-[var(--md-sys-color-surface-container)] px-5 py-5 shadow-[0_1px_3px_var(--md-sys-color-shadow)] sm:px-6">
           <h2 className="text-start text-lg font-semibold text-[var(--md-sys-color-on-surface)] sm:text-xl">
-            {buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name)}
+            {buildMunicipalityTopIndustriesHeading(activeLocale, municipality.name, dictionary)}
           </h2>
           <p className="mt-2 max-w-3xl text-start text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
             {dictionary.municipalityPage.importedIndustryNote}
@@ -236,7 +236,7 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
           {additionalIndustryOverview.length > 0 ? (
             <div className="mt-6">
               <h3 className="text-start text-base font-semibold text-[var(--md-sys-color-on-surface)] sm:text-lg">
-                {buildMunicipalityAdditionalIndustriesHeading(activeLocale, municipality.name)}
+                {buildMunicipalityAdditionalIndustriesHeading(activeLocale, municipality.name, dictionary)}
               </h3>
               <div className="mt-4 flex flex-wrap gap-2.5">
                 {additionalIndustryOverview.map((industry) => (

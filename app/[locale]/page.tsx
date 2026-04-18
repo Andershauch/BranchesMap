@@ -4,8 +4,8 @@ import QRCode from "qrcode";
 import { HomeMapExplorer } from "@/components/home/home-map-explorer";
 import { getKioskTravelOrigin } from "@/lib/config/kiosk";
 import { getMunicipalitySummaries } from "@/lib/data/municipalities";
-import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
+import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { getTrustedAppBaseUrl } from "@/lib/server/request-origin";
 
 type LocalizedHomePageProps = {
@@ -32,7 +32,7 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
 
   const [municipalities, dictionary, search] = await Promise.all([
     getMunicipalitySummaries(),
-    getDictionary(locale as AppLocale),
+    getRuntimeDictionary(locale as AppLocale),
     searchParams,
   ]);
   const requestedFocusSlug = getStringParam(search.focus);

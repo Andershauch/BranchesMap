@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 
+import { useDictionary } from "@/components/i18n/dictionary-provider";
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import type { AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
 
 type TravelEstimateStatus = "idle" | "loading" | "ready" | "denied" | "unsupported" | "error";
 
@@ -75,7 +75,7 @@ export function MunicipalityTravelEstimate({
   fixedOrigin?: FixedTravelOrigin | null;
   kioskMode?: boolean;
 }) {
-  const copy = getDictionarySync(locale).travel;
+  const copy = useDictionary().travel;
   const [status, setStatus] = useState<TravelEstimateStatus>("idle");
   const [position, setPosition] = useState<UserPosition | null>(null);
 

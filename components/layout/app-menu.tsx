@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useDictionary } from "@/components/i18n/dictionary-provider";
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
-import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import { logoutAction } from "@/lib/server/auth-actions";
 
 type MenuUser = {
@@ -59,7 +59,7 @@ export function AppMenu({
   const [open, setOpen] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(detectStandaloneMode);
-  const copy = getDictionarySync(locale).menu;
+  const copy = useDictionary().menu;
   const isRtl = isRtlLocale(locale);
   const displayName = user?.name?.trim() ? user.name : user?.email ?? "";
   const isDevRuntime = isDevelopmentRuntime();
