@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMunicipalityBySlug, getMunicipalitySummaries } from "@/lib/data/municipalities";
-import { formatNumber, getIndustryLabel } from "@/lib/i18n/format";
+import { getIndustryLabel } from "@/lib/i18n/format";
 import { getJobindsatsTitleTranslator } from "@/lib/i18n/jobindsats-titles";
 import { isRtlLocale, isValidLocale, locales, type AppLocale } from "@/lib/i18n/config";
 import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
@@ -200,12 +200,6 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                           {industryLabel}
                         </a>
                       </h2>
-                      <p className="text-sm text-[var(--md-sys-color-on-surface-variant)]">
-                        <strong className="font-semibold text-[var(--md-sys-color-on-surface)]">
-                          {formatNumber(activeLocale, industry.jobCount)}
-                        </strong>{" "}
-                        {dictionary.labels.estimatedRoles}
-                      </p>
                       {industry.representativeTitles && industry.representativeTitles.length > 0 ? (
                         <div className="mt-3 text-sm leading-6 text-[var(--md-sys-color-on-surface-variant)]">
                           <p>{dictionary.municipalityPage.representativeTitlesPrefix}</p>
@@ -255,12 +249,6 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
                       {industry.icon}
                     </span>
                     <span dir="auto" className="max-w-[10rem] truncate">{industry.label}</span>
-                    <span
-                      dir="auto"
-                      className="rounded-full bg-white/70 px-2 py-0.5 text-[var(--md-sys-color-on-surface-variant)]"
-                    >
-                      {formatNumber(activeLocale, industry.jobCount)}
-                    </span>
                   </a>
                 ))}
               </div>

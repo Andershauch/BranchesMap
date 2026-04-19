@@ -331,7 +331,9 @@ function createImportedIndustryPresentationModel(importedSnapshots: DatabaseImpo
 
       const nonGenericTitles = rankedTitles.filter((title) => !classifyJobindsatsTitle(title.title).isGeneric);
       const uiSuitableTitles = nonGenericTitles.filter((title) => !shouldHideRepresentativeTitleFromUi(title.title));
-      const selectedTitles = (uiSuitableTitles.length > 0 ? uiSuitableTitles : nonGenericTitles.length > 0 ? nonGenericTitles : rankedTitles).slice(0, 4);
+      const selectedTitles = (
+        uiSuitableTitles.length > 0 ? uiSuitableTitles : nonGenericTitles.length > 0 ? nonGenericTitles : rankedTitles
+      ).slice(0, 10);
       const representativeTitles = selectedTitles.map((title) => title.title);
       const bestTitleScore = rankedTitles[0]?.score ?? 0;
       const titleCoverage = rankedTitles.reduce((sum, title) => sum + title.openPositions, 0);
