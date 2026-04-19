@@ -1,7 +1,7 @@
 import "server-only";
 
 import { sjaellandMunicipalityProperties } from "@/lib/geo/sjaelland";
-import { pocMunicipalities, pocIndustryCatalog } from "@/lib/mock/poc-data";
+import { mockMunicipalities, mockIndustryCatalog } from "@/lib/mock/poc-data";
 
 export const STATBANK_DATA_URL = "https://api.statbank.dk/v1/data";
 export const BRANCH_TABLE = "LSK01";
@@ -18,7 +18,7 @@ const REQUEST_TIMEOUT_MS = 10000;
 const DANISH_AREA_LABEL = "Omrade";
 const DANISH_AREA_LABEL_UNICODE = "Omr\u00E5de";
 const ESTIMATION_NOTE =
-  "Danmarks Statistik stiller aktuelt ledige stillinger til raadighed fordelt paa brancher (LSK01) og regioner (LSK02), men ikke pr. kommune og branche i samme tabel. Kommunelag er derfor et tydeligt markeret estimat, skaleret til den nuvaerende demo-model.";
+  "Danmarks Statistik stiller aktuelt ledige stillinger til raadighed fordelt paa brancher (LSK01) og regioner (LSK02), men ikke pr. kommune og branche i samme tabel. Kommunelag er derfor et tydeligt markeret estimat, skaleret til den nuvaerende reference model.";
 const FALLBACK_INDUSTRY = {
   code: "other",
   slug: "andet",
@@ -37,8 +37,8 @@ const municipalityByLookupCode = new Map(
     ] as const;
   }),
 );
-const demoMunicipalityByCode = new Map(
-  pocMunicipalities.flatMap((municipality) => {
+const referenceMunicipalityByCode = new Map(
+  mockMunicipalities.flatMap((municipality) => {
     const withoutLeadingZeroes = municipality.code.replace(/^0+/, "") || municipality.code;
     return [
       [municipality.code, municipality],
@@ -46,7 +46,7 @@ const demoMunicipalityByCode = new Map(
     ] as const;
   }),
 );
-const industryByCode = new Map(pocIndustryCatalog.map((industry) => [industry.code, industry]));
+const industryByCode = new Map(mockIndustryCatalog.map((industry) => [industry.code, industry]));
 const branchRowsCache = new Map<string, Promise<BranchRow[]>>();
 const regionRowsCache = new Map<string, Promise<RegionRow[]>>();
 
@@ -143,7 +143,7 @@ export type MunicipalityJobEstimateResponse = {
   official: { regionTotalJobPostings: number | null; branchBreakdown: BranchRow[] };
   municipalityEstimate: {
     basis: string;
-    demoTotalWeight: number;
+    referenceTotalWeight: number;
     totalEstimatedJobCount: number;
     topIndustries: Array<StatbankIndustry & { jobCount: number; officialShare: number }>;
     industryBreakdown: IndustryBreakdownEntry[];
@@ -448,7 +448,7 @@ function mapBranchToIndustry(branchLabel: string) {
   return FALLBACK_INDUSTRY;
 }
 
-function createUiBreakdown(branches: BranchRow[], demoTotalWeight: number) {
+function createUiBreakdown(branches: BranchRow[], referenceTotalWeight: number) {
   const aggregated = new Map<string, IndustryBreakdownEntry>();
 
   for (const branch of branches) {
@@ -460,7 +460,7 @@ function createUiBreakdown(branches: BranchRow[], demoTotalWeight: number) {
       statbankBranches: [],
     };
 
-    existing.estimatedJobCount += Math.round(demoTotalWeight * branch.share);
+    existing.estimatedJobCount += Math.round(referenceTotalWeight * branch.share);
     existing.officialShare += branch.share;
     existing.statbankBranches.push({
       code: branch.branchCode,
@@ -530,7 +530,7 @@ function buildRegionRows(rows: FlatJsonStatRow[]) {
 }
 
 function getDemoTotalWeight(municipalityCode: string) {
-  const demoMunicipality = demoMunicipalityByCode.get(municipalityCode) ?? demoMunicipalityByCode.get(municipalityCode.replace(/^0+/, ""));
+  const demoMunicipality = referenceMunicipalityByCode.get(municipalityCode) ?? referenceMunicipalityByCode.get(municipalityCode.replace(/^0+/, ""));
   return demoMunicipality ? demoMunicipality.topIndustries.reduce((sum, industry) => sum + industry.jobCount, 0) : 0;
 }
 
@@ -637,8 +637,8 @@ export async function getMunicipalityLiveJobEstimate(requested: JobsRouteRequest
   ]);
 
   const regionTotal = regionRows[0] ?? null;
-  const demoTotalWeight = getDemoTotalWeight(municipality.code);
-  const industryBreakdown = createUiBreakdown(branchRows, demoTotalWeight);
+  const referenceTotalWeight = getDemoTotalWeight(municipality.code);
+  const industryBreakdown = createUiBreakdown(branchRows, referenceTotalWeight);
   const totalEstimatedJobCount = industryBreakdown.reduce((sum, entry) => sum + entry.estimatedJobCount, 0);
   const topIndustries = industryBreakdown.slice(0, 3).map((entry) => ({
     ...entry.industry,
@@ -655,7 +655,7 @@ export async function getMunicipalityLiveJobEstimate(requested: JobsRouteRequest
 
   return {
     ok: true,
-    exactness: "official_branch_distribution_plus_region_total_with_demo_scaled_municipality_estimate",
+    exactness: "official_branch_distribution_plus_region_total_with_reference_scaled_municipality_estimate",
     note: ESTIMATION_NOTE,
     municipality: {
       code: municipality.code,
@@ -685,8 +685,8 @@ export async function getMunicipalityLiveJobEstimate(requested: JobsRouteRequest
       branchBreakdown: branchRows,
     },
     municipalityEstimate: {
-      basis: "National branch mix from LSK01 scaled to the current municipality demo weight.",
-      demoTotalWeight,
+      basis: "National branch mix from LSK01 scaled to the current municipality reference weight.",
+      referenceTotalWeight,
       totalEstimatedJobCount,
       topIndustries,
       industryBreakdown,

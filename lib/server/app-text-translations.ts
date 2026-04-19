@@ -138,18 +138,28 @@ async function ensureSeeded() {
   });
 }
 
+async function listAllAppTextTranslationsUncached() {
+  await ensureSeeded();
+  return prisma.appTextTranslation.findMany({
+    orderBy: [{ group: "asc" }, { key: "asc" }],
+  });
+}
+
 const listAllAppTextTranslationsCached = unstable_cache(
-  async () => {
-    await ensureSeeded();
-    return prisma.appTextTranslation.findMany({
-      orderBy: [{ group: "asc" }, { key: "asc" }],
-    });
-  },
+  async () => listAllAppTextTranslationsUncached(),
   ["app-text-translations-all"],
   {
     tags: ["app-text-translations"],
   },
 );
+
+async function loadAllAppTextTranslations() {
+  if (process.env.NODE_ENV !== "production") {
+    return listAllAppTextTranslationsUncached();
+  }
+
+  return listAllAppTextTranslationsCached();
+}
 
 export function getAppTextBaseValue(locale: EditableLocale, key: string) {
   return baseFlatDictionaries[locale][key] ?? "";
@@ -169,7 +179,7 @@ export async function listAppTextTranslations(options?: {
   const locale = options?.locale ?? "da";
   const filter = options?.filter ?? "all";
   const selectedGroup = options?.group?.trim() ?? "";
-  const rows = ((await listAllAppTextTranslationsCached()) as AppTextTranslationRow[]).filter((row) =>
+  const rows = ((await loadAllAppTextTranslations()) as AppTextTranslationRow[]).filter((row) =>
     isEditableAppTextKey(row.key),
   );
 
@@ -294,7 +304,7 @@ export async function resetAppTextTranslation(input: {
 
 export async function getRuntimeDictionary(locale: AppLocale): Promise<Dictionary> {
   const baseDictionary = cloneDictionary(baseDictionaries[locale]);
-  const rows = (await listAllAppTextTranslationsCached()) as AppTextTranslationRow[];
+  const rows = (await loadAllAppTextTranslations()) as AppTextTranslationRow[];
 
   for (const row of rows) {
     if (!isEditableAppTextKey(row.key)) {

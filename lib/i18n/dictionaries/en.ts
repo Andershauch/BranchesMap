@@ -21,7 +21,7 @@ export const enDictionary: Dictionary = {
     de: "German",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "Municipality map with real Zealand boundaries",
     intro:
       "The map now uses official municipality geometry from Dataforsyningen. Each municipality is directly clickable, and the three most represented industries are shown as icon badges on top of the area.",
@@ -34,7 +34,7 @@ export const enDictionary: Dictionary = {
     utf8Action: "Test UTF-8 API",
     mapTitle: "Municipality map",
     mapDescription:
-      "This is the real geo layer for the POC. Bornholm and Lolland-Falster are intentionally excluded because the current scope is Zealand and the Amager municipalities.",
+      "This map uses the current geo layer. Bornholm and Lolland-Falster are intentionally excluded because the current scope is Zealand and the Amager municipalities.",
     mapNote:
       "The next iteration can use the same structure for more precise labels, search, zoom, and later live data per municipality.",
     mapAriaLabel: "Map of Zealand municipalities",
@@ -42,8 +42,8 @@ export const enDictionary: Dictionary = {
   municipality: {
     backToMap: "Back to the map",
     kicker: "Municipality profile",
-    pocStatusTitle: "POC status",
-    pocStatusBody:
+    dataStatusTitle: "Data status",
+    dataStatusBody:
       "Industry distribution and jobs are mock data, but the structure follows the model we can later seed into Prisma.",
     municipalityCode: "Municipality code",
   },
@@ -63,15 +63,14 @@ export const enDictionary: Dictionary = {
       "In {municipality}, the three industries with the most jobs are {industries}. Open the municipality for more details.",
     topIndustriesHeading: "{municipality} currently has the most jobs within",
     additionalIndustriesHeading: "There are also jobs in {municipality} in these industries right now:",
-    pocStatusImportedFull:
-      "Total job counts and industry distribution now come from the daily Jobindsats import. The concrete job cards below are still POC data until a real job feed is connected.",
-    pocStatusImportedTotalOnly:
-      "Total job counts are updated from the Jobindsats import. Industry distribution and job cards are still partly POC data.",
-    pocStatusFallback:
-      "Industry distribution and jobs are still POC data, but the structure is ready for the next data sources.",
+    dataStatusImportedFull:
+      "Total job counts and industry distribution now come from the daily Jobindsats import. The concrete job cards below are still sample data until a real job feed is connected.",
+    dataStatusImportedTotalOnly:
+      "Total job counts are updated from the Jobindsats import. Industry distribution and job cards are still partly sample data.",
+    dataStatusFallback:
+      "Industry distribution and jobs are still sample data, but the structure is ready for the next data sources.",
   },
   labels: {
-    demoJobs: "demo jobs",
     estimatedRoles: "estimated roles in this industry",
     sampleJobsInIndustry: "sample jobs in this industry",
   },
@@ -125,7 +124,7 @@ export const enDictionary: Dictionary = {
     updating: "Refreshing...",
   },
   sheet: {
-    jobsSuffix: "jobs in the POC",
+    jobsSuffix: "open positions in this municipality",
     teaserLabel: "Profile",
     openProfile: "Open municipality",
     follow: "Follow",
@@ -170,7 +169,7 @@ export const enDictionary: Dictionary = {
     municipalityFallback: "Municipality profile",
   },
   loginPage: {
-    eyebrow: "Phase 2",
+    eyebrow: "Beta",
     title: "Log in",
     intro: "Log in to use your follows and keep track of municipalities securely.",
     followIntro: "Log in to follow this municipality. Your account lets us show updates later.",
@@ -187,7 +186,7 @@ export const enDictionary: Dictionary = {
     },
   },
   registerPage: {
-    eyebrow: "Phase 2",
+    eyebrow: "Beta",
     title: "Create account",
     intro: "Create a simple account so you can follow municipalities and later receive relevant updates.",
     followIntro: "Create an account to follow this municipality. The next layer will be notifications when it changes.",

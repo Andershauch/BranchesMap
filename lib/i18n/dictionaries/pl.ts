@@ -3,7 +3,7 @@ import type { Dictionary } from "@/lib/i18n/schema";
 export const plDictionary: Dictionary = {
   meta: {
     title: "JOBVEJ",
-    description: "POC dla przyjaznej dla urządzeń mobilnych mapy gmin i branż na całej Zelandii.",
+    description: "Beta dla przyjaznej dla urządzeń mobilnych mapy gmin i branż na całej Zelandii.",
   },
   header: {
     appName: "JOBVEJ",
@@ -21,7 +21,7 @@ export const plDictionary: Dictionary = {
     de: "Niemiecki",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "Mapa gmin z rzeczywistymi granicami Zelandii",
     intro:
       "Mapa wykorzystuje teraz oficjalną geometrię gmin z Dataforsyningen. Każda gmina jest bezpośrednio klikalna, a trzy najbardziej reprezentowane branże są wyświetlane jako ikony nad danym obszarem.",
@@ -34,7 +34,7 @@ export const plDictionary: Dictionary = {
     utf8Action: "Testuj API UTF-8",
     mapTitle: "Mapa gmin",
     mapDescription:
-      "To jest rzeczywista warstwa geograficzna dla POC. Bornholm i Lolland-Falster zostały celowo wyłączone, ponieważ obecny zakres obejmuje Zelandię i gminy Amager.",
+      "Ta mapa korzysta z aktualnej warstwy geograficznej. Bornholm i Lolland-Falster zostały celowo wyłączone, ponieważ obecny zakres obejmuje Zelandię i gminy Amager.",
     mapNote:
       "Następna iteracja może wykorzystać tę samą strukturę dla bardziej precyzyjnych etykiet, wyszukiwania, powiększania, a później danych na żywo dla każdej gminy.",
     mapAriaLabel: "Mapa gmin Zelandii",
@@ -42,8 +42,8 @@ export const plDictionary: Dictionary = {
   municipality: {
     backToMap: "Powrót do mapy",
     kicker: "Profil gminy",
-    pocStatusTitle: "Status POC",
-    pocStatusBody:
+    dataStatusTitle: "Status danych",
+    dataStatusBody:
       "Rozkład branż i oferty pracy to dane testowe (mock), ale struktura odpowiada modelowi, który możemy później zasilić w Prisma.",
     municipalityCode: "Kod gminy",
   },
@@ -63,15 +63,14 @@ export const plDictionary: Dictionary = {
       "W {municipality} trzy branże z największą liczbą ofert pracy to {industries}. Otwórz gminę, aby uzyskać więcej szczegółów.",
     topIndustriesHeading: "{municipality} ma obecnie najwięcej ofert pracy w",
     additionalIndustriesHeading: "W {municipality} są obecnie również oferty pracy w tych branżach:",
-    pocStatusImportedFull:
-      "Całkowita liczba ofert pracy i rozkład branż pochodzą teraz z codziennego importu Jobindsats. Konkretne karty ofert poniżej to nadal dane POC, dopóki nie zostanie podłączony rzeczywisty kanał ofert.",
-    pocStatusImportedTotalOnly:
-      "Całkowita liczba ofert pracy jest aktualizowana z importu Jobindsats. Rozkład branż i karty ofert to nadal częściowo dane POC.",
-    pocStatusFallback:
-      "Rozkład branż i oferty pracy to nadal dane POC, ale struktura jest gotowa na kolejne źródła danych.",
+    dataStatusImportedFull:
+      "Całkowita liczba ofert pracy i rozkład branż pochodzą teraz z codziennego importu Jobindsats. Konkretne karty ofert poniżej to nadal dane przyk?adowe, dopóki nie zostanie podłączony rzeczywisty kanał ofert.",
+    dataStatusImportedTotalOnly:
+      "Całkowita liczba ofert pracy jest aktualizowana z importu Jobindsats. Rozkład branż i karty ofert to nadal częściowo dane przyk?adowe.",
+    dataStatusFallback:
+      "Rozkład branż i oferty pracy to nadal dane przyk?adowe, ale struktura jest gotowa na kolejne źródła danych.",
   },
   labels: {
-    demoJobs: "przykładowe oferty pracy",
     estimatedRoles: "szacowana liczba stanowisk w tej branży",
     sampleJobsInIndustry: "przykładowe zawody w tej branży",
   },
@@ -125,7 +124,7 @@ export const plDictionary: Dictionary = {
     updating: "Odświeżanie...",
   },
   sheet: {
-    jobsSuffix: "ofert pracy w POC",
+    jobsSuffix: "otwartych ofert pracy w tej gminie",
     teaserLabel: "Profil",
     openProfile: "Otwórz gminę",
     follow: "Obserwuj",

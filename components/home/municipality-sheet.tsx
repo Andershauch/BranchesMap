@@ -17,6 +17,10 @@ function formatCount(locale: AppLocale, value: number) {
   return new Intl.NumberFormat(locale).format(value);
 }
 
+function formatMunicipalityName(locale: AppLocale, value: string) {
+  return value.toLocaleUpperCase(locale);
+}
+
 export function MunicipalitySheet({
   locale,
   municipality,
@@ -173,13 +177,13 @@ export function MunicipalitySheet({
                 <div className="min-w-0 flex-1 text-start">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="truncate text-[1.45rem] font-semibold tracking-tight text-slate-950">
-                      {municipality.name}
+                      {formatMunicipalityName(locale, municipality.name)}
                     </h2>
                     <span
                       dir="auto"
                       className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-900/6"
                     >
-                      {formatCount(locale, municipality.totalJobs)} {copy.jobsSuffix}
+                      ca. {formatCount(locale, municipality.totalJobs)} {copy.jobsSuffix}
                     </span>
                   </div>
 

@@ -3,7 +3,7 @@ import type { Dictionary } from "@/lib/i18n/schema";
 export const deDictionary: Dictionary = {
   meta: {
     title: "JOBVEJ",
-    description: "POC für eine mobiloptimierte Karte von Gemeinden und Branchen in ganz Seeland.",
+    description: "beta für eine mobiloptimierte Karte von Gemeinden und Branchen in ganz Seeland.",
   },
   header: {
     appName: "JOBVEJ",
@@ -21,7 +21,7 @@ export const deDictionary: Dictionary = {
     de: "Deutsch",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "Gemeindekarte mit realen Grenzen Seelands",
     intro:
       "Die Karte nutzt jetzt offizielle Gemeindegeometrien von Dataforsyningen. Jede Gemeinde ist direkt anklickbar, und die drei am stärksten vertretenen Branchen werden als Icon-Badges über dem Gebiet angezeigt.",
@@ -34,7 +34,7 @@ export const deDictionary: Dictionary = {
     utf8Action: "UTF-8 API testen",
     mapTitle: "Gemeindekarte",
     mapDescription:
-      "Dies ist der reale Geo-Layer für den POC. Bornholm und Lolland-Falster sind bewusst ausgeschlossen, da der aktuelle Fokus auf Seeland und den Amager-Gemeinden liegt.",
+      "Dies ist der reale Geo-Layer für den beta. Bornholm und Lolland-Falster sind bewusst ausgeschlossen, da der aktuelle Fokus auf Seeland und den Amager-Gemeinden liegt.",
     mapNote:
       "Die nächste Iteration kann dieselbe Struktur für präzisere Beschriftungen, Suche, Zoom und später Live-Daten pro Gemeinde nutzen.",
     mapAriaLabel: "Karte der Gemeinden Seelands",
@@ -42,8 +42,8 @@ export const deDictionary: Dictionary = {
   municipality: {
     backToMap: "Zurück zur Karte",
     kicker: "Gemeindeprofil",
-    pocStatusTitle: "POC-Status",
-    pocStatusBody:
+    dataStatusTitle: "Datenstatus",
+    dataStatusBody:
       "Branchenverteilung und Jobs sind Beispieldaten, aber die Struktur folgt dem Modell, das wir später in Prisma einspeisen können.",
     municipalityCode: "Gemeindeschlüssel",
   },
@@ -63,15 +63,14 @@ export const deDictionary: Dictionary = {
       "In {municipality} sind die drei Branchen mit den meisten Jobs {industries}. Öffne die Gemeinde für mehr Details.",
     topIndustriesHeading: "{municipality} hat derzeit die meisten Jobs in folgenden Bereichen:",
     additionalIndustriesHeading: "Es gibt derzeit auch Jobs in {municipality} in diesen Branchen:",
-    pocStatusImportedFull:
-      "Die Gesamtzahl der Jobs und die Branchenverteilung stammen nun aus dem täglichen Jobindsats-Import. Die konkreten Jobkarten unten sind noch POC-Daten, bis ein realer Job-Feed verbunden ist.",
-    pocStatusImportedTotalOnly:
-      "Die Gesamtzahl der Jobs wird über den Jobindsats-Import aktualisiert. Branchenverteilung und Jobkarten sind noch teilweise POC-Daten.",
-    pocStatusFallback:
-      "Branchenverteilung und Jobs sind noch POC-Daten, aber die Struktur ist bereit für die nächsten Datenquellen.",
+    dataStatusImportedFull:
+      "Die Gesamtzahl der Jobs und die Branchenverteilung stammen nun aus dem täglichen Jobindsats-Import. Die konkreten Jobkarten unten sind noch Beispieldaten, bis ein realer Job-Feed verbunden ist.",
+    dataStatusImportedTotalOnly:
+      "Die Gesamtzahl der Jobs wird über den Jobindsats-Import aktualisiert. Branchenverteilung und Jobkarten sind noch teilweise Beispieldaten.",
+    dataStatusFallback:
+      "Branchenverteilung und Jobs sind noch Beispieldaten, aber die Struktur ist bereit für die nächsten Datenquellen.",
   },
   labels: {
-    demoJobs: "Demo-Jobs",
     estimatedRoles: "geschätzte Rollen in dieser Branche",
     sampleJobsInIndustry: "Beispielberufe in dieser Branche",
   },
@@ -125,7 +124,7 @@ export const deDictionary: Dictionary = {
     updating: "Aktualisiere...",
   },
   sheet: {
-    jobsSuffix: "Jobs im POC",
+    jobsSuffix: "offene Stellen in dieser Kommune",
     teaserLabel: "Profil",
     openProfile: "Gemeinde öffnen",
     follow: "Folgen",
@@ -170,7 +169,7 @@ export const deDictionary: Dictionary = {
     municipalityFallback: "Gemeindeprofil",
   },
   loginPage: {
-    eyebrow: "Phase 2",
+    eyebrow: "Beta",
     title: "Anmelden",
     intro: "Melde dich an, um deine gefolgten Gemeinden sicher zu verwalten.",
     followIntro: "Melde dich an, um dieser Gemeinde zu folgen. Dein Konto ermöglicht es uns, dir später Updates zu zeigen.",
@@ -187,7 +186,7 @@ export const deDictionary: Dictionary = {
     },
   },
   registerPage: {
-    eyebrow: "Phase 2",
+    eyebrow: "Beta",
     title: "Konto erstellen",
     intro: "Erstelle ein einfaches Konto, um Gemeinden zu folgen und später relevante Updates zu erhalten.",
     followIntro: "Erstelle ein Konto, um dieser Gemeinde zu folgen. Der nächste Schritt sind Benachrichtigungen bei Änderungen.",

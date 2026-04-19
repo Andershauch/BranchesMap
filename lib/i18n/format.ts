@@ -29,18 +29,10 @@ export function buildMunicipalityTeaser(
   }
 
   if (locale !== "da") {
-    return `${municipalityName} is strongest in ${industryNames[0].toLowerCase()}, ${industryNames[1].toLowerCase()}, and ${industryNames[2].toLowerCase()} in this POC.`;
+    return `${municipalityName} is strongest in ${industryNames[0].toLowerCase()}, ${industryNames[1].toLowerCase()}, and ${industryNames[2].toLowerCase()} right now.`;
   }
 
-  return `${municipalityName} er i denne POC stærkest repræsenteret inden for ${industryNames[0].toLowerCase()}, ${industryNames[1].toLowerCase()} og ${industryNames[2].toLowerCase()}.`;
-}
-
-export function formatDemoJobsLabel(
-  locale: AppLocale,
-  dictionary: Dictionary,
-  count: number,
-) {
-  return `${formatNumber(locale, count)} ${dictionary.labels.demoJobs}`;
+  return `${municipalityName} er lige nu stærkest repræsenteret inden for ${industryNames[0].toLowerCase()}, ${industryNames[1].toLowerCase()} og ${industryNames[2].toLowerCase()}.`;
 }
 
 export function formatEstimatedRolesLabel(

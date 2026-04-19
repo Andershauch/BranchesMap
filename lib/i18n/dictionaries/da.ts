@@ -21,7 +21,7 @@ export const daDictionary: Dictionary = {
     de: "Deutsch",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "Kommunekort med rigtige grænser for Sjælland",
     intro:
       "Kortet bruger nu officielle kommunegeometrier fra Dataforsyningen. Hver kommune kan klikkes direkte, og de tre mest repræsenterede brancher vises som ikonbadge oven på fladen.",
@@ -34,7 +34,7 @@ export const daDictionary: Dictionary = {
     utf8Action: "Test UTF-8 API",
     mapTitle: "Kommunekort",
     mapDescription:
-      "Dette er POC-versionens rigtige geolag. Bornholm og Lolland-Falster er bevidst udeladt, fordi scope her er selve Sjælland og Amager-kommunerne.",
+      "Kortet bruger den nuvaerende geografi for version 1 beta. Bornholm og Lolland-Falster er bevidst udeladt, fordi scope her er selve Sjælland og Amager-kommunerne.",
     mapNote:
       "Næste iteration kan bruge samme struktur til mere præcise labels, søgning, zoom og senere live-data pr. kommune.",
     mapAriaLabel: "Kort over Sjællands kommuner",
@@ -42,8 +42,8 @@ export const daDictionary: Dictionary = {
   municipality: {
     backToMap: "Tilbage til kortet",
     kicker: "Kommuneprofil",
-    pocStatusTitle: "POC-status",
-    pocStatusBody:
+    dataStatusTitle: "Datastatus",
+    dataStatusBody:
       "Branchefordeling og jobs er mock-data, men strukturen følger den model, vi senere kan seede til Prisma.",
     municipalityCode: "Kommunekode",
   },
@@ -63,15 +63,14 @@ export const daDictionary: Dictionary = {
       "I {municipality} er de 3 brancher, hvor der er flest jobs: {industries}. Åbn kommunen for at få flere detaljer.",
     topIndustriesHeading: "{municipality} har i øjeblikket flest job indenfor",
     additionalIndustriesHeading: "Der er desuden jobs i {municipality} i disse brancher i øjeblikket:",
-    pocStatusImportedFull:
-      "Samlet jobtal og branchefordeling opdateres nu fra den daglige Jobindsats-import. De konkrete jobkort længere nede er stadig POC-data, indtil et egentligt jobfeed er koblet på.",
-    pocStatusImportedTotalOnly:
-      "Samlet jobtal opdateres fra Jobindsats-importen. Branchefordeling og jobkort er stadig delvist POC-data.",
-    pocStatusFallback:
-      "Branchefordeling og jobs er stadig POC-data, men strukturen er klar til at blive koblet til de næste datakilder.",
+    dataStatusImportedFull:
+      "Samlet jobtal og branchefordeling opdateres nu fra den daglige Jobindsats-import. De konkrete jobkort længere nede er stadig eksempeldata, indtil et egentligt jobfeed er koblet på.",
+    dataStatusImportedTotalOnly:
+      "Samlet jobtal opdateres fra Jobindsats-importen. Branchefordeling og jobkort er stadig delvist eksempeldata.",
+    dataStatusFallback:
+      "Branchefordeling og jobs er stadig eksempeldata, men strukturen er klar til at blive koblet til de næste datakilder.",
   },
   labels: {
-    demoJobs: "demojobs",
     estimatedRoles: "estimerede stillinger i denne branche",
     sampleJobsInIndustry: "eksempeljobs i denne branche",
   },
@@ -125,7 +124,7 @@ export const daDictionary: Dictionary = {
     updating: "Opdaterer...",
   },
   sheet: {
-    jobsSuffix: "jobs i POC",
+    jobsSuffix: "åbne stillinger i denne kommune",
     teaserLabel: "Profil",
     openProfile: "Åbn kommune",
     follow: "Følg",
@@ -170,7 +169,7 @@ export const daDictionary: Dictionary = {
     municipalityFallback: "Kommuneprofil",
   },
   loginPage: {
-    eyebrow: "Fase 2",
+    eyebrow: "Beta",
     title: "Log ind",
     intro: "Log ind for at bruge dine følger og holde styr på kommuner sikkert.",
     followIntro: "Log ind for at følge denne kommune. Vi bruger din konto til senere at kunne vise opdateringer.",
@@ -187,7 +186,7 @@ export const daDictionary: Dictionary = {
     },
   },
   registerPage: {
-    eyebrow: "Fase 2",
+    eyebrow: "Beta",
     title: "Opret bruger",
     intro: "Lav en enkel konto, så du kan følge kommuner og senere få relevante opdateringer.",
     followIntro: "Opret en bruger for at følge denne kommune. Næste lag bliver notifikationer, når kommunen ændrer sig.",

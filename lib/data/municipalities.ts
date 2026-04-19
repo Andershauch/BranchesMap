@@ -8,7 +8,7 @@ import {
   type MunicipalityHomeMapLabelMode,
   type MunicipalityHomeMapRegionTag,
 } from "@/lib/config/home-map-display";
-import { pocMunicipalities, type MunicipalityRecord as MockMunicipalityRecord } from "@/lib/mock/poc-data";
+import { mockMunicipalities, type MunicipalityRecord as MockMunicipalityRecord } from "@/lib/mock/poc-data";
 import {
   createJobsRequest,
   getMunicipalityLiveJobEstimate,
@@ -180,7 +180,7 @@ export type MunicipalityDataSources = {
 
 const defaultIndustryIcon = "*";
 const defaultIndustryColor = "#64748b";
-const mockMunicipalityMap = new Map(pocMunicipalities.map((municipality) => [municipality.slug, municipality]));
+const mockMunicipalityMap = new Map(mockMunicipalities.map((municipality) => [municipality.slug, municipality]));
 const municipalityPublicDataTag = "municipality-public-data";
 const municipalityAdminDataTag = "municipality-admin-data";
 const liveEstimateTtlMs = 15 * 60 * 1000;
@@ -376,7 +376,7 @@ function buildFallbackTeaser(name: string, topIndustries: MunicipalityIndustrySu
     return name;
   }
 
-  return `${name} er i denne POC staerkest repraesenteret inden for ${topIndustries[0].name.toLowerCase()}, ${topIndustries[1].name.toLowerCase()} og ${topIndustries[2].name.toLowerCase()}.`;
+  return `${name} er lige nu staerkest repraesenteret inden for ${topIndustries[0].name.toLowerCase()}, ${topIndustries[1].name.toLowerCase()} og ${topIndustries[2].name.toLowerCase()}.`;
 }
 
 function countMockJobs(municipality: MockMunicipalityRecord) {
@@ -464,8 +464,13 @@ function resolveTotalJobs(
   liveEstimate?: MunicipalityJobEstimateResponse | null,
 ) {
   if (importedSnapshot) {
+    const currentOpenPositions =
+      importedSnapshot.dailyAverageOpenPositions > 0
+        ? importedSnapshot.dailyAverageOpenPositions
+        : importedSnapshot.totalOpenPositions;
+
     return {
-      totalJobs: importedSnapshot.totalOpenPositions,
+      totalJobs: currentOpenPositions,
       source: "jobindsats_y25i07_import" as const,
     };
   }
@@ -1078,11 +1083,11 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
 
   if (databaseRows.length === 0) {
     const liveEstimateMap = await getLiveEstimateMap(
-      pocMunicipalities.map((municipality) => ({ slug: municipality.slug, code: municipality.code })),
+      mockMunicipalities.map((municipality) => ({ slug: municipality.slug, code: municipality.code })),
     );
 
     return sortSummaries(
-      pocMunicipalities.map((municipality) => {
+      mockMunicipalities.map((municipality) => {
         const liveEstimate = liveEstimateMap.get(municipality.slug);
         const resolvedTopIndustries = resolveTopIndustries(municipality.topIndustries, [], liveEstimate);
         const resolvedTotalJobs = resolveTotalJobs(countMockJobs(municipality), null, liveEstimate);
@@ -1101,7 +1106,7 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
   }
 
   const databaseMap = new Map(databaseRows.map((row) => [row.slug, row]));
-  const visibleMunicipalities = pocMunicipalities.filter((municipality) => databaseMap.get(municipality.slug)?.isActive !== false);
+  const visibleMunicipalities = mockMunicipalities.filter((municipality) => databaseMap.get(municipality.slug)?.isActive !== false);
 
   return sortSummaries(
     visibleMunicipalities.map((municipality) => {
@@ -1130,7 +1135,7 @@ export async function getMunicipalitySummaries(): Promise<MunicipalitySummary[]>
 export async function getMunicipalityHomeMapAdminRows(): Promise<MunicipalityHomeMapAdminRow[]> {
   const databaseMap = await getDatabaseMunicipalityMap();
 
-  return pocMunicipalities
+  return mockMunicipalities
     .map((municipality) => {
       const dbRow = databaseMap.get(municipality.slug);
 

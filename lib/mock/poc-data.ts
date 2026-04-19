@@ -152,7 +152,7 @@ const rotateIndustryIndexes = (index: number) => [
 ];
 
 function buildMunicipalityTeaser(seed: (typeof municipalitySeeds)[number], topIndustries: IndustrySummary[]) {
-  return `${seed.name} er i denne POC stærkest repræsenteret inden for ${topIndustries[0].name.toLowerCase()}, ${topIndustries[1].name.toLowerCase()} og ${topIndustries[2].name.toLowerCase()}.`;
+  return `${seed.name} er lige nu stærkest repræsenteret inden for ${topIndustries[0].name.toLowerCase()}, ${topIndustries[1].name.toLowerCase()} og ${topIndustries[2].name.toLowerCase()}.`;
 }
 
 const buildMunicipality = (
@@ -189,8 +189,8 @@ const buildMunicipality = (
         en: `${seed.name} Municipality`,
       },
       summary: {
-        da: `Mock-opslag til POC for ${seed.name} inden for ${definition.nameDa.toLowerCase()}.`,
-        en: `Mock posting for the POC in ${seed.name} within ${definition.nameEn.toLowerCase()}.`,
+        da: `Eksempelopslag for ${seed.name} inden for ${definition.nameDa.toLowerCase()}.`,
+        en: `Sample posting in ${seed.name} within ${definition.nameEn.toLowerCase()}.`,
       },
       applyUrl: `https://example.com/jobs/${seed.slug}/${industry.slug}/${jobIndex + 1}`,
     }));
@@ -212,9 +212,9 @@ const buildMunicipality = (
   };
 };
 
-export const pocMunicipalities = municipalitySeeds.map(buildMunicipality);
+export const mockMunicipalities = municipalitySeeds.map(buildMunicipality);
 
-export const pocIndustryCatalog = industryCatalog.map((industry) => ({
+export const mockIndustryCatalog = industryCatalog.map((industry) => ({
   code: industry.code,
   slug: industry.slug,
   name: industry.nameDa,

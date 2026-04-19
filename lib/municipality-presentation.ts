@@ -79,7 +79,7 @@ export function buildMunicipalityAdditionalIndustriesHeading(
   });
 }
 
-export function buildMunicipalityPocStatus(
+export function buildMunicipalityDataStatus(
   locale: AppLocale,
   sources: PresentedSources,
   dictionaryOverride?: Dictionary,
@@ -89,14 +89,14 @@ export function buildMunicipalityPocStatus(
     sources.totalJobs === "jobindsats_y25i07_import" &&
     sources.topIndustries === "jobindsats_y25i07_category_mapping"
   ) {
-    return dictionary.municipalityPage.pocStatusImportedFull;
+    return dictionary.municipalityPage.dataStatusImportedFull;
   }
 
   if (sources.totalJobs === "jobindsats_y25i07_import") {
-    return dictionary.municipalityPage.pocStatusImportedTotalOnly;
+    return dictionary.municipalityPage.dataStatusImportedTotalOnly;
   }
 
-  return dictionary.municipalityPage.pocStatusFallback;
+  return dictionary.municipalityPage.dataStatusFallback;
 }
 
 export function buildJobnetIndustrySearchUrl(

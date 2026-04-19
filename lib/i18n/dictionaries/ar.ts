@@ -3,7 +3,7 @@ import type { Dictionary } from "@/lib/i18n/schema";
 export const arDictionary: Dictionary = {
   meta: {
     title: "JOBVEJ",
-    description: "إثبات مفهوم (POC) لخريطة تفاعلية للبلديات والصناعات في نيوزيلندا، مصممة للهواتف المحمولة.",
+    description: "إثبات مفهوم (beta) لخريطة تفاعلية للبلديات والصناعات في نيوزيلندا، مصممة للهواتف المحمولة.",
   },
   header: {
     appName: "JOBVEJ",
@@ -21,7 +21,7 @@ export const arDictionary: Dictionary = {
     de: "الألمانية",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "خريطة البلديات بحدود زيلاند الحقيقية",
     intro:
       "تستخدم الخريطة الآن الهندسة الرسمية للبلديات من Dataforsyningen. كل بلدية قابلة للنقر مباشرة، وتظهر الصناعات الثلاث الأكثر تمثيلاً كرموز فوق المنطقة.",
@@ -34,7 +34,7 @@ export const arDictionary: Dictionary = {
     utf8Action: "اختبار واجهة برمجة تطبيقات UTF-8",
     mapTitle: "خريطة البلديات",
     mapDescription:
-      "هذه هي الطبقة الجغرافية الحقيقية لـ POC. تم استبعاد بورنهولم ولولاند-فالستر عمدًا لأن النطاق الحالي هو زيلاند وبلديات أماجر.",
+      "هذه هي الطبقة الجغرافية الحقيقية لـ beta. تم استبعاد بورنهولم ولولاند-فالستر عمدًا لأن النطاق الحالي هو زيلاند وبلديات أماجر.",
     mapNote:
       "يمكن للتكرار التالي استخدام نفس الهيكل لتسميات أكثر دقة، والبحث، والتكبير، والبيانات الحية لاحقًا لكل بلدية.",
     mapAriaLabel: "خريطة بلديات زيلاند",
@@ -42,8 +42,8 @@ export const arDictionary: Dictionary = {
   municipality: {
     backToMap: "العودة إلى الخريطة",
     kicker: "ملف البلدية",
-    pocStatusTitle: "حالة POC",
-    pocStatusBody:
+    dataStatusTitle: "حالة beta",
+    dataStatusBody:
       "توزيع الصناعة والوظائف هي بيانات تجريبية، لكن الهيكل يتبع النموذج الذي يمكننا لاحقًا تغذيته في Prisma.",
     municipalityCode: "رمز البلدية",
   },
@@ -63,15 +63,14 @@ export const arDictionary: Dictionary = {
       "في {municipality}، الصناعات الثلاث التي تضم أكبر عدد من الوظائف هي {industries}. افتح البلدية لمزيد من التفاصيل.",
     topIndustriesHeading: "{municipality} لديها حالياً معظم الوظائف في",
     additionalIndustriesHeading: "توجد أيضاً وظائف في {municipality} في هذه الصناعات الآن:",
-    pocStatusImportedFull:
-      "إجمالي أعداد الوظائف وتوزيع الصناعة يأتي الآن من استيراد Jobindsats اليومي. بطاقات الوظائف الملموسة أدناه لا تزال بيانات POC حتى يتم توصيل موجز وظائف حقيقي.",
-    pocStatusImportedTotalOnly:
-      "يتم تحديث إجمالي أعداد الوظائف من استيراد Jobindsats. لا يزال توزيع الصناعة وبطاقات الوظائف جزءاً من بيانات POC.",
-    pocStatusFallback:
-      "لا يزال توزيع الصناعة والوظائف من بيانات POC، لكن الهيكل جاهز لمصادر البيانات التالية.",
+    dataStatusImportedFull:
+      "إجمالي أعداد الوظائف وتوزيع الصناعة يأتي الآن من استيراد Jobindsats اليومي. بطاقات الوظائف الملموسة أدناه لا تزال بيانات beta حتى يتم توصيل موجز وظائف حقيقي.",
+    dataStatusImportedTotalOnly:
+      "يتم تحديث إجمالي أعداد الوظائف من استيراد Jobindsats. لا يزال توزيع الصناعة وبطاقات الوظائف جزءاً من بيانات beta.",
+    dataStatusFallback:
+      "لا يزال توزيع الصناعة والوظائف من بيانات beta، لكن الهيكل جاهز لمصادر البيانات التالية.",
   },
   labels: {
-    demoJobs: "وظائف تجريبية",
     estimatedRoles: "الأدوار المقدرة في هذه الصناعة",
     sampleJobsInIndustry: "وظائف عينة في هذه الصناعة",
   },
@@ -125,7 +124,7 @@ export const arDictionary: Dictionary = {
     updating: "جاري التحديث...",
   },
   sheet: {
-    jobsSuffix: "وظائف في POC",
+    jobsSuffix: "وظيفة شاغرة في هذه البلدية",
     teaserLabel: "الملف الشخصي",
     openProfile: "افتح البلدية",
     follow: "متابعة",

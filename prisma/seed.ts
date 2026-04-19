@@ -5,7 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import pg from "pg";
 
 import { getMunicipalityHomeMapConfig } from "../lib/config/home-map-display";
-import { pocMunicipalities } from "../lib/mock/poc-data";
+import { mockMunicipalities } from "../lib/mock/poc-data";
 
 const { Pool } = pg;
 
@@ -27,7 +27,7 @@ async function main() {
   let statCount = 0;
   let jobCount = 0;
 
-  for (const municipality of pocMunicipalities) {
+  for (const municipality of mockMunicipalities) {
     const homeMap = getMunicipalityHomeMapConfig(municipality.slug);
     const municipalityRecord = await prisma.municipality.upsert({
       where: { slug: municipality.slug },
@@ -106,7 +106,7 @@ async function main() {
   }
 
   console.log(
-    `Seed fuldf\u00f8rt: ${pocMunicipalities.length} kommuner, ${industryCount} branche-relationer, ${statCount} statistik-r\u00e6kker og ${jobCount} jobs behandlet.`,
+    `Seed fuldf\u00f8rt: ${mockMunicipalities.length} kommuner, ${industryCount} branche-relationer, ${statCount} statistik-r\u00e6kker og ${jobCount} jobs behandlet.`,
   );
 }
 

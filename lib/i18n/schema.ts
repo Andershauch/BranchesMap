@@ -37,8 +37,8 @@ export type Dictionary = {
   municipality: {
     backToMap: string;
     kicker: string;
-    pocStatusTitle: string;
-    pocStatusBody: string;
+    dataStatusTitle: string;
+    dataStatusBody: string;
     municipalityCode: string;
   };
   municipalityPage: {
@@ -55,12 +55,11 @@ export type Dictionary = {
     sheetProfileSummary: string;
     topIndustriesHeading: string;
     additionalIndustriesHeading: string;
-    pocStatusImportedFull: string;
-    pocStatusImportedTotalOnly: string;
-    pocStatusFallback: string;
+    dataStatusImportedFull: string;
+    dataStatusImportedTotalOnly: string;
+    dataStatusFallback: string;
   };
   labels: {
-    demoJobs: string;
     estimatedRoles: string;
     sampleJobsInIndustry: string;
   };

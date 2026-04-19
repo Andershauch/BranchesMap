@@ -8,7 +8,7 @@ import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import {
   buildJobnetIndustrySearchUrl,
   buildMunicipalityAdditionalIndustriesHeading,
-  buildMunicipalityPocStatus,
+  buildMunicipalityDataStatus,
   buildMunicipalityTopIndustriesHeading,
 } from "@/lib/municipality-presentation";
 import { getCurrentUser } from "@/lib/server/auth";
@@ -154,10 +154,10 @@ export default async function MunicipalityPage({ params, searchParams }: Municip
 
             <div className="w-full max-w-sm rounded-[1.5rem] bg-[var(--md-sys-color-primary-container)] p-5 text-start text-[var(--md-sys-color-on-primary-container)]">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] opacity-70">
-                {dictionary.municipality.pocStatusTitle}
+                {dictionary.municipality.dataStatusTitle}
               </p>
               <p className="mt-3 text-sm leading-6 sm:text-base">
-                {buildMunicipalityPocStatus(activeLocale, municipality.sources, dictionary)}
+                {buildMunicipalityDataStatus(activeLocale, municipality.sources, dictionary)}
               </p>
             </div>
           </div>

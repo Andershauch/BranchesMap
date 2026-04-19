@@ -3,7 +3,7 @@ import type { Dictionary } from "@/lib/i18n/schema";
 export const faDictionary: Dictionary = {
   meta: {
     title: "JOBVEJ",
-    description: "POC برای نقشه کاربرپسند موبایل از شهرداری‌ها و صنایع در سراسر زلاند.",
+    description: "beta برای نقشه کاربرپسند موبایل از شهرداری‌ها و صنایع در سراسر زلاند.",
   },
   header: {
     appName: "JOBVEJ",
@@ -21,7 +21,7 @@ export const faDictionary: Dictionary = {
     de: "آلمانی",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "نقشه شهرداری‌ها با مرزهای واقعی زلاند",
     intro:
       "نقشه اکنون از هندسه رسمی شهرداری‌ها از Dataforsyningen استفاده می‌کند. هر شهرداری مستقیماً قابل کلیک است و سه صنعت پرکاربرد به صورت نشان‌های آیکون روی منطقه نمایش داده می‌شوند.",
@@ -34,7 +34,7 @@ export const faDictionary: Dictionary = {
     utf8Action: "تست API UTF-8",
     mapTitle: "نقشه شهرداری",
     mapDescription:
-      "این لایه جغرافیایی واقعی برای POC است. بورنهولم و لولاند-فالستر عمداً حذف شده‌اند زیرا محدوده فعلی شامل زلاند و شهرداری‌های آماگر است.",
+      "این لایه جغرافیایی واقعی برای beta است. بورنهولم و لولاند-فالستر عمداً حذف شده‌اند زیرا محدوده فعلی شامل زلاند و شهرداری‌های آماگر است.",
     mapNote:
       "نسخه بعدی می‌تواند از همین ساختار برای برچسب‌های دقیق‌تر، جستجو، زوم و داده‌های زنده بعدی برای هر شهرداری استفاده کند.",
     mapAriaLabel: "نقشه شهرداری‌های زلاند",
@@ -42,8 +42,8 @@ export const faDictionary: Dictionary = {
   municipality: {
     backToMap: "بازگشت به نقشه",
     kicker: "پروفایل شهرداری",
-    pocStatusTitle: "وضعیت POC",
-    pocStatusBody:
+    dataStatusTitle: "وضعیت beta",
+    dataStatusBody:
       "توزیع صنایع و مشاغل داده‌های آزمایشی هستند، اما ساختار از مدلی پیروی می‌کند که بعداً می‌توانیم در Prisma وارد کنیم.",
     municipalityCode: "کد شهرداری",
   },
@@ -63,15 +63,14 @@ export const faDictionary: Dictionary = {
       "در {municipality}، سه صنعتی که بیشترین شغل را دارند {industries} هستند. برای جزئیات بیشتر شهرداری را باز کنید.",
     topIndustriesHeading: "{municipality} در حال حاضر بیشترین شغل را در این زمینه‌ها دارد",
     additionalIndustriesHeading: "در حال حاضر در {municipality} در این صنایع نیز شغل وجود دارد:",
-    pocStatusImportedFull:
-      "تعداد کل مشاغل و توزیع صنایع اکنون از واردات روزانه Jobindsats تامین می‌شود. کارت‌های شغلی عینی زیر هنوز داده‌های POC هستند تا زمانی که فید شغلی واقعی متصل شود.",
-    pocStatusImportedTotalOnly:
-      "تعداد کل مشاغل از واردات Jobindsats به‌روزرسانی می‌شود. توزیع صنایع و کارت‌های شغلی هنوز بخشی از داده‌های POC هستند.",
-    pocStatusFallback:
-      "توزیع صنایع و مشاغل هنوز داده‌های POC هستند، اما ساختار برای منابع داده بعدی آماده است.",
+    dataStatusImportedFull:
+      "تعداد کل مشاغل و توزیع صنایع اکنون از واردات روزانه Jobindsats تامین می‌شود. کارت‌های شغلی عینی زیر هنوز داده‌های beta هستند تا زمانی که فید شغلی واقعی متصل شود.",
+    dataStatusImportedTotalOnly:
+      "تعداد کل مشاغل از واردات Jobindsats به‌روزرسانی می‌شود. توزیع صنایع و کارت‌های شغلی هنوز بخشی از داده‌های beta هستند.",
+    dataStatusFallback:
+      "توزیع صنایع و مشاغل هنوز داده‌های beta هستند، اما ساختار برای منابع داده بعدی آماده است.",
   },
   labels: {
-    demoJobs: "مشاغل دمو",
     estimatedRoles: "نقش‌های تخمینی در این صنعت",
     sampleJobsInIndustry: "مشاغل نمونه در این صنعت",
   },
@@ -125,7 +124,7 @@ export const faDictionary: Dictionary = {
     updating: "در حال به‌روزرسانی...",
   },
   sheet: {
-    jobsSuffix: "شغل در POC",
+    jobsSuffix: "موقعیت شغلی باز در این شهرداری",
     teaserLabel: "پروفایل",
     openProfile: "باز کردن شهرداری",
     follow: "دنبال کردن",

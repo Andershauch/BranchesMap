@@ -3,7 +3,7 @@ import type { Dictionary } from "@/lib/i18n/schema";
 export const urDictionary: Dictionary = {
   meta: {
     title: "JOBVEJ",
-    description: "زیلینڈ بھر میں بلدیات اور صنعتوں کے موبائل دوستانہ نقشے کے لیے POC۔",
+    description: "زیلینڈ بھر میں بلدیات اور صنعتوں کے موبائل دوستانہ نقشے کے لیے beta۔",
   },
   header: {
     appName: "JOBVEJ",
@@ -21,7 +21,7 @@ export const urDictionary: Dictionary = {
     de: "جرمن",
   },
   home: {
-    kicker: "JOBVEJ POC",
+    kicker: "JOBVEJ Beta",
     title: "زیلینڈ کی اصل حدود کے ساتھ بلدیاتی نقشہ",
     intro:
       "نقشہ اب Dataforsyningen سے سرکاری بلدیاتی جیومیٹری استعمال کرتا ہے۔ ہر بلدیہ براہ راست کلک کے قابل ہے، اور تین سب سے زیادہ نمائندگی کرنے والی صنعتیں علاقے کے اوپر آئیکن بیجز کے طور پر دکھائی گئی ہیں۔",
@@ -34,7 +34,7 @@ export const urDictionary: Dictionary = {
     utf8Action: "ٹیسٹ UTF-8 API",
     mapTitle: "بلدیاتی نقشہ",
     mapDescription:
-      "یہ POC کے لیے اصل جغرافیائی تہہ ہے۔ بورنہولم اور لولینڈ-فالسٹر کو جان بوجھ کر خارج کر دیا گیا ہے کیونکہ موجودہ دائرہ کار زیلینڈ اور اماگر کی بلدیات ہیں۔",
+      "یہ beta کے لیے اصل جغرافیائی تہہ ہے۔ بورنہولم اور لولینڈ-فالسٹر کو جان بوجھ کر خارج کر دیا گیا ہے کیونکہ موجودہ دائرہ کار زیلینڈ اور اماگر کی بلدیات ہیں۔",
     mapNote:
       "اگلا مرحلہ زیادہ درست لیبلز، تلاش، زوم اور بعد میں ہر بلدیہ کے لائیو ڈیٹا کے لیے اسی ڈھانچے کو استعمال کر سکتا ہے۔",
     mapAriaLabel: "زیلینڈ کی بلدیات کا نقشہ",
@@ -42,8 +42,8 @@ export const urDictionary: Dictionary = {
   municipality: {
     backToMap: "نقشے پر واپس جائیں",
     kicker: "بلدیہ کا پروفائل",
-    pocStatusTitle: "POC کی صورتحال",
-    pocStatusBody:
+    dataStatusTitle: "beta کی صورتحال",
+    dataStatusBody:
       "صنعتوں کی تقسیم اور ملازمتیں فرضی ڈیٹا ہیں، لیکن ڈھانچہ اسی ماڈل کی پیروی کرتا ہے جسے ہم بعد میں Prisma میں شامل کر سکتے ہیں۔",
     municipalityCode: "بلدیہ کا کوڈ",
   },
@@ -63,15 +63,14 @@ export const urDictionary: Dictionary = {
       "میں {municipality}، وہ تین صنعتیں جن میں سب سے زیادہ ملازمتیں ہیں {industries} ہیں۔ مزید تفصیلات کے لیے بلدیہ کھولیں۔",
     topIndustriesHeading: "میں {municipality} اس وقت سب سے زیادہ ملازمتیں ان شعبوں میں ہیں",
     additionalIndustriesHeading: "میں {municipality} ان صنعتوں میں بھی اس وقت ملازمتیں موجود ہیں:",
-    pocStatusImportedFull:
-      "ملازمتوں کی کل تعداد اور صنعتوں کی تقسیم اب روزانہ Jobindsats امپورٹ سے آتی ہے۔ نیچے دیے گئے جاب کارڈز اب بھی POC ڈیٹا ہیں جب تک کہ اصل جاب فیڈ منسلک نہ ہو جائے۔",
-    pocStatusImportedTotalOnly:
-      "ملازمتوں کی کل تعداد Jobindsats امپورٹ سے اپ ڈیٹ کی جاتی ہے۔ صنعتوں کی تقسیم اور جاب کارڈز اب بھی جزوی طور پر POC ڈیٹا ہیں۔",
-    pocStatusFallback:
-      "صنعتوں کی تقسیم اور ملازمتیں اب بھی POC ڈیٹا ہیں، لیکن ڈھانچہ اگلے ڈیٹا ذرائع کے لیے تیار ہے۔",
+    dataStatusImportedFull:
+      "ملازمتوں کی کل تعداد اور صنعتوں کی تقسیم اب روزانہ Jobindsats امپورٹ سے آتی ہے۔ نیچے دیے گئے جاب کارڈز اب بھی beta ڈیٹا ہیں جب تک کہ اصل جاب فیڈ منسلک نہ ہو جائے۔",
+    dataStatusImportedTotalOnly:
+      "ملازمتوں کی کل تعداد Jobindsats امپورٹ سے اپ ڈیٹ کی جاتی ہے۔ صنعتوں کی تقسیم اور جاب کارڈز اب بھی جزوی طور پر beta ڈیٹا ہیں۔",
+    dataStatusFallback:
+      "صنعتوں کی تقسیم اور ملازمتیں اب بھی beta ڈیٹا ہیں، لیکن ڈھانچہ اگلے ڈیٹا ذرائع کے لیے تیار ہے۔",
   },
   labels: {
-    demoJobs: "ڈیمو ملازمتیں",
     estimatedRoles: "اس صنعت میں تخمینہ شدہ کردار",
     sampleJobsInIndustry: "اس صنعت میں نمونے کی ملازمتیں",
   },
@@ -125,7 +124,7 @@ export const urDictionary: Dictionary = {
     updating: "ریفریش ہو رہا ہے...",
   },
   sheet: {
-    jobsSuffix: "POC میں ملازمتیں",
+    jobsSuffix: "اس بلدیہ میں کھلی اسامیاں",
     teaserLabel: "پروفائل",
     openProfile: "بلدیہ کھولیں",
     follow: "فالو کریں",
