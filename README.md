@@ -1,29 +1,29 @@
 # JOBVEJ
 
-Mobil-first beta for et interaktivt kort over SjÃ¦llands kommuner, brancher og jobestimater.
+Mobil-first beta for et interaktivt kort over Sjællands kommuner, brancher og jobestimater.
 
 ## Status
 
 - full-screen kortoplevelse optimeret til mobil
 - bottom sheet for kommune-preview og expanded state
 - PWA-baseline med manifest, app-ikoner og service worker
-- installerbar pÃ¥ Android
-- follow-spor med fÃ¸rste version af change detection og in-app status
-- kiosk-mode kan aktiveres eksplicit med `?kiosk=1` for reception-touchskÃ¦rme
-- kiosk-mode viser QR-handoff og attract-mode uden at pÃ¥virke normal mobilbrug
+- installerbar på Android
+- follow-spor med første version af change detection og in-app status
+- kiosk-mode kan aktiveres eksplicit med `?kiosk=1` for reception-touchskærme
+- kiosk-mode viser QR-handoff og attract-mode uden at påvirke normal mobilbrug
 - roadmap og sprintstatus vedligeholdes i `roadmap.md`
 
 ## Runtime-overblik
 
-Appen kÃ¸rer som en `Next.js` App Router-lÃ¸sning med tre primÃ¦re lag:
+Appen kører som en `Next.js` App Router-løsning med tre primære lag:
 
 - `app/` leverer ruter, layouts og server-renderede entrypoints
-- `components/` leverer den interaktive klientoplevelse, herunder kort, sheets og kiosk-adfÃ¦rd
+- `components/` leverer den interaktive klientoplevelse, herunder kort, sheets og kiosk-adfærd
 - `lib/server/` samler auth, origin checks, sikkerhedsheaders, persistence, rate limiting og integrationslogik
 - `prisma/` definerer persistence-modellen for brugere, follows, saved searches, audit og rate-limit buckets
-- `scripts/` hÃ¥ndterer import, dataklargÃ¸ring og operationelle hjÃ¦lpekommandoer uden for runtime-pathen
+- `scripts/` håndterer import, dataklargøring og operationelle hjælpekommandoer uden for runtime-pathen
 
-V1-arkitekturen kan lÃ¦ses som fem konkrete spor:
+V1-arkitekturen kan læses som fem konkrete spor:
 
 - route-lag: locale-ruter, API-ruter og server-renderede entrypoints
 - klient-lag: kort, sheets, kiosk/QR-flow og anden brugerinteraktion
@@ -38,11 +38,11 @@ Reception/kiosk-entrypoint er den samme rute med eksplicit kiosk-flag:
 /da?kiosk=1
 ```
 
-Det er bevidst, sÃ¥ kiosk-specifik adfÃ¦rd ikke pÃ¥virker normal mobil- eller desktopbrug.
+Det er bevidst, så kiosk-specifik adfærd ikke påvirker normal mobil- eller desktopbrug.
 
-## MiljÃ¸variabler
+## Miljøvariabler
 
-V1 krÃ¦ver, at runtime-konfigurationen er eksplicit og ens pÃ¥ tvÃ¦rs af drift og QA.
+V1 kræver, at runtime-konfigurationen er eksplicit og ens på tværs af drift og QA.
 
 Kritiske produktionsvariabler:
 
@@ -53,38 +53,38 @@ Kritiske produktionsvariabler:
 - `FOLLOW_CHECK_SECRET` til operationel adgang til follow-check endpointet
 - `JOBINDSATS_API_TOKEN` til import af Jobindsats-data
 
-Se ogsÃ¥ `.env.example` og driftsnoterne i `docs/` for miljÃ¸specifikke krav.
+Se også `.env.example` og driftsnoterne i `docs/` for miljøspecifikke krav.
 
 ## Lokalt
 
-KÃ¸r udviklingsserver:
+Kør udviklingsserver:
 
 ```bash
 npm run dev
 ```
 
-Hvis `next dev` pÃ¥ din maskine vokser voldsomt i memory eller crasher med `JavaScript heap out of memory`, sÃ¥ brug webpack-baseret dev i stedet:
+Hvis `next dev` på din maskine vokser voldsomt i memory eller crasher med `JavaScript heap out of memory`, så brug webpack-baseret dev i stedet:
 
 ```bash
 npm run dev:webpack
 ```
 
-Det pÃ¥virker ikke production-builden. Det er kun en lokal fallback til mere stabil udvikling, hvis Next 16/Turbopack opfÃ¸rer sig dÃ¥rligt pÃ¥ din maskine.
+Det påvirker ikke production-builden. Det er kun en lokal fallback til mere stabil udvikling, hvis Next 16/Turbopack opfører sig dårligt på din maskine.
 
-KÃ¸r pÃ¥ lokalnet til telefon-test:
+Kør på lokalnet til telefon-test:
 
 ```bash
 npm run dev -- --hostname 0.0.0.0
 ```
 
-KÃ¸r production-build lokalt:
+Kør production-build lokalt:
 
 ```bash
 npm run build
 npm run start
 ```
 
-KÃ¸r og test kiosk-entry lokalt:
+Kør og test kiosk-entry lokalt:
 
 ```text
 http://localhost:3000/da?kiosk=1
@@ -94,52 +94,52 @@ http://localhost:3000/da?kiosk=1
 
 PWA-sporet er bevidst konservativt lige nu:
 
-- `sw.js` hentes uden cache for at gÃ¸re opdateringer mere forudsigelige
-- navigation gÃ¥r netvÃ¦rk-fÃ¸rst med offline-fallback
+- `sw.js` hentes uden cache for at gøre opdateringer mere forudsigelige
+- navigation går netværk-først med offline-fallback
 - statiske PWA-assets caches eksplicit
-- appen viser in-app besked ved offline-tilstand og nÃ¥r en ny version er klar
+- appen viser in-app besked ved offline-tilstand og når en ny version er klar
 
-### Hvad der virker offline i Ã¸jeblikket
+### Hvad der virker offline i øjeblikket
 
 - offline fallback-side
 - manifest og app-ikoner
-- installeret app-shell kan stadig Ã¥bne fallback, hvis netvÃ¦rket mangler
+- installeret app-shell kan stadig åbne fallback, hvis netværket mangler
 
 ### Hvad der ikke er endeligt afklaret endnu
 
-- om selve kortskallen skal kunne Ã¥bne offline i betaen
+- om selve kortskallen skal kunne åbne offline i betaen
 - endelig iPhone standalone-QA
 - fuld dokumentation af opdateringsflow mellem builds
 
 ## Kiosk-mode
 
-Kiosk-mode er lavet til reception-touchskÃ¦rme og er kun aktiv, nÃ¥r siden Ã¥bnes med `?kiosk=1`.
+Kiosk-mode er lavet til reception-touchskærme og er kun aktiv, når siden åbnes med `?kiosk=1`.
 
 Det betyder:
 
 - QR-handoff-card vises kun i kiosk-mode
-- attract-mode og idle reset kÃ¸rer kun i kiosk-mode
-- almindelig mobilversion fÃ¥r ikke automatisk idle reset eller QR-overlay
-- QR peger pÃ¥ den normale locale-rute, sÃ¥ borgeren fortsÃ¦tter pÃ¥ mobil uden kiosk-flag
+- attract-mode og idle reset kører kun i kiosk-mode
+- almindelig mobilversion får ikke automatisk idle reset eller QR-overlay
+- QR peger på den normale locale-rute, så borgeren fortsætter på mobil uden kiosk-flag
 
-Aktuel V1-adfÃ¦rd i kiosk-mode:
+Aktuel V1-adfærd i kiosk-mode:
 
-- efter cirka `75` sekunders inaktivitet gÃ¥r forsiden i attract-mode
+- efter cirka `75` sekunders inaktivitet går forsiden i attract-mode
 - attract-mode looper mellem op til `5` kommuner
-- hver kommune vises i cirka `10` sekunder med skuffen Ã¥ben
-- fÃ¸rste touch vÃ¦kker skÃ¦rmen og nulstiller tilbage til normal starttilstand
+- hver kommune vises i cirka `10` sekunder med skuffen åben
+- første touch vækker skærmen og nulstiller tilbage til normal starttilstand
 
-Det nÃ¦ste vigtige QA-punkt er stadig at verificere det faktiske kiosk-til-mobil-flow pÃ¥ en rigtig telefon.
+Det næste vigtige QA-punkt er stadig at verificere det faktiske kiosk-til-mobil-flow på en rigtig telefon.
 
-## Admin-vÃ¦rktÃ¸jer
+## Admin-værktøjer
 
-Admin er nu opdelt i selvstÃ¦ndige arbejdssider:
+Admin er nu opdelt i selvstændige arbejdssider:
 
 - `/{locale}/admin` for overblik og hurtige indgange
 - `/{locale}/admin/home-map` for kortstyring og attract-mode-kommuner
-- `/{locale}/admin/security` for sikkerhedshÃ¦ndelser
+- `/{locale}/admin/security` for sikkerhedshændelser
 - `/{locale}/admin/app-texts` for frontend-systemtekster
-- `/{locale}/admin/jobindsats-titles` for Jobindsats-titeloversÃ¦ttelser
+- `/{locale}/admin/jobindsats-titles` for Jobindsats-titeloversættelser
 
 ### Systemtekster
 
@@ -149,24 +149,24 @@ Det vigtige designprincip er:
 
 - filbaserede dictionaries er stadig baseline
 - databasen fungerer som runtime-override for godkendte frontend-grupper
-- admin kan ikke redigere vilkÃ¥rlige systemtekster, som kode afhÃ¦nger af
+- admin kan ikke redigere vilkårlige systemtekster, som kode afhænger af
 - placeholders som `{municipality}` og `{industries}` valideres ved gem
-- Ã¦ndringer og reset bliver audit-logget
+- ændringer og reset bliver audit-logget
 
 Se [docs/admin-system-text-workflow.md](docs/admin-system-text-workflow.md) for den fulde arbejdsgang.
 
 ## Follow checks
 
-Fase 4A bruger et server-side snapshot af kommuneindholdet til at afgÃ¸re om en fulgt kommune har Ã¦ndret sig.
+Fase 4A bruger et server-side snapshot af kommuneindholdet til at afgøre om en fulgt kommune har ændret sig.
 
-### V1-felter der tÃ¦ller som Ã¦ndring
+### V1-felter der tæller som ændring
 
 - kommune-teaser/profiltekst
 - `totalJobs`
-- topbrancher og deres rÃ¦kkefÃ¸lge/jobtal
-- jobkort under kommunen fordelt pÃ¥ branche
+- topbrancher og deres rækkefølge/jobtal
+- jobkort under kommunen fordelt på branche
 
-Snapshotlaget er bevidst gjort generisk, sÃ¥ DST kan drive estimatdelen nu, og STAR senere kan drive jobdelen uden at Ã¦ndre follow-modellen.
+Snapshotlaget er bevidst gjort generisk, så DST kan drive estimatdelen nu, og STAR senere kan drive jobdelen uden at ændre follow-modellen.
 
 ### Endpoint
 
@@ -174,18 +174,18 @@ Snapshotlaget er bevidst gjort generisk, sÃ¥ DST kan drive estimatdelen nu, og
 
 Bruges til:
 
-- at checke Ã©t konkret follow
+- at checke ét konkret follow
 - at checke alle aktive follows i batch
 - at drive et senere cron-job
 
 ### Autorisation
 
-I production krÃ¦ver endpointet enten:
+I production kræver endpointet enten:
 
 - headeren `x-follows-check-secret` som matcher `FOLLOW_CHECK_SECRET`
 - eller en aktiv admin-session
 
-I lokal udvikling pÃ¥ `localhost` og `127.0.0.1` er endpointet Ã¥bent for at gÃ¸re QA nemmere.
+I lokal udvikling på `localhost` og `127.0.0.1` er endpointet åbent for at gøre QA nemmere.
 
 ### Eksempler
 
@@ -201,7 +201,7 @@ Batch-check med limit:
 curl -X POST "http://localhost:3000/api/follows/check?limit=5"
 ```
 
-Check af Ã©t follow:
+Check af ét follow:
 
 ```bash
 curl -X POST http://localhost:3000/api/follows/check \
@@ -216,52 +216,52 @@ curl -X POST https://your-domain.example/api/follows/check \
   -H "x-follows-check-secret: $FOLLOW_CHECK_SECRET"
 ```
 
-### Forventet adfÃ¦rd
+### Forventet adfærd
 
-- fÃ¸rste kÃ¸rsel initialiserer baseline og sÃ¦tter `lastResultHash`
-- nÃ¦ste kÃ¸rsel uden Ã¦ndringer opdaterer kun `lastCheckedAt`
-- en Ã¦ndring sÃ¦tter ny hash og markerer followet som ulÃ¦st via `lastNotifiedAt`
-- Ã¥bning af kommuneprofil eller `MarkÃ©r som set` nulstiller ulÃ¦st status i v1
+- første kørsel initialiserer baseline og sætter `lastResultHash`
+- næste kørsel uden ændringer opdaterer kun `lastCheckedAt`
+- en ændring sætter ny hash og markerer followet som ulæst via `lastNotifiedAt`
+- åbning af kommuneprofil eller `Markér som set` nulstiller ulæst status i v1
 
 ## QA-flow for Fase 4A
 
 ### 1. Baseline
 
 1. Log ind.
-2. FÃ¸lg en kommune.
-3. KÃ¸r `POST /api/follows/check`.
-4. GÃ¥ til `/da/follows`.
+2. Følg en kommune.
+3. Kør `POST /api/follows/check`.
+4. Gå til `/da/follows`.
 
 Forventet resultat:
 
 - `Sidst tjekket` vises
 - ingen `Ny opdatering` endnu
 
-### 2. Ingen Ã¦ndring
+### 2. Ingen ændring
 
-1. KÃ¸r `POST /api/follows/check` igen uden at Ã¦ndre data.
-2. GÃ¥ til `/da/follows`.
+1. Kør `POST /api/follows/check` igen uden at ændre data.
+2. Gå til `/da/follows`.
 
 Forventet resultat:
 
 - `Sidst tjekket` opdateres
 - stadig ingen `Ny opdatering`
 
-### 3. Ã†ndret snapshot
+### 3. Ændret snapshot
 
-Lav en kontrolleret Ã¦ndring i en kommune, fx:
+Lav en kontrolleret ændring i en kommune, fx:
 
-- Ã¦ndr teaser
-- Ã¦ndr jobCount i en topbranche
-- Ã¦ndr rÃ¦kkefÃ¸lge i top-3 brancher
+- ændr teaser
+- ændr jobCount i en topbranche
+- ændr rækkefølge i top-3 brancher
 
-KÃ¸r derefter `POST /api/follows/check` igen.
+Kør derefter `POST /api/follows/check` igen.
 
 Forventet resultat:
 
 - `/da/follows` viser `Ny opdatering`
-- Ã¥bning af kommuneprofil nulstiller status
-- `MarkÃ©r som set` nulstiller ogsÃ¥ status
+- åbning af kommuneprofil nulstiller status
+- `Markér som set` nulstiller også status
 
 ## Kvalitetschecks
 
@@ -271,4 +271,3 @@ npm run lint
 npx tsc --noEmit
 npm run build
 ```
-
