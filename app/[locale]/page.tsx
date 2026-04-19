@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 
@@ -21,6 +22,20 @@ export function generateStaticParams() {
 
 function getStringParam(value: string | string[] | undefined) {
   return typeof value === "string" && value ? value : null;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: LocalizedHomePageProps): Promise<Metadata> {
+  const search = await searchParams;
+
+  if (getStringParam(search.kiosk) !== "1") {
+    return {};
+  }
+
+  return {
+    manifest: "/manifest-kiosk.webmanifest",
+  };
 }
 
 export default async function LocalizedHomePage({ params, searchParams }: LocalizedHomePageProps) {
