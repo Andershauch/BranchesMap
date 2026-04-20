@@ -36,6 +36,31 @@ V2 kræver:
 - pre-beregnede centerpunkter og metadata for alle kommuner
 - beslutning om ét nationalt output eller flere opdelte outputs, fx pr. region eller som level-of-detail-varianter
 
+#### Plan for kort-assets og indlæsning
+
+Dette punkt skal behandles som et særskilt teknisk spor i V2, fordi kortdata er næsten statiske, men hurtigt bliver tunge, når scope udvides fra Sjælland til hele Danmark.
+
+Planen er:
+
+1. V1-stabilisering
+   Sjællandskortet skal fortsat leveres som et statisk genereret asset, og klienten skal genbruge samme GeoJSON i stedet for at hente den igen ved hvert mount.
+2. Danmark build-pipeline
+   Geo skal genereres i build-trinnet fra én canonical Danmark-kilde, så output ikke længere afhænger af manuelle Sjælland-specifikke filer.
+3. Partitionering
+   Danmark skal ikke nødvendigvis leveres som ét stort asset. Vi skal teste mindst to strategier: ét nationalt asset og regionsopdelte assets.
+4. Level of detail
+   Vi skal kunne levere en lettere geometri til oversigtskort og en mere detaljeret geometri til tættere zoom-niveauer.
+5. Render-klare data
+   Metadata som centerpunkter, bounds og eventuelt præberegnede SVG-paths skal genereres på forhånd, så runtime-arbejdet i klienten holdes nede.
+6. Performance-budget
+   Vi skal sætte konkrete mål for payload, første render og interaktion på kiosk-skærme og ældre telefoner, før Danmark-kortet rulles ud.
+
+Definition of done for dette spor:
+
+- kortet afhænger af versionsstyrede, statiske map-assets
+- appen fetcher ikke samme grundgeometri igen og igen under normal brug
+- Danmark-kortet kan leveres inden for et kendt performance-budget på mobil og kiosk
+
 ### 2.2 Kommunekatalog og datamodel
 
 Kommuner skal behandles som et fuldt nationalt katalog, ikke som et snævert pilotsæt.

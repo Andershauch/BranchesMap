@@ -29,22 +29,29 @@ export type MunicipalityFeatureCollection = {
   features: MunicipalityFeature[];
 };
 
-/**
- * Asynkront fetch af den pre-kalkulerede og normaliserede GeoJSON-fil.
- * Hentes over netværket på klientsiden i stedet for at bundle det ind i JS-koden.
- */
+let sjaellandGeoJsonPromise: Promise<MunicipalityFeatureCollection> | null = null;
+
 export async function fetchSjaellandGeoJSON(): Promise<MunicipalityFeatureCollection> {
-  const response = await fetch("/geo/sjaelland-normalized.json");
-  if (!response.ok) {
-    throw new Error("Kunne ikke hente Sjællandskort data");
+  if (!sjaellandGeoJsonPromise) {
+    sjaellandGeoJsonPromise = fetch("/geo/sjaelland-normalized.json", {
+      cache: "force-cache",
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error("Kunne ikke hente Sjaellandskort-data");
+        }
+
+        return (await response.json()) as MunicipalityFeatureCollection;
+      })
+      .catch((error) => {
+        sjaellandGeoJsonPromise = null;
+        throw error;
+      });
   }
-  return response.json();
+
+  return sjaellandGeoJsonPromise;
 }
 
-/**
- * Synkront tilgængelige metadata og pre-kalkulerede centerpunkter.
- * Genereret af scripts/prepare-geojson.ts for at undgå at parse hele kortet runtime.
- */
 export const sjaellandMunicipalityProperties = sjaellandProperties as Array<
   MunicipalityFeature["properties"] & { longitude: number; latitude: number }
 >;
