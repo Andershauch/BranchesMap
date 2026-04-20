@@ -125,7 +125,7 @@ export const daDictionary: Dictionary = {
   },
   sheet: {
     jobsSuffix: "åbne stillinger i denne kommune",
-    teaserLabel: "Profil",
+    teaserLabel: "Brancher med flest jobs:",
     openProfile: "Åbn kommune",
     follow: "Følg",
     following: "Følger allerede",

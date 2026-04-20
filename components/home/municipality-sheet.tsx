@@ -8,7 +8,7 @@ import { MunicipalityTravelEstimate } from "@/components/home/municipality-trave
 import type { MunicipalitySummary } from "@/lib/data/municipalities";
 import type { TravelDestination } from "@/lib/geo/municipality-centers";
 import { isRtlLocale, type AppLocale } from "@/lib/i18n/config";
-import { buildJobnetIndustrySearchUrl, buildMunicipalitySheetProfile } from "@/lib/municipality-presentation";
+import { buildJobnetIndustrySearchUrl } from "@/lib/municipality-presentation";
 
 type SheetMode = "closed" | "preview" | "expanded";
 const sheetEnterDelayMs = 16;
@@ -109,6 +109,87 @@ export function MunicipalitySheet({
         ? `calc(100% - ${previewPeek})`
         : "calc(100% - 0.35rem)";
 
+  if (kioskMode) {
+    return (
+      <section className="pointer-events-none absolute inset-x-0 bottom-0 z-30">
+        <div className="pointer-events-auto border-t border-white/72 bg-[color:rgba(255,255,255,0.84)] shadow-[0_-18px_48px_rgba(15,23,42,0.12)] backdrop-blur-2xl">
+          <div className="mx-auto flex w-full max-w-none flex-col gap-3 px-4 pb-[calc(max(var(--safe-bottom),0px)+0.9rem)] pt-3">
+            <div className="flex flex-wrap items-center gap-2 text-start">
+              <h2 className="text-[1.65rem] font-semibold tracking-tight text-slate-950">
+                {formatMunicipalityName(locale, municipality.name)}
+              </h2>
+              <span
+                dir="auto"
+                className="rounded-full bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-900/6"
+              >
+                ca. {formatCount(locale, municipality.totalJobs)} {copy.jobsSuffix}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {municipality.topIndustries.slice(0, 3).map((industry) => (
+                <a
+                  key={municipality.slug + "-kiosk-" + industry.slug}
+                  href={buildJobnetIndustrySearchUrl(municipality.name, industry.name)}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={dictionary.municipalityPage.relatedJobnetSearchHint}
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-full px-4 py-2.5 text-[15px] font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/90 focus-visible:ring-offset-1"
+                  style={{ backgroundColor: industry.accentColor }}
+                >
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full text-[15px] leading-none">
+                    {industry.icon}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-center">
+                    <span dir="auto">{industry.name}</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+
+            <MunicipalityTravelEstimate
+              locale={locale}
+              destination={travelDestination}
+              kioskMode
+              fixedOrigin={kioskTravelOrigin}
+            />
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const actionButtons = (
+    <div className={`grid gap-2 ${isExpanded ? "grid-cols-2" : ""}`}>
+      {isExpanded ? (
+        <Link
+          href={`/${locale}/kommuner/${municipality.slug}`}
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/88 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
+        >
+          {copy.openProfile}
+        </Link>
+      ) : null}
+
+      <form action="/api/follows" method="post">
+        <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="intent" value="follow-municipality" />
+        <input type="hidden" name="municipalitySlug" value={municipality.slug} />
+        <input type="hidden" name="returnTo" value={`/${locale}?focus=${municipality.slug}`} />
+        <button
+          type="submit"
+          disabled={isFollowing}
+          className={`inline-flex min-h-10 w-full items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_14px_24px_rgba(15,23,42,0.16)] transition ${
+            isFollowing
+              ? "cursor-default bg-slate-200 text-slate-700 shadow-none"
+              : "bg-slate-950 text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
+          }`}
+        >
+          {isFollowing ? copy.following : copy.follow}
+        </button>
+      </form>
+    </div>
+  );
+
   return (
     <>
       {isVisible ? (
@@ -173,15 +254,15 @@ export function MunicipalitySheet({
                 ) : null}
               </div>
 
-              <div className="mt-3 flex items-start justify-between gap-3">
+              <div className={`flex items-start justify-between gap-3 ${kioskMode ? "mt-2" : "mt-3"}`}>
                 <div className="min-w-0 flex-1 text-start">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="truncate text-[1.45rem] font-semibold tracking-tight text-slate-950">
+                    <h2 className={`truncate font-semibold tracking-tight text-slate-950 ${kioskMode ? "text-[1.6rem]" : "text-[1.45rem]"}`}>
                       {formatMunicipalityName(locale, municipality.name)}
                     </h2>
                     <span
                       dir="auto"
-                      className="rounded-full bg-white/82 px-2.5 py-1 text-[10px] font-semibold text-slate-600 ring-1 ring-slate-900/6"
+                      className={`rounded-full bg-white/82 font-semibold text-slate-600 ring-1 ring-slate-900/6 ${kioskMode ? "px-3 py-1.5 text-[11px]" : "px-2.5 py-1 text-[10px]"}`}
                     >
                       ca. {formatCount(locale, municipality.totalJobs)} {copy.jobsSuffix}
                     </span>
@@ -212,7 +293,15 @@ export function MunicipalitySheet({
               </div>
             </div>
 
-            <div className={isExpanded ? "flex-1 overflow-y-auto px-5 pb-2" : "px-5 pb-2.5"}>
+            <div
+              className={
+                isExpanded
+                  ? kioskMode
+                    ? "flex-1 overflow-y-auto px-5 pb-1"
+                    : "flex-1 overflow-y-auto px-5 pb-2"
+                  : "px-5 pb-2.5"
+              }
+            >
               <div className="grid grid-cols-3 gap-1.5">
                 {visibleIndustries.map((industry) => (
                   <a
@@ -224,7 +313,7 @@ export function MunicipalitySheet({
                     className={`inline-flex items-center rounded-full font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.12)] ${
                       kioskMode
                         ? isExpanded
-                          ? "min-h-11 w-full justify-center gap-2 px-3 py-2 text-[12px]"
+                          ? "min-h-12 w-full justify-center gap-2.5 px-4 py-2.5 text-[15px]"
                           : "min-h-10 w-full justify-center gap-2 px-3 py-1.75 text-[11px]"
                         : isExpanded
                           ? "w-full justify-center gap-1.5 px-2 py-1.75 text-[10px]"
@@ -236,7 +325,7 @@ export function MunicipalitySheet({
                       className={`inline-flex shrink-0 aspect-square items-center justify-center overflow-hidden rounded-full leading-none ${
                         kioskMode
                           ? isExpanded
-                            ? "h-5.5 w-5.5 text-[13px]"
+                            ? "h-6 w-6 text-[15px]"
                             : "h-5 w-5 text-[12px]"
                           : isExpanded
                             ? "h-4 w-4 text-[10px]"
@@ -246,15 +335,9 @@ export function MunicipalitySheet({
                       {industry.icon}
                     </span>
                     <span
-                      className={
-                        kioskMode
-                          ? isExpanded
-                            ? "max-w-[7.2rem] truncate"
-                            : "max-w-[6.4rem] truncate"
-                          : isExpanded
-                            ? "max-w-[4.6rem] truncate"
-                            : "max-w-[4.2rem] truncate"
-                      }
+                      className={`min-w-0 flex-1 truncate text-center ${
+                        isExpanded ? "max-w-[4.6rem]" : "max-w-[4.2rem]"
+                      }`}
                     >
                       <span dir="auto">{industry.name}</span>
                     </span>
@@ -270,48 +353,12 @@ export function MunicipalitySheet({
                     kioskMode={kioskMode}
                     fixedOrigin={kioskTravelOrigin}
                   />
-
-                  <div className="mt-4 rounded-[1.35rem] bg-white/60 px-4 py-4 ring-1 ring-slate-900/5">
-                    <p className="text-start text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      {copy.teaserLabel}
-                    </p>
-                    <p className="mt-2 text-start text-sm leading-6 text-slate-600">
-                      {buildMunicipalitySheetProfile(locale, municipality.name, municipality.topIndustries, dictionary)}
-                    </p>
-                  </div>
                 </>
               ) : null}
             </div>
 
-            <div className={`px-5 ${isExpanded ? "pb-2.5" : "pb-1"}`}>
-              <div className={`grid gap-2 ${isExpanded ? "" : ""}`}>
-                {isExpanded ? (
-                  <Link
-                    href={`/${locale}/kommuner/${municipality.slug}`}
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white/88 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-900 hover:bg-white hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
-                  >
-                    {copy.openProfile}
-                  </Link>
-                ) : null}
-
-                <form action="/api/follows" method="post">
-                  <input type="hidden" name="locale" value={locale} />
-                  <input type="hidden" name="intent" value="follow-municipality" />
-                  <input type="hidden" name="municipalitySlug" value={municipality.slug} />
-                  <input type="hidden" name="returnTo" value={`/${locale}?focus=${municipality.slug}`} />
-                  <button
-                    type="submit"
-                    disabled={isFollowing}
-                    className={`inline-flex min-h-10 w-full items-center justify-center rounded-full px-4 py-2.5 text-sm font-semibold shadow-[0_14px_24px_rgba(15,23,42,0.16)] transition ${
-                      isFollowing
-                        ? "cursor-default bg-slate-200 text-slate-700 shadow-none"
-                        : "bg-slate-950 text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
-                    }`}
-                  >
-                    {isFollowing ? copy.following : copy.follow}
-                  </button>
-                </form>
-              </div>
+            <div className={`px-5 ${isExpanded ? "mt-4 pb-2.5" : "mt-4 pb-1"}`}>
+              {actionButtons}
             </div>
           </div>
         </div>

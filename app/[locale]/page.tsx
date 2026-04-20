@@ -78,7 +78,6 @@ export default async function LocalizedHomePage({ params, searchParams }: Locali
         handoffUrl={handoffUrl.toString()}
         handoffQrDataUrl={handoffQrDataUrl}
         handoffTitle={dictionary.home.handoffTitle}
-        handoffBody={dictionary.home.handoffBody}
         handoffScanLabel={dictionary.home.handoffScanLabel}
       />
     </main>

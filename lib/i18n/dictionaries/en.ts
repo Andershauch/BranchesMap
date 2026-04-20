@@ -125,7 +125,7 @@ export const enDictionary: Dictionary = {
   },
   sheet: {
     jobsSuffix: "open positions in this municipality",
-    teaserLabel: "Profile",
+    teaserLabel: "Industries with the most jobs:",
     openProfile: "Open municipality",
     follow: "Follow",
     following: "Already following",

@@ -46,7 +46,6 @@ export function HomeMapExplorer({
   handoffUrl,
   handoffQrDataUrl,
   handoffTitle,
-  handoffBody,
   handoffScanLabel,
 }: {
   municipalities: MunicipalitySummary[];
@@ -58,7 +57,6 @@ export function HomeMapExplorer({
   handoffUrl: string;
   handoffQrDataUrl: string | null;
   handoffTitle: string;
-  handoffBody: string;
   handoffScanLabel: string;
 }) {
   const sortedMunicipalities = useMemo(() => sortMunicipalities(municipalities), [municipalities]);
@@ -337,26 +335,25 @@ export function HomeMapExplorer({
       </div>
 
       {kioskModeActive && handoffQrDataUrl ? (
-        <aside className="pointer-events-none absolute left-3 top-[calc(var(--app-header-height)+0.75rem)] z-30 max-w-[11rem] sm:left-4 sm:max-w-[12rem]">
-          <div className="pointer-events-auto rounded-[1.5rem] border border-white/70 bg-white/88 p-3 shadow-[0_18px_40px_rgba(15,23,42,0.16)] backdrop-blur-xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-primary)]">
+        <aside className="pointer-events-none absolute left-3 top-[calc(var(--app-header-height)+0.75rem)] z-30 max-w-[9.25rem] sm:left-4 sm:max-w-[9.75rem]">
+          <div className="pointer-events-auto rounded-[1.4rem] border border-white/70 bg-white/80 p-2.5 shadow-[0_16px_34px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--md-sys-color-primary)]">
               {handoffScanLabel}
             </p>
-            <h2 className="mt-2 text-sm font-semibold leading-5 text-slate-950">{handoffTitle}</h2>
-            <p className="mt-1.5 text-xs leading-5 text-slate-600">{handoffBody}</p>
+            <h2 className="mt-1.5 text-[13px] font-semibold leading-5 text-slate-950">{handoffTitle}</h2>
 
-            <div className="mt-3 rounded-[1.1rem] bg-white p-2 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]">
+            <div className="mt-2.5 rounded-[1rem] bg-white p-1.5 shadow-[inset_0_0_0_1px_rgba(15,23,42,0.06)]">
               <Image
                 src={handoffQrDataUrl}
                 alt={handoffScanLabel}
                 width={220}
                 height={220}
                 unoptimized
-                className="block h-auto w-full rounded-[0.9rem]"
+                className="block h-auto w-full rounded-[0.8rem]"
               />
             </div>
 
-            <p className="mt-2 truncate text-[11px] font-medium text-slate-500">
+            <p className="mt-1.5 truncate text-[10px] font-medium text-slate-500">
               {handoffUrl.replace(/^https?:\/\//, "")}
             </p>
           </div>

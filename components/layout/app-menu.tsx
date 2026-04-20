@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -59,10 +60,12 @@ export function AppMenu({
   const [open, setOpen] = useState(false);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(detectStandaloneMode);
+  const searchParams = useSearchParams();
   const copy = useDictionary().menu;
   const isRtl = isRtlLocale(locale);
   const displayName = user?.name?.trim() ? user.name : user?.email ?? "";
   const isDevRuntime = isDevelopmentRuntime();
+  const isKioskMode = searchParams.get("kiosk") === "1";
 
   useEffect(() => {
     if (!open) {
@@ -244,13 +247,15 @@ export function AppMenu({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-white/70 text-[var(--md-sys-color-on-surface)] shadow-[0_10px_22px_rgba(15,23,42,0.1)] backdrop-blur-xl transition hover:bg-white/84 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70 sm:h-11 sm:w-11"
+        className={`inline-flex items-center justify-center rounded-full border border-white/60 bg-white/70 text-[var(--md-sys-color-on-surface)] shadow-[0_10px_22px_rgba(15,23,42,0.1)] backdrop-blur-xl transition hover:bg-white/84 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-white/70 ${
+          isKioskMode ? "h-9 w-9" : "h-10 w-10 sm:h-11 sm:w-11"
+        }`}
         aria-label={copy.menu}
       >
-        <span className="flex flex-col gap-[0.3rem]">
-          <span className="block h-0.5 w-[1.05rem] rounded-full bg-current" />
-          <span className="block h-0.5 w-[1.05rem] rounded-full bg-current" />
-          <span className="block h-0.5 w-[1.05rem] rounded-full bg-current" />
+        <span className={`flex flex-col ${isKioskMode ? "gap-1" : "gap-[0.3rem]"}`}>
+          <span className={`block rounded-full bg-current ${isKioskMode ? "h-0.5 w-[0.95rem]" : "h-0.5 w-[1.05rem]"}`} />
+          <span className={`block rounded-full bg-current ${isKioskMode ? "h-0.5 w-[0.95rem]" : "h-0.5 w-[1.05rem]"}`} />
+          <span className={`block rounded-full bg-current ${isKioskMode ? "h-0.5 w-[0.95rem]" : "h-0.5 w-[1.05rem]"}`} />
         </span>
       </button>
 
