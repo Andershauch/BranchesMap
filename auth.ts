@@ -49,17 +49,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await authenticateUser({ email, password });
-        if (!user) {
+        const result = await authenticateUser({ email, password });
+        if (!result.ok) {
           return null;
         }
 
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          locale: user.locale,
-          role: user.role,
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          locale: result.user.locale,
+          role: result.user.role,
         };
       },
     }),
@@ -84,7 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.email = token.email ?? session.user.email;
       session.user.name = typeof token.name === "string" ? token.name : session.user.name;
       session.user.locale = typeof token.locale === "string" ? token.locale : "da";
-      session.user.role = token.role === "admin" ? "admin" : "user";
+      session.user.role =
+        token.role === "superadmin" ? "superadmin" : token.role === "admin" ? "admin" : "user";
 
       return session;
     },

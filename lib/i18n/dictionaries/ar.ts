@@ -183,6 +183,7 @@ export const arDictionary: Dictionary = {
     errors: {
       missing_fields: "املأ كلا من البريد الإلكتروني وكلمة المرور.",
       invalid_credentials: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      deactivated_account: "تم تعطيل حسابك. يرجى التواصل مع المسؤول.",
     },
   },
   registerPage: {

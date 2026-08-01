@@ -172,6 +172,7 @@ export type Dictionary = {
     errors: {
       missing_fields: string;
       invalid_credentials: string;
+      deactivated_account: string;
     };
   };
   registerPage: {

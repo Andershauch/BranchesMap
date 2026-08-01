@@ -9,6 +9,7 @@ datasource db {
 enum UserRole {
   user
   admin
+  superadmin
 }
 
 model Municipality {
@@ -169,13 +170,33 @@ model User {
   name          String?
   locale        String         @default("da")
   role          UserRole       @default(user)
+  isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   savedSearches SavedSearch[]
   searchFollows SearchFollow[]
   auditEvents   AuditEvent[]
+  invitations   UserInvitation[]
 
   @@index([createdAt])
+}
+
+model UserInvitation {
+  id              String    @id @default(cuid())
+  email           String
+  name            String?
+  locale          String    @default("da")
+  role            UserRole  @default(user)
+  tokenHash       String    @unique
+  invitedByUserId String
+  expiresAt       DateTime
+  acceptedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  invitedBy       User      @relation(fields: [invitedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([email, createdAt])
+  @@index([expiresAt])
 }
 
 model SavedSearch {

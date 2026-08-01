@@ -183,6 +183,7 @@ export const urDictionary: Dictionary = {
     errors: {
       missing_fields: "ای میل اور پاس ورڈ دونوں پُر کریں۔",
       invalid_credentials: "ای میل یا پاس ورڈ غلط ہے۔",
+      deactivated_account: "آپ کا اکاؤنٹ غیر فعال کر دیا گیا ہے۔ براہِ کرم ایڈمن سے رابطہ کریں۔",
     },
   },
   registerPage: {

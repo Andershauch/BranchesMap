@@ -183,6 +183,7 @@ export const daDictionary: Dictionary = {
     errors: {
       missing_fields: "Udfyld både e-mail og adgangskode.",
       invalid_credentials: "E-mail eller adgangskode er forkert.",
+      deactivated_account: "Din konto er deaktiveret. Kontakt en administrator.",
     },
   },
   registerPage: {

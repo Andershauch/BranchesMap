@@ -49,7 +49,9 @@ Kritiske produktionsvariabler:
 - `DATABASE_URL` for Postgres
 - `APP_BASE_URL` som canonical origin for redirects, auth og QR-relaterede links
 - `AUTH_SECRET` til signerede sessioner
-- `ADMIN_USER_EMAILS` som allowlist for navngivne admin-konti
+- `SUPERADMIN_SETUP_SECRET` til engangs-setup af første superadmin
+- `RESEND_API_KEY` til invitationsmails
+- `APP_MAIL_FROM` som afsenderadresse for invitationsmails
 - `FOLLOW_CHECK_SECRET` til operationel adgang til follow-check endpointet
 - `JOBINDSATS_API_TOKEN` til import af Jobindsats-data
 

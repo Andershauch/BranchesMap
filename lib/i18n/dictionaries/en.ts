@@ -183,6 +183,7 @@ export const enDictionary: Dictionary = {
     errors: {
       missing_fields: "Fill in both email and password.",
       invalid_credentials: "Email or password is incorrect.",
+      deactivated_account: "Your account has been deactivated. Contact an administrator.",
     },
   },
   registerPage: {

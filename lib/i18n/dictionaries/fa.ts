@@ -183,6 +183,7 @@ export const faDictionary: Dictionary = {
     errors: {
       missing_fields: "هر دو فیلد ایمیل و رمز عبور را پر کنید.",
       invalid_credentials: "ایمیل یا رمز عبور اشتباه است.",
+      deactivated_account: "حساب شما غیرفعال شده است. با مدیر تماس بگیرید.",
     },
   },
   registerPage: {

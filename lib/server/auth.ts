@@ -3,6 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/auth";
+import { prisma } from "@/lib/server/prisma";
 
 /**
  * Server-only helpers for reading and enforcing the authenticated session.
@@ -17,7 +18,7 @@ export type AuthUser = {
   email: string;
   name: string | null;
   locale: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "superadmin";
 };
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
@@ -28,12 +29,28 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return null;
   }
 
+  const currentUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      locale: true,
+      role: true,
+      isActive: true,
+    },
+  });
+
+  if (!currentUser?.isActive) {
+    return null;
+  }
+
   return {
-    id: user.id,
-    email: user.email,
-    name: user.name ?? null,
-    locale: user.locale,
-    role: user.role,
+    id: currentUser.id,
+    email: currentUser.email,
+    name: currentUser.name ?? null,
+    locale: currentUser.locale,
+    role: currentUser.role,
   };
 }
 
@@ -47,7 +64,7 @@ export async function requireCurrentUser(redirectTo?: string) {
 }
 
 export function isAdminUser(user: Pick<AuthUser, "role"> | null | undefined) {
-  return user?.role === "admin";
+  return user?.role === "admin" || user?.role === "superadmin";
 }
 
 export async function getCurrentAdminUser() {
@@ -59,6 +76,25 @@ export async function requireAdminUser(redirectTo?: string) {
   const user = await requireCurrentUser(redirectTo);
 
   if (!isAdminUser(user)) {
+    redirect(redirectTo ?? `/${user.locale}/login`);
+  }
+
+  return user;
+}
+
+export function isSuperAdminUser(user: Pick<AuthUser, "role"> | null | undefined) {
+  return user?.role === "superadmin";
+}
+
+export async function getCurrentSuperAdminUser() {
+  const user = await getCurrentUser();
+  return isSuperAdminUser(user) ? user : null;
+}
+
+export async function requireSuperAdminUser(redirectTo?: string) {
+  const user = await requireCurrentUser(redirectTo);
+
+  if (!isSuperAdminUser(user)) {
     redirect(redirectTo ?? `/${user.locale}/login`);
   }
 

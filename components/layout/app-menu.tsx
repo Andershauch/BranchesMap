@@ -12,7 +12,7 @@ import { logoutAction } from "@/lib/server/auth-actions";
 type MenuUser = {
   email: string;
   name: string | null;
-  role: "user" | "admin";
+  role: "user" | "admin" | "superadmin";
 };
 
 type BeforeInstallPromptEvent = Event & {
@@ -174,7 +174,7 @@ export function AppMenu({
           <nav className="mt-2 grid gap-1">
             <MenuLink href={`/${locale}`} label={copy.home} onClick={closeMenu} />
             <MenuLink href={`/${locale}/follows`} label={copy.follows} onClick={closeMenu} />
-            {user?.role === "admin" ? (
+            {user?.role === "admin" || user?.role === "superadmin" ? (
               <MenuLink href={`/${locale}/admin`} label={copy.admin} onClick={closeMenu} />
             ) : null}
           </nav>

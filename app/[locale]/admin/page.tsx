@@ -9,6 +9,7 @@ import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 import { requireAdminUser } from "@/lib/server/auth";
 import { listAppTextTranslations } from "@/lib/server/app-text-translations";
 import { listRecentSecurityAuditEvents } from "@/lib/server/audit";
+import { listUsersForAdmin } from "@/lib/server/users";
 
 export const dynamic = "force-dynamic";
 
@@ -30,27 +31,31 @@ function dashboardCopy(locale: AppLocale) {
     return {
       title: "Admin: overblik",
       intro:
-        "Brug admin-forsiden som indgang til kortstyring, sikkerhed og oversættelser. De vigtigste værktøjer er delt op efter opgave i stedet for at være samlet på én side.",
+        "Brug admin-forsiden som indgang til brugere, kortstyring, sikkerhed og oversaettelser. De vigtigste vaerktojer er delt op efter opgave i stedet for at vaere samlet paa en side.",
+      usersTitle: "Brugere",
+      usersBody:
+        "Gennemgaa konti og styr hvem der har almindelig admin-adgang. Superadmin-konti styres separat og kan ikke aendres fra denne side.",
       homeMapTitle: "Kortstyring",
       homeMapBody:
-        "Styr hvilke kommuner der vises på home map, deres prioritet og hvilke kommuner der indgår i attract mode.",
+        "Styr hvilke kommuner der vises paa home map, deres prioritet og hvilke kommuner der indgaar i attract mode.",
       securityTitle: "Sikkerhed",
       securityBody:
-        "Gennemgå de seneste sikkerhedshændelser og brug siden som første stop ved throttling, origin-fejl eller uautoriserede requests.",
+        "Gennemgaa de seneste sikkerhedshaendelser og brug siden som foerste stop ved throttling, origin-fejl eller uautoriserede requests.",
       appTextsTitle: "Systemtekster",
       appTextsBody:
-        "Ret brugerrettede frontend-tekster direkte i runtime-laget med placeholder-validering, reset til filværdi og audit logging.",
-      jobindsatsTitle: "Titeloversættelser",
+        "Ret brugerrettede frontend-tekster direkte i runtime-laget med placeholder-validering, reset til filvaerdi og audit logging.",
+      jobindsatsTitle: "Titeloversaettelser",
       jobindsatsBody:
-        "Vedligehold Jobindsats-titeloversættelser pr. sprog uden at røre versionsfilerne.",
-      open: "Åbn",
+        "Vedligehold Jobindsats-titeloversaettelser pr. sprog uden at roere versionsfilerne.",
+      open: "Aabn",
+      totalUsers: "Brugere",
+      admins: "Admins",
       visibleCount: "Synlige kommuner",
       attractCount: "Attract-kommuner",
-      securityEvents: "Seneste hændelser",
+      securityEvents: "Seneste haendelser",
       appTextOverrides: "Afviger fra fil",
-      appTextMissing: "Mangler værdi",
       appTextTotal: "Redigerbare tekster",
-      recentWindow: "Hændelsesvindue",
+      recentWindow: "Haendelsesvindue",
       titleLocales: "Sprog",
       storage: "Kilde",
     };
@@ -59,7 +64,10 @@ function dashboardCopy(locale: AppLocale) {
   return {
     title: "Admin: overview",
     intro:
-      "Use the admin home page as the entry point for map management, security, and translations. The tools are split by task instead of being crowded into one page.",
+      "Use the admin home page as the entry point for users, map management, security, and translations. The tools are split by task instead of being crowded onto one page.",
+    usersTitle: "Users",
+    usersBody:
+      "Review accounts and control who has regular admin access. Superadmin accounts are managed separately and cannot be changed from this page.",
     homeMapTitle: "Map manager",
     homeMapBody:
       "Control which municipalities appear on the home map, their priority, and which municipalities are used in attract mode.",
@@ -73,11 +81,12 @@ function dashboardCopy(locale: AppLocale) {
     jobindsatsBody:
       "Maintain Jobindsats title translations per language without editing versioned files.",
     open: "Open",
+    totalUsers: "Users",
+    admins: "Admins",
     visibleCount: "Visible municipalities",
     attractCount: "Attract municipalities",
     securityEvents: "Recent events",
     appTextOverrides: "Overrides",
-    appTextMissing: "Missing values",
     appTextTotal: "Editable texts",
     recentWindow: "Event window",
     titleLocales: "Locales",
@@ -127,15 +136,18 @@ export default async function AdminDashboardPage({ params }: AdminDashboardPageP
   const currentUser = await requireAdminUser(loginPath);
   const displayName = currentUser.name?.trim() ? currentUser.name : currentUser.email;
 
-  const [municipalities, securityEvents, appTextOverview, appTextOverrides] = await Promise.all([
+  const [municipalities, securityEvents, appTextOverview, appTextOverrides, usersOverview] =
+    await Promise.all([
       getMunicipalityHomeMapAdminRows(),
       listRecentSecurityAuditEvents(20),
       listAppTextTranslations({ locale: "da", page: 1, pageSize: 1 }),
       listAppTextTranslations({ locale: "da", page: 1, pageSize: 1, filter: "overridden" }),
+      listUsersForAdmin({ query: "", page: 1, pageSize: 100 }),
     ]);
 
   const visibleCount = municipalities.filter((municipality) => municipality.homeMap.isPrimary).length;
   const attractCount = municipalities.filter((municipality) => municipality.homeMap.useInAttractMode).length;
+  const adminCount = usersOverview.rows.filter((user) => user.role === "admin").length;
 
   return (
     <AdminShell
@@ -147,6 +159,18 @@ export default async function AdminDashboardPage({ params }: AdminDashboardPageP
       copyOverride={shellText}
     >
       <section className="grid gap-4 xl:grid-cols-2">
+        <DashboardCard
+          href={`/${locale}/admin/users`}
+          eyebrow={text.usersTitle}
+          title={text.usersTitle}
+          body={text.usersBody}
+          action={text.open}
+          metrics={[
+            { label: text.totalUsers, value: String(usersOverview.total) },
+            { label: text.admins, value: String(adminCount) },
+          ]}
+        />
+
         <DashboardCard
           href={`/${locale}/admin/home-map`}
           eyebrow={text.homeMapTitle}

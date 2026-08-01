@@ -76,9 +76,9 @@ async function main() {
     throw new Error(`No user found for ${email}.`);
   }
 
-  if (user.role === "admin" && !allowAdmin) {
+  if ((user.role === "admin" || user.role === "superadmin") && !allowAdmin) {
     throw new Error(
-      "Refusing to delete an admin account without --allow-admin. Use a named non-shared admin account review first.",
+      "Refusing to delete an admin or superadmin account without --allow-admin. Review the account carefully first.",
     );
   }
 

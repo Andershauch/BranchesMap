@@ -183,6 +183,7 @@ export const plDictionary: Dictionary = {
     errors: {
       missing_fields: "Wprowadź zarówno email, jak i hasło.",
       invalid_credentials: "Email lub hasło są nieprawidłowe.",
+      deactivated_account: "Twoje konto zostało dezaktywowane. Skontaktuj się z administratorem.",
     },
   },
   registerPage: {

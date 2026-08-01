@@ -47,3 +47,10 @@ _tmp_*
 .tmp/
 temp/
 .vercel
+tmp/
+output/
+*.code-workspace
+
+# Internal-only docs (not for a public repo)
+PROJECT_DASHBOARD.md
+docs/v1-public-launch-security-plan.md

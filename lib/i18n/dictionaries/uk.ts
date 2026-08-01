@@ -183,6 +183,7 @@ export const ukDictionary: Dictionary = {
     errors: {
       missing_fields: "Заповніть email та пароль.",
       invalid_credentials: "Невірний email або пароль.",
+      deactivated_account: "Ваш обліковий запис деактивовано. Зверніться до адміністратора.",
     },
   },
   registerPage: {

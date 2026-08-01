@@ -1,14 +1,10 @@
 import "server-only";
 
-import { getCurrentAdminUser } from "@/lib/server/auth";
-import { getConfiguredAdminEmails } from "@/lib/server/auth-config";
+import { getCurrentAdminUser, getCurrentSuperAdminUser } from "@/lib/server/auth";
+import { hasSuperAdminAccount } from "@/lib/server/users";
 
-function hasConfiguredAdminUsers() {
-  return getConfiguredAdminEmails().length > 0;
-}
-
-export function isAdminConfigured() {
-  return hasConfiguredAdminUsers();
+export async function isAdminConfigured() {
+  return hasSuperAdminAccount();
 }
 
 export async function isAdminAuthenticated() {
@@ -19,5 +15,16 @@ export async function requireAdminAuth() {
   const authenticated = await isAdminAuthenticated();
   if (!authenticated) {
     throw new Error("Admin authentication required.");
+  }
+}
+
+export async function isSuperAdminAuthenticated() {
+  return Boolean(await getCurrentSuperAdminUser());
+}
+
+export async function requireSuperAdminAuth() {
+  const authenticated = await isSuperAdminAuthenticated();
+  if (!authenticated) {
+    throw new Error("Superadmin authentication required.");
   }
 }

@@ -138,21 +138,21 @@ export async function loginAction(formData: FormData) {
   }
 
   const user = await authenticateUser({ email, password });
-  if (!user) {
+  if (!user.ok) {
     await consumeAuthFailureLimit("auth-login-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
       entityType: "User",
       metadata: {
         flow: "login",
-        reason: "invalid_credentials",
+        reason: user.reason,
         email,
         ip: clientIp,
       },
     });
     redirect(
       withParams(`/${locale}/login`, {
-        error: "invalid_credentials",
+        error: user.reason,
         redirectTo,
         followMunicipality,
       }),
@@ -160,25 +160,25 @@ export async function loginAction(formData: FormData) {
   }
 
   await recordAuditEvent({
-    userId: user.id,
+    userId: user.user.id,
     action: "auth.login",
     entityType: "User",
-    entityId: user.id,
+    entityId: user.user.id,
     metadata: { locale },
   });
 
   let finalRedirect = redirectTo;
 
   if (followMunicipality) {
-    const followResult = await followMunicipalitySearch({
-      userId: user.id,
+      const followResult = await followMunicipalitySearch({
+      userId: user.user.id,
       municipalitySlug: followMunicipality,
       locale,
     });
 
     if (followResult.ok) {
-      await recordAuditEvent({
-        userId: user.id,
+        await recordAuditEvent({
+        userId: user.user.id,
         action: followResult.created ? "search_follow.create" : followResult.reactivated ? "search_follow.reactivate" : "search_follow.duplicate",
         entityType: "SearchFollow",
         entityId: followResult.follow.id,

@@ -6,7 +6,13 @@ import { getDictionarySync } from "@/lib/i18n/dictionaries";
 import type { Dictionary } from "@/lib/i18n/schema";
 import { logoutAction } from "@/lib/server/auth-actions";
 
-type AdminSection = "dashboard" | "home-map" | "security" | "app-texts" | "jobindsats-titles";
+type AdminSection =
+  | "dashboard"
+  | "users"
+  | "home-map"
+  | "security"
+  | "app-texts"
+  | "jobindsats-titles";
 
 type AdminShellProps = {
   locale: AppLocale;
@@ -29,6 +35,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const text = copyOverride ?? getDictionarySync(locale).adminHomeMap;
   const navDashboard = locale === "da" ? "Overblik" : "Overview";
+  const navUsers = locale === "da" ? "Brugere" : "Users";
   const navHomeMap = text.navHomeMap ?? (locale === "da" ? "Kortstyring" : "Map manager");
   const navSecurity = text.navSecurity ?? (locale === "da" ? "Sikkerhed" : "Security");
   const navAppTexts = text.navAppTexts ?? (locale === "da" ? "Systemtekster" : "System texts");
@@ -38,6 +45,11 @@ export function AdminShell({
       key: "dashboard" as const,
       href: `/${locale}/admin`,
       label: navDashboard,
+    },
+    {
+      key: "users" as const,
+      href: `/${locale}/admin/users`,
+      label: navUsers,
     },
     {
       key: "home-map" as const,

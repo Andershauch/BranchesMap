@@ -5,19 +5,19 @@ declare module "next-auth" {
     user: DefaultSession["user"] & {
       id: string;
       locale: string;
-      role: "user" | "admin";
+      role: "user" | "admin" | "superadmin";
     };
   }
 
   interface User {
     locale: string;
-    role: "user" | "admin";
+    role: "user" | "admin" | "superadmin";
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     locale?: string;
-    role?: "user" | "admin";
+    role?: "user" | "admin" | "superadmin";
   }
 }

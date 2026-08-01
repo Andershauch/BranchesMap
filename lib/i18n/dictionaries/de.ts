@@ -183,6 +183,7 @@ export const deDictionary: Dictionary = {
     errors: {
       missing_fields: "Bitte fülle E-Mail und Passwort aus.",
       invalid_credentials: "E-Mail oder Passwort ist inkorrekt.",
+      deactivated_account: "Dein Konto wurde deaktiviert. Kontaktiere eine Administratorin oder einen Administrator.",
     },
   },
   registerPage: {
