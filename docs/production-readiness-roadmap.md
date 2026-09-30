@@ -9,22 +9,22 @@ Planen er opdelt i faser, så vi kan levere og godkende én risikogruppe ad gang
 
 - **Fase 0 er gennemført:** Brugeren er ansvarlig og har adgang til Vercel Preview (staging).
 - Det lokale Vercel-link peger på projektet `branches-map`.
-- Seneste Vercel-deployment, som blev set, fejlede 2026-08-01 (`npm run build` afsluttede med fejl); seneste READY-deployment var fra 2026-04-20. Der er endnu ingen aktiv, vedvarende Preview-branch/URL til staging.
+- Git-branchen `staging` er pushed. Commit `e85bb661` har en READY Vercel Preview-deployment på [staging-URL'en](https://branches-map-git-staging-andershauchs-projects.vercel.app). Login-siden returnerede HTTP 200, og deploymentens `/api/jobs` returnerede LSK13-data for 2026K2.
 - Vercel Preview er projektets stagingmiljø. Preview bruger nu sin egen krypterede `DATABASE_URL`, rettet mod Neon-branch `staging`; Production beholder sin eksisterende `DATABASE_URL`. Preview har også separate `AUTH_SECRET` og `FOLLOW_CHECK_SECRET`. `APP_BASE_URL` er fortsat fælles, men appen bruger Vercels branch-URL automatisk for Preview. De resterende fælles miljøvariabler skal vurderes før staging åbnes for flere brugere.
-- Vercel target-listen viser Production (`main`), Preview (alle ikke-main-branches) og Development. Der er endnu ingen staging-branch i Git. Custom environments er ikke tilgængelige på planen, men Preview fungerer som staging. Vercel CLI er autoriseret; Neon CLI er installeret og autentificeret.
+- Vercel target-listen viser Production (`main`), Preview (alle ikke-main-branches) og Development. Custom environments er ikke tilgængelige på planen, men Preview fungerer som staging. Vercel CLI er autoriseret; Neon CLI er installeret og autentificeret.
 - Neon-branch `staging` er oprettet schema-only fra projektets production-branch. Den har ingen kopierede produktionsrækker og er `ready`. Neon MCP-forbindelsen er fortsat unscoped; Neon CLI-adgangen virker.
-- Fase 2 er påbegyndt: databasefri unit/API-kontrakttests, CI-workflow og lokalt pre-push-hook er tilføjet. Hooket er aktiveret i denne lokale clone. Databaseflows og browserbaserede E2E-tests mangler fortsat.
+- Fase 2: 22 databasefri unit/API-kontrakttests, CI-workflow og lokalt pre-push-hook er på plads. Hooket er aktiveret i denne lokale clone. GitHub Actions-run `36760594760` bestod efter push. Databaseflows og browserbaserede E2E-tests mangler fortsat.
 - GitHub-workflowen validerer Prisma, typer, lint, unit tests og production build mod en isoleret PostgreSQL-service. Den eksisterende `jobindsats-daily.yml` er fortsat separat.
-- Jobindsats v3 og StatBank LSK13 er opdateret i kildekoden, men ændringerne er ikke deployet. Den fulde Jobindsats-import er ikke kørt mod databasen.
+- Jobindsats v3 og StatBank LSK13 er deployet til Preview og `/api/jobs` blev verificeret. Login-siden svarer, men login kan ikke verificeres, fordi stagingdatabasen er tom. Den fulde Jobindsats-import er ikke kørt mod stagingdatabasen.
 - Lokale databasebaserede API-kald kunne ikke verificeres fra reviewmiljøet, fordi Postgres-forbindelsen blev afvist (`EACCES`).
 - `npm audit` viste fire high findings i Prisma-afhængighedsgrafen. Den automatiske løsning foreslog en major-versionstilbagegang og blev ikke anvendt.
 
 ## Næste arbejdsskridt
 
-1. Brug Vercel Preview som staging; alle Preview-deployments deler nu en isoleret Neon staging-database.
-2. Træk test/CI-fasen frem, så kvalitetsgates er på plads før næste push til GitHub.
-3. Opret og push en vedvarende `staging` Git-branch efter CI-gates er på plads; verificér deployment og miljøvariabler uden at eksponere hemmeligheder.
-4. Undersøg den fejlede Vercel-build fra 2026-08-01, deploy API-kodeændringerne til staging, kør importen mod stagingdatabasen, og gennemfør fase 1's datakontroller.
+1. Kør den fulde Jobindsats-import mod Neon `staging`, og kontrollér kommunedækning, perioder, genkørsel og upsert-resultater.
+2. Bootstrap en staging-superadmin og test login, invitationer og rollegrænser; stagingdatabasen indeholder endnu ingen brugere.
+3. Tilføj databaseintegrationstests og browserbaserede E2E-tests for login, admin og kioskflow.
+4. Gennemfør fase 1's datakontroller og undersøg de resterende fælles Preview-miljøvariabler før flere brugere får adgang.
 
 ## Fase 0 — Gør release-miljøet klar
 

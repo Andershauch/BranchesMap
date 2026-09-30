@@ -41,6 +41,13 @@ Official references: [Jobindsats v3 guide](https://jobindsats.dk/api/kom-i-gang/
 
 ## Verification
 
+### Staging follow-up after the source review
+
+- Pushed commit `e85bb661` to Git branch `staging`; Vercel Preview reached `READY` at [the staging URL](https://branches-map-git-staging-andershauchs-projects.vercel.app). Production `main` was not changed.
+- GitHub Actions CI run `36760594760` passed. The local pre-push hook also passed Prisma validation, typecheck, lint, all 22 tests and the production build.
+- The Danish login page returned HTTP 200 with security headers. `/api/jobs` returned HTTP 200 with LSK13 data for 2026K2. Staging login remains unverified because the schema-only Neon staging branch contains no users.
+- The full Jobindsats import, database-backed account flows and browser E2E tests remain outstanding.
+
 - `npm run lint` — passed, including encoding check.
 - `npx tsc --noEmit` — passed.
 - `npm run build` — passed with Next.js 16.3.7; 450 static pages generated.
@@ -50,7 +57,7 @@ Official references: [Jobindsats v3 guide](https://jobindsats.dk/api/kom-i-gang/
 - StatBank LSK13 metadata and Region Zealand live JSONSTAT request — passed.
 - Local `/api/jobs` returned the generic 503 response with no Prisma/database internals. The full data path could not complete because the sandbox denied the app's Postgres connection (`EACCES`).
 - `npm audit` — 4 high findings remain in the Prisma dependency graph (`prisma`, `@prisma/config`, `deepmerge-ts`, `mysql2`); no critical findings remain. npm's suggested automatic fix downgrades Prisma to 6.19.3, so that breaking downgrade was not applied. Review again when Prisma publishes a compatible fix; do not call the dependency report clean.
-- No automated test suite or end-to-end browser run was performed.
+- The original source review had no automated test suite or browser run. The follow-up added 22 unit/API-contract tests; browser E2E tests are still absent.
 
 ## Findings and release gates
 
