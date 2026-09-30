@@ -4,21 +4,19 @@ import { sjaellandMunicipalityProperties } from "@/lib/geo/sjaelland";
 import { mockMunicipalities, mockIndustryCatalog } from "@/lib/mock/poc-data";
 
 export const STATBANK_DATA_URL = "https://api.statbank.dk/v1/data";
-export const BRANCH_TABLE = "LSK01";
-export const REGION_TABLE = "LSK02";
+export const BRANCH_TABLE = "LSK13";
+export const REGION_TABLE = "LSK13";
 export const DEFAULT_FORMAT = "JSONSTAT" as const;
 export const DEFAULT_MUNICIPALITY_CODE = "0101";
 export const DEFAULT_BRANCH_SELECTION = ["*"];
 export const DEFAULT_TIME_SELECTION = ["(1)"];
-export const DEFAULT_BRANCH_VALUES = ["2", "3", "4", "5", "6-7", "8"];
 export const DEFAULT_REGION_UNIT = "LS";
 export const DEFAULT_BRANCH_UNIT = "LS";
-export const DEFAULT_SIZE = "000";
 const REQUEST_TIMEOUT_MS = 10000;
 const DANISH_AREA_LABEL = "Omrade";
 const DANISH_AREA_LABEL_UNICODE = "Omr\u00E5de";
 const ESTIMATION_NOTE =
-  "Danmarks Statistik stiller aktuelt ledige stillinger til raadighed fordelt paa brancher (LSK01) og regioner (LSK02), men ikke pr. kommune og branche i samme tabel. Kommunelag er derfor et tydeligt markeret estimat, skaleret til den nuvaerende reference model.";
+  "Danmarks Statistik offentliggør ledige stillinger efter region og DB25-branche i LSK13, men ikke pr. kommune. Kommunetallet er derfor et tydeligt markeret estimat, skaleret med den nuvaerende reference model.";
 const FALLBACK_INDUSTRY = {
   code: "other",
   slug: "andet",
@@ -47,8 +45,11 @@ const referenceMunicipalityByCode = new Map(
   }),
 );
 const industryByCode = new Map(mockIndustryCatalog.map((industry) => [industry.code, industry]));
-const branchRowsCache = new Map<string, Promise<BranchRow[]>>();
-const regionRowsCache = new Map<string, Promise<RegionRow[]>>();
+type StatbankCacheEntry<T> = { promise: Promise<T>; expiresAt: number };
+const branchRowsCache = new Map<string, StatbankCacheEntry<BranchRow[]>>();
+const regionRowsCache = new Map<string, StatbankCacheEntry<RegionRow[]>>();
+const STATBANK_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const STATBANK_CACHE_MAX_ENTRIES = 64;
 
 type JsonStatDimension = {
   label?: string;
@@ -406,18 +407,18 @@ function flattenJsonStatDataset(dataset: JsonStatDataset) {
   return rows;
 }
 
-function mapBranchToIndustry(branchLabel: string) {
+function mapBranchToIndustry(branchCode: string, branchLabel: string) {
   const normalized = normalizeForLookup(branchLabel);
 
-  if (normalized.includes("offentlig administration") || normalized.includes("undervisning") || normalized.includes("sundhed")) {
+  if (branchCode === "PQR" || normalized.includes("offentlig administration") || normalized.includes("undervisning") || normalized.includes("sundhed")) {
     return industryByCode.get("health") ?? FALLBACK_INDUSTRY;
   }
 
-  if (normalized.includes("landbrug") || normalized.includes("skovbrug") || normalized.includes("fiskeri")) {
+  if (branchCode === "A" || normalized.includes("landbrug") || normalized.includes("skovbrug") || normalized.includes("fiskeri")) {
     return industryByCode.get("food") ?? FALLBACK_INDUSTRY;
   }
 
-  if (normalized.includes("industri") || normalized.includes("raastof") || normalized.includes("forsyning")) {
+  if (branchCode === "BCDE" || branchCode === "F" || normalized.includes("industri") || normalized.includes("raastof") || normalized.includes("forsyning")) {
     return industryByCode.get("build") ?? FALLBACK_INDUSTRY;
   }
 
@@ -425,11 +426,11 @@ function mapBranchToIndustry(branchLabel: string) {
     return industryByCode.get("build") ?? FALLBACK_INDUSTRY;
   }
 
-  if (normalized.includes("handel") || normalized.includes("transport") || normalized.includes("hotel") || normalized.includes("restauration")) {
+  if (branchCode === "GHI" || normalized.includes("handel") || normalized.includes("transport") || normalized.includes("hotel") || normalized.includes("restauration")) {
     return industryByCode.get("logistics") ?? FALLBACK_INDUSTRY;
   }
 
-  if (normalized.includes("information") || normalized.includes("kommunikation")) {
+  if (branchCode === "JK" || branchCode === "L" || branchCode === "M" || branchCode === "NO" || normalized.includes("information") || normalized.includes("kommunikation")) {
     return industryByCode.get("tech") ?? FALLBACK_INDUSTRY;
   }
 
@@ -441,7 +442,7 @@ function mapBranchToIndustry(branchLabel: string) {
     return industryByCode.get("tech") ?? FALLBACK_INDUSTRY;
   }
 
-  if (normalized.includes("kultur") || normalized.includes("fritid") || normalized.includes("anden service")) {
+  if (branchCode === "STUV" || normalized.includes("kultur") || normalized.includes("fritid") || normalized.includes("anden service")) {
     return industryByCode.get("tourism") ?? FALLBACK_INDUSTRY;
   }
 
@@ -452,7 +453,7 @@ function createUiBreakdown(branches: BranchRow[], referenceTotalWeight: number) 
   const aggregated = new Map<string, IndustryBreakdownEntry>();
 
   for (const branch of branches) {
-    const mappedIndustry = mapBranchToIndustry(branch.branchLabel);
+      const mappedIndustry = mapBranchToIndustry(branch.branchCode, branch.branchLabel);
     const existing = aggregated.get(mappedIndustry.code) ?? {
       industry: mappedIndustry,
       estimatedJobCount: 0,
@@ -484,10 +485,10 @@ function createUiBreakdown(branches: BranchRow[], referenceTotalWeight: number) 
 function buildBranchRows(rows: FlatJsonStatRow[]) {
   const result = rows
     .map((row) => {
-      const branch = row.dimensions.BRANCHE;
+      const branch = row.dimensions.BRANCHEDB25;
       const time = row.dimensions.Tid;
 
-      if (!branch || !time || branch.code === "0") {
+      if (!branch || !time || branch.code === "A-V") {
         return null;
       }
 
@@ -511,9 +512,10 @@ function buildRegionRows(rows: FlatJsonStatRow[]) {
   return rows
     .map((row) => {
       const region = row.dimensions.REGION;
+      const industry = row.dimensions.BRANCHEDB25;
       const time = row.dimensions.Tid;
 
-      if (!region || !time) {
+      if (!region || !industry || industry.code !== "A-V" || !time) {
         return null;
       }
 
@@ -546,22 +548,43 @@ function getRegionCodeForMunicipality(municipalityCode: string) {
 function getTimeCacheKey(locale: StatbankLocale, timeValues: string[]) {
   return `${locale}:${timeValues.join(",")}`;
 }
-function getBranchRowsForSelection(locale: StatbankLocale, timeValues: string[]) {
-  const cacheKey = getTimeCacheKey(locale, timeValues);
-  const existing = branchRowsCache.get(cacheKey);
 
-  if (existing) {
-    return existing;
+function cacheStatbankRead<T>(cache: Map<string, StatbankCacheEntry<T>>, key: string, load: () => Promise<T>) {
+  const now = Date.now();
+  const existing = cache.get(key);
+
+  if (existing && existing.expiresAt > now) {
+    cache.delete(key);
+    cache.set(key, existing);
+    return existing.promise;
   }
 
-  const pending = (async () => {
+  cache.delete(key);
+  const promise = load();
+  cache.set(key, { promise, expiresAt: now + STATBANK_CACHE_TTL_MS });
+
+  if (cache.size > STATBANK_CACHE_MAX_ENTRIES) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) cache.delete(oldestKey);
+  }
+
+  promise.catch(() => {
+    if (cache.get(key)?.promise === promise) cache.delete(key);
+  });
+
+  return promise;
+}
+
+function getBranchRowsForSelection(locale: StatbankLocale, timeValues: string[]) {
+  const cacheKey = getTimeCacheKey(locale, timeValues);
+  return cacheStatbankRead(branchRowsCache, cacheKey, async () => {
     const payload = await fetchJsonStatDataset({
       table: BRANCH_TABLE,
       locale,
       variables: [
-        { code: "BRANCHE", values: DEFAULT_BRANCH_VALUES },
+        { code: "REGION", values: ["001"] },
         { code: "ENHED", values: [DEFAULT_BRANCH_UNIT] },
-        { code: "ST\u00D8RRELSE", values: [DEFAULT_SIZE] },
+        { code: "BRANCHEDB25", values: ["*"] },
         { code: "Tid", values: timeValues },
       ],
     });
@@ -572,28 +595,19 @@ function getBranchRowsForSelection(locale: StatbankLocale, timeValues: string[])
     }
 
     return buildBranchRows(flattenJsonStatDataset(dataset));
-  })();
-
-  branchRowsCache.set(cacheKey, pending);
-  pending.catch(() => branchRowsCache.delete(cacheKey));
-  return pending;
+  });
 }
 
 function getRegionRowsForSelection(locale: StatbankLocale, regionCode: string, timeValues: string[]) {
   const cacheKey = `${getTimeCacheKey(locale, timeValues)}:${regionCode}`;
-  const existing = regionRowsCache.get(cacheKey);
-
-  if (existing) {
-    return existing;
-  }
-
-  const pending = (async () => {
+  return cacheStatbankRead(regionRowsCache, cacheKey, async () => {
     const payload = await fetchJsonStatDataset({
       table: REGION_TABLE,
       locale,
       variables: [
         { code: "REGION", values: [regionCode] },
         { code: "ENHED", values: [DEFAULT_REGION_UNIT] },
+        { code: "BRANCHEDB25", values: ["A-V"] },
         { code: "Tid", values: timeValues },
       ],
     });
@@ -604,11 +618,7 @@ function getRegionRowsForSelection(locale: StatbankLocale, regionCode: string, t
     }
 
     return buildRegionRows(flattenJsonStatDataset(dataset));
-  })();
-
-  regionRowsCache.set(cacheKey, pending);
-  pending.catch(() => regionRowsCache.delete(cacheKey));
-  return pending;
+  });
 }
 
 export function isLiveJobEstimatesEnabled() {
@@ -685,7 +695,7 @@ export async function getMunicipalityLiveJobEstimate(requested: JobsRouteRequest
       branchBreakdown: branchRows,
     },
     municipalityEstimate: {
-      basis: "National branch mix from LSK01 scaled to the current municipality reference weight.",
+      basis: "National DB25 industry mix from LSK13 scaled to the current municipality reference weight.",
       referenceTotalWeight,
       totalEstimatedJobCount,
       topIndustries,

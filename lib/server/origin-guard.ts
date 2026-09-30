@@ -25,10 +25,15 @@ function normalizeOrigin(value: string | null) {
 }
 
 export function isTrustedMutationRequest(request: NextRequest) {
-  const origin = normalizeOrigin(request.headers.get("origin"));
+  const originHeader = request.headers.get("origin");
 
-  if (!origin) {
+  if (!originHeader) {
     return true;
+  }
+
+  const origin = normalizeOrigin(originHeader);
+  if (!origin) {
+    return false;
   }
 
   return origin === getTrustedAppOrigin(request);

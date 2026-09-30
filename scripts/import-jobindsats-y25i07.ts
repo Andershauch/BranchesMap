@@ -12,7 +12,6 @@ import pg from "pg";
 import {
   JOBINDSATS_OPEN_POSITIONS_TABLE,
   JOBINDSATS_SOURCE,
-  getLatestMonthlyJobindsatsPeriod,
   normalizeJobindsatsText,
 } from "../lib/server/jobindsats-imports";
 import {
@@ -34,14 +33,13 @@ type MunicipalityScopeRow = {
 };
 
 type JobindsatsTableDetail = {
-  Period?: string[];
+  periods?: Array<{ periodtype_id: string; values?: Array<{ period_id: string }> }>;
 };
 
 type JobindsatsDataResponse = {
-  Data?: Array<{ value?: string[] } | string[]>;
+  rows?: Array<Array<string | number | null>>;
+  columns?: string[];
 };
-
-type JobindsatsRawRow = { value?: string[] } | string[];
 
 type ParsedDataRow = {
   area: string;
@@ -159,7 +157,10 @@ function buildEnglishSeedMap() {
   );
 }
 
-function parseInteger(value: string | null | undefined) {
+function parseInteger(value: string | number | null | undefined) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.trunc(value) : 0;
+  }
   const trimmed = value?.trim() ?? "";
 
   if (!trimmed) {
@@ -170,30 +171,27 @@ function parseInteger(value: string | null | undefined) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-function getRowValues(row: JobindsatsRawRow) {
-  if (Array.isArray(row)) {
-    return row;
-  }
-
-  if (Array.isArray(row?.value)) {
-    return row.value;
-  }
-
-  return [];
-}
-
 function parseDataRows(response: JobindsatsDataResponse): ParsedDataRow[] {
-  return (response.Data ?? [])
-    .map(getRowValues)
-    .filter((row) => row.length >= 5)
-    .map((row) => ({
-      area: normalizeJobindsatsText(row[0] ?? ""),
-      period: normalizeJobindsatsText(row[1] ?? ""),
-      titleLabel: row.length >= 6 ? normalizeJobindsatsText(row[2] ?? "") : null,
-      totalOpenPositions: parseInteger(row[row.length >= 6 ? 3 : 2]),
-      dailyAverageOpenPositions: parseInteger(row[row.length >= 6 ? 4 : 3]),
-      newlyPostedPositions: parseInteger(row[row.length >= 6 ? 5 : 4]),
-    }));
+  const columns = response.columns ?? [];
+  const periodIndex = columns.indexOf("Periode");
+  const areaIndex = columns.indexOf("Område");
+  const titleIndex = columns.findIndex((column) => column.toLowerCase().startsWith("stillingsbetegnelse"));
+  const totalIndex = columns.indexOf("Antal stillinger");
+  const averageIndex = columns.indexOf("Dagligt gennemsnitligt antal stillinger");
+  const newIndex = columns.indexOf("Antal nyopslåede stillinger");
+
+  if ([periodIndex, areaIndex, titleIndex, totalIndex, averageIndex, newIndex].some((index) => index < 0)) {
+    throw new Error("Jobindsats v3 returned an unexpected Y25i07 column layout.");
+  }
+
+  return (response.rows ?? []).map((row) => ({
+    area: normalizeJobindsatsText(String(row[areaIndex] ?? "")),
+    period: normalizeJobindsatsText(String(row[periodIndex] ?? "")),
+    titleLabel: normalizeJobindsatsText(String(row[titleIndex] ?? "")) || null,
+    totalOpenPositions: parseInteger(row[totalIndex]),
+    dailyAverageOpenPositions: parseInteger(row[averageIndex]),
+    newlyPostedPositions: parseInteger(row[newIndex]),
+  }));
 }
 
 async function getMunicipalityScope(prisma: PrismaClient) {
@@ -251,9 +249,9 @@ function resolveLatestPeriod(periodArg: string | null) {
     return periodArg;
   }
 
-  const latestPeriod = getLatestMonthlyJobindsatsPeriod(metadata.Period ?? []);
+  const latestPeriod = metadata.periods?.find((period) => period.periodtype_id === "M")?.values?.[0]?.period_id;
 
-  if (!latestPeriod) {
+  if (!latestPeriod || !/^\d{4}M\d{2}$/.test(latestPeriod)) {
     throw new Error(`Could not resolve latest monthly period from ${JOBINDSATS_OPEN_POSITIONS_TABLE}.`);
   }
 

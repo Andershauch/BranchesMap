@@ -1148,7 +1148,7 @@ Fase 5 er nu konkret påbegyndt som discovery- og importforberedelse mod Jobinds
 Det, der er afklaret:
 
 - vi har et gyldigt Jobindsats-token og kan kalde API'et via den dokumenterede PowerShell-klientvej
-- appens Node/Next-runtime er stadig ustabil mod upstream og har i flere forsøg returneret `403`
+- Historisk observation mod API v2: Node/Next brugte dengang det gamle raw-token-headerformat. Per 2026-09-30 er appens Node-klient migreret til v3/Bearer og live-verificeret; se `docs/jobindsats-integration-status.md`.
 - PowerShell-discovery fungerer stabilt nok til at kortlægge tabeller og bygge en importstrategi
 - hele tabelkataloget er hentet lokalt
 

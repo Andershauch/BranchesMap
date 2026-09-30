@@ -9,7 +9,7 @@ export type MunicipalityTotalJobsSource =
 export type MunicipalityTopIndustriesSource = "mock_or_db" | "mock_or_db_plus_live_estimate";
 export type MunicipalityImportedTopIndustriesSource = "jobindsats_y25i07_category_mapping";
 
-export const JOBINDSATS_MONTHLY_PERIOD_PATTERN = /^\d{4}M\d{2}$/;
+export const JOBINDSATS_MONTHLY_PERIOD_PATTERN = /^\d{4}M(?:0[1-9]|1[0-2])$/;
 
 export function compareJobindsatsPeriods(left: string, right: string) {
   return left.localeCompare(right, "en");

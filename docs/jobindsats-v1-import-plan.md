@@ -1,5 +1,14 @@
 # Jobindsats V1 Import Plan
 
+> Historical planning note. The API assumptions below were written for v2. The production implementation now targets v3; see [the current integration status](jobindsats-integration-status.md).
+
+## Status 2026-09-30
+
+- The daily batch-import architecture remains the selected design.
+- The importer, discovery script, and Node client have been migrated to API v3 and Bearer authentication.
+- Live v3 metadata and one Næstved data request returned HTTP 200. A full database import has not been run as part of this migration.
+- API v2 retirement is scheduled after 2026-09-30. Do not use the v2 field names or raw-token header in new work.
+
 ## Formaal
 
 Denne plan beskriver den foerste driftsegnede integration mod Jobindsats API'et som et dagligt importspor. Maalet er at erstatte dele af det nuvaerende estimatlag med officielle Jobindsats-tal paa kommuneniveau uden at binde UI eller app-runtime direkte til upstream API'et.
@@ -11,7 +20,7 @@ V1 boer bygges som et dagligt importjob, ikke som live-opslag i brugerens reques
 Begrundelse:
 
 - PowerShell-klienten virker stabilt lokalt mod Jobindsats
-- Node/Next-runtime er stadig ustabil med `403` i flere forsog
+- The previous Node/Next `403` observation was against v2 and its raw-token header; it is superseded by the verified v3 Bearer client.
 - data opdateres ikke minut for minut, saa et dagligt batchjob er et bedre og mere robust fit
 - appen faar et enklere og sikrere datalag, hvis Jobindsats importeres til vores egen database foerst
 

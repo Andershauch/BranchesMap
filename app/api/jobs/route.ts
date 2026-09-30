@@ -41,7 +41,6 @@ function buildErrorResponse(error: unknown) {
     {
       ok: false,
       error: "Danmarks Statistik API er midlertidigt utilgaengelig eller returnerede uventede data.",
-      details,
     },
     { status },
   );
