@@ -12,19 +12,20 @@ Planen er opdelt i faser, så vi kan levere og godkende én risikogruppe ad gang
 - Git-branchen `staging` er pushed. Commit `e85bb661` har en READY Vercel Preview-deployment på [staging-URL'en](https://branches-map-git-staging-andershauchs-projects.vercel.app). Login-siden returnerede HTTP 200, og deploymentens `/api/jobs` returnerede LSK13-data for 2026K2.
 - Vercel Preview er projektets stagingmiljø. Preview bruger nu sin egen krypterede `DATABASE_URL`, rettet mod Neon-branch `staging`; Production beholder sin eksisterende `DATABASE_URL`. Preview har også separate `AUTH_SECRET` og `FOLLOW_CHECK_SECRET`. `APP_BASE_URL` er fortsat fælles, men appen bruger Vercels branch-URL automatisk for Preview. De resterende fælles miljøvariabler skal vurderes før staging åbnes for flere brugere.
 - Vercel target-listen viser Production (`main`), Preview (alle ikke-main-branches) og Development. Custom environments er ikke tilgængelige på planen, men Preview fungerer som staging. Vercel CLI er autoriseret; Neon CLI er installeret og autentificeret.
-- Neon-branch `staging` er oprettet schema-only fra projektets production-branch. Den har ingen kopierede produktionsrækker og er `ready`. Neon MCP-forbindelsen er fortsat unscoped; Neon CLI-adgangen virker.
-- Fase 2: 22 databasefri unit/API-kontrakttests, CI-workflow og lokalt pre-push-hook er på plads. Hooket er aktiveret i denne lokale clone. GitHub Actions-run `36760594760` bestod efter push. Databaseflows og browserbaserede E2E-tests mangler fortsat.
+- Neon-branch `staging` er oprettet schema-only fra projektets production-branch; ingen produktionsrækker blev kopieret. Den indeholder nu referenceseed, testkonti og JOBINDSATS-import. Neon MCP-forbindelsen er fortsat unscoped; Neon CLI-adgangen virker.
+- Fase 2: 22 databasefri unit/API-kontrakttests, CI-workflow og lokalt pre-push-hook er på plads. Hooket er aktiveret i denne lokale clone. GitHub Actions-run `36760594760` bestod efter push. Database- og rolleflows er manuelt kontrolleret mod staging; automatiske integrationstests og browserbaserede E2E-tests mangler fortsat.
 - GitHub-workflowen validerer Prisma, typer, lint, unit tests og production build mod en isoleret PostgreSQL-service. Den eksisterende `jobindsats-daily.yml` er fortsat separat.
-- Jobindsats v3 og StatBank LSK13 er deployet til Preview og `/api/jobs` blev verificeret. Login-siden svarer, men login kan ikke verificeres, fordi stagingdatabasen er tom. Den fulde Jobindsats-import er ikke kørt mod stagingdatabasen.
-- Lokale databasebaserede API-kald kunne ikke verificeres fra reviewmiljøet, fordi Postgres-forbindelsen blev afvist (`EACCES`).
+- Jobindsats v3-importen er kørt to gange mod staging for alle 43 aktive kommuner for 2026M08. Begge runs (`cmuoh0i2f0000lg61dfc84cyx`, `cmuohkivr0000vg61qi72cgi9`) er `completed`; genkørsel efterlod fortsat 43 snapshots, 293 branchekategorier og 2.009 titler. Næstved matcher live API-kontrollen: 703 stillinger, 349 dagligt gennemsnit og 355 nyopslåede. Referenceseed indeholder 43 kommuner, 129 branche-relationer og 387 demo-jobs.
+- Login-/rolleflowet er HTTP-testet med den byggede app koblet til staging: superadmin får adgang til brugeradministration; admin og almindelig bruger afvises dér; admin får adgang til almindelig admin; bruger afvises fra admin. Invitation acceptance oprettede en admin, og genbrug af token blev afvist. Preview-login er ikke kørt i en rigtig browser, og Resend-maillevering er ikke testet, fordi Preview ikke har `RESEND_API_KEY` eller en godkendt testmodtager.
+- Reviewmiljøets lokale Postgres-forbindelse blev oprindeligt afvist (`EACCES`); Neon CLI-adgangen er nu brugt til stagingkontrollerne.
 - `npm audit` viste fire high findings i Prisma-afhængighedsgrafen. Den automatiske løsning foreslog en major-versionstilbagegang og blev ikke anvendt.
 
 ## Næste arbejdsskridt
 
-1. Kør den fulde Jobindsats-import mod Neon `staging`, og kontrollér kommunedækning, perioder, genkørsel og upsert-resultater.
-2. Bootstrap en staging-superadmin og test login, invitationer og rollegrænser; stagingdatabasen indeholder endnu ingen brugere.
-3. Tilføj databaseintegrationstests og browserbaserede E2E-tests for login, admin og kioskflow.
-4. Gennemfør fase 1's datakontroller og undersøg de resterende fælles Preview-miljøvariabler før flere brugere får adgang.
+1. Sammenlign flere kommuneværdier med de officielle Jobindsats-svar; en genkørsel har allerede bekræftet stabilt snapshot-antal.
+2. Test Preview-login i rigtig browser og bekræft invitation via en Preview-specifik Resend-konfiguration og en godkendt testmodtager.
+3. Tilføj automatiske databaseintegrationstests og browserbaserede E2E-tests for login, invitationer, admin og kioskflow.
+4. Gennemgå de resterende fælles Preview-miljøvariabler og luk åbne konto-/recovery-krav før flere brugere får adgang.
 
 ## Fase 0 — Gør release-miljøet klar
 

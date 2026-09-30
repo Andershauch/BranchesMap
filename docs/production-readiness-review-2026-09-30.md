@@ -45,8 +45,10 @@ Official references: [Jobindsats v3 guide](https://jobindsats.dk/api/kom-i-gang/
 
 - Pushed commit `e85bb661` to Git branch `staging`; Vercel Preview reached `READY` at [the staging URL](https://branches-map-git-staging-andershauchs-projects.vercel.app). Production `main` was not changed.
 - GitHub Actions CI run `36760594760` passed. The local pre-push hook also passed Prisma validation, typecheck, lint, all 22 tests and the production build.
-- The Danish login page returned HTTP 200 with security headers. `/api/jobs` returned HTTP 200 with LSK13 data for 2026K2. Staging login remains unverified because the schema-only Neon staging branch contains no users.
-- The full Jobindsats import, database-backed account flows and browser E2E tests remain outstanding.
+- Neon staging schema matched Prisma. Reference seed added 43 municipalities, 129 municipality-industry relations and 387 demo jobs. The branch started without copied production rows.
+- Jobindsats Y25i07 import runs `cmuoh0i2f0000lg61dfc84cyx` and `cmuohkivr0000vg61qi72cgi9` completed for all 43 active municipalities, period `2026M08`. After the rerun, staging still contains 43 snapshots, 293 category rows and 2,009 top-title rows. Næstved matches the live API check: 703 open positions, 349 daily average and 355 newly posted. Wider municipality reconciliation remains outstanding.
+- Created staging-only test accounts at reserved `.test` addresses: superadmin, admin (through the invitation acceptance service) and regular user. Local HTTP checks against the staging database verified Auth.js credentials sessions, role claims, access to `/da/admin` and `/da/admin/users`, denial of an incorrect password, and single-use invitation acceptance.
+- The deployed Danish login page returned HTTP 200 with security headers, and deployed `/api/jobs` returned HTTP 200 with LSK13 data for 2026K2. Credential login was tested against the locally running production build with staging data, but the deployed Preview login was not exercised in a browser. Preview has no `RESEND_API_KEY`; no invitation email was sent. Invitation delivery and the browser-based end-to-end flows remain outstanding.
 
 - `npm run lint` — passed, including encoding check.
 - `npx tsc --noEmit` — passed.
