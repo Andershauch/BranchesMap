@@ -4,8 +4,17 @@ const password = "E2E-only-password-2026";
 
 async function signIn(page: import("@playwright/test").Page, email: string) {
   await page.goto("/da/login");
-  await page.locator('input[name="email"]').fill(email);
-  await page.locator('input[name="password"]').fill(password);
+  // Wait for the shared client menu to hydrate before filling a server-action form.
+  await page.getByRole("button", { name: "Menu" }).click();
+  await expect(page.getByRole("button", { name: "Luk menu" })).toBeVisible();
+  await page.getByRole("button", { name: "Luk menu" }).click();
+
+  const emailInput = page.locator('input[name="email"]');
+  const passwordInput = page.locator('input[name="password"]');
+  await emailInput.fill(email);
+  await passwordInput.fill(password);
+  await expect(emailInput).toHaveValue(email);
+  await expect(passwordInput).toHaveValue(password);
   await page.getByRole("button", { name: "Log ind" }).click();
 }
 
