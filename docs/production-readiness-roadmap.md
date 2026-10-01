@@ -15,14 +15,14 @@ Planen er opdelt i faser, så vi kan levere og godkende én risikogruppe ad gang
 - Neon-branch `staging` er oprettet schema-only fra projektets production-branch; ingen produktionsrækker blev kopieret. Den indeholder nu referenceseed, testkonti og JOBINDSATS-import. Neon MCP-forbindelsen er fortsat unscoped; Neon CLI-adgangen virker.
 - Fase 2: 22 databasefri unit/API-kontrakttests, CI-workflow og lokalt pre-push-hook er på plads. Hooket er aktiveret i denne lokale clone. GitHub Actions-run `36760594760` bestod efter push. Database- og rolleflows er manuelt kontrolleret mod staging. Automatiske databaseintegrationstests for oprettelse, login og invitation er nu tilføjet til CI; E2E-tests mangler fortsat.
 - GitHub-workflowen validerer Prisma, typer, lint, unit tests og production build mod en isoleret PostgreSQL-service. Den eksisterende `jobindsats-daily.yml` er fortsat separat.
-- Jobindsats v3-importen er kørt to gange mod staging for alle 43 aktive kommuner for 2026M08. Begge runs (`cmuoh0i2f0000lg61dfc84cyx`, `cmuohkivr0000vg61qi72cgi9`) er `completed`; genkørsel efterlod fortsat 43 snapshots, 293 branchekategorier og 2.009 titler. Næstved matcher live API-kontrollen: 703 stillinger, 349 dagligt gennemsnit og 355 nyopslåede. Referenceseed indeholder 43 kommuner, 129 branche-relationer og 387 demo-jobs.
+- Jobindsats v3-importen er kørt to gange mod staging for alle 43 aktive kommuner for 2026M08. Begge runs (`cmuoh0i2f0000lg61dfc84cyx`, `cmuohkivr0000vg61qi72cgi9`) er `completed`; genkørsel efterlod fortsat 43 snapshots, 293 branchekategorier og 2.009 titler. Live API-svar og staging stemmer nu for alle tre mål i fem kommuner (Kalundborg, Køge, Næstved, Slagelse og Sorø). Referenceseed indeholder 43 kommuner, 129 branche-relationer og 387 demo-jobs.
 - Login-/rolleflowet er HTTP-testet med den byggede app koblet til staging: superadmin får adgang til brugeradministration; admin og almindelig bruger afvises dér; admin får adgang til almindelig admin; bruger afvises fra admin. Invitation acceptance oprettede en admin, og genbrug af token blev afvist. Anders har bekræftet Preview-login i browseren 2026-10-01. Resend-maillevering er ikke testet, fordi Preview ikke har `RESEND_API_KEY` eller en godkendt testmodtager.
 - Reviewmiljøets lokale Postgres-forbindelse blev oprindeligt afvist (`EACCES`); Neon CLI-adgangen er nu brugt til stagingkontrollerne.
 - `npm audit` viste fire high findings i Prisma-afhængighedsgrafen. Den automatiske løsning foreslog en major-versionstilbagegang og blev ikke anvendt.
 
 ## Næste arbejdsskridt
 
-1. Sammenlign flere kommuneværdier med de officielle Jobindsats-svar; en genkørsel har allerede bekræftet stabilt snapshot-antal.
+1. Observer den normale planlagte import i GitHub Actions, og bekræft fejlalarm og håndtering af forældede data.
 2. Bekræft invitation via en Preview-specifik Resend-konfiguration og en godkendt testmodtager.
 3. Tilføj browserbaserede E2E-tests for login, invitationer, admin og kioskflow.
 4. Gennemgå de resterende fælles Preview-miljøvariabler og luk åbne konto-/recovery-krav før flere brugere får adgang.

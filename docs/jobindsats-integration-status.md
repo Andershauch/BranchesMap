@@ -1,6 +1,6 @@
 # Jobindsats integration status
 
-Checked: 2026-09-30. This note describes the v3 migration and the operational import path.
+Checked: 2026-10-01. This note describes the v3 integration and staging import checks.
 
 ## Current API
 
@@ -21,9 +21,20 @@ The official v3 guide says v2 is available only through 30 September 2026. The v
 - 2026-09-30: the updated Node client returned HTTP 200 for v3 subjects, filtered table groups, Y25i07 metadata, and the full relevant-table discovery pass.
 - 2026-09-30: the same metadata endpoint returned HTTP 401 when called with the v2 raw-token header, confirming that the old client header is not compatible with v3.
 - 2026-09-30: a v3 data request for Næstved and the latest month returned HTTP 200 and the expected six columns: period, area, ESCO title, open positions, daily average, and newly posted positions.
+- 2026-10-01: live v3 requests for `Y25i07`, period `2026M08`, matched the staging snapshots for all three measures in five municipalities:
+
+  | Municipality | Open positions | Daily average | Newly posted |
+  | --- | ---: | ---: | ---: |
+  | Kalundborg | 352 | 183 | 185 |
+  | Køge | 718 | 388 | 341 |
+  | Næstved | 703 | 349 | 355 |
+  | Slagelse | 770 | 423 | 330 |
+  | Sorø | 246 | 127 | 148 |
+
+- 2026-09-30: the staging import completed twice for all 43 active municipalities for `2026M08`. The rerun remained idempotent: 43 snapshots, 293 category rows, and 2,009 top-title rows.
 - 2026-09-30: v2 still returned HTTP 200 for the Y25i07 table catalogue when called with its legacy raw-token header. STAR states that v2 will be retired after 30 September, so this response is not a reason to keep the app on v2.
 - `scripts/jobindsats-discovery.ps1` and the scheduled import must use v3 and Bearer auth together; do not change one without the other.
-- The live importer writes to Postgres. A full import has not been run as part of the migration check.
+- The full import is verified on staging. The scheduled workflow itself still needs an observed run with failure notification checked.
 
 ## Import operations
 
@@ -33,10 +44,8 @@ Do not replace the existing StatBank estimate path solely because Jobindsats has
 
 ## Follow-up
 
-1. Run the scheduled import once in its normal CI environment and verify municipality coverage and period.
-2. Compare a sample of imported rows with the Jobindsats UI/API and record the import run ID.
-3. Review the workflow after the first scheduled run and alert on failure or stale data.
-4. Refresh this note when STAR changes table metadata, especially the ESCO hierarchy or yearly title values.
+1. Observe the scheduled import in its normal CI environment and verify failure notification and stale-data handling.
+2. Refresh this note when STAR changes table metadata, especially the ESCO hierarchy or yearly title values.
 
 ## Official references
 
