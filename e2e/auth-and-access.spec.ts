@@ -2,12 +2,17 @@ import { expect, test } from "@playwright/test";
 
 const password = "E2E-only-password-2026";
 
+async function waitForClientReady(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: "Menu" }).click();
+  const closeMenu = page.getByRole("button", { name: "Luk menu" }).first();
+  await expect(closeMenu).toBeVisible();
+  await closeMenu.click();
+}
+
 async function signIn(page: import("@playwright/test").Page, email: string) {
   await page.goto("/da/login");
   // Wait for the shared client menu to hydrate before filling a server-action form.
-  await page.getByRole("button", { name: "Menu" }).click();
-  await expect(page.getByRole("button", { name: "Luk menu" })).toBeVisible();
-  await page.getByRole("button", { name: "Luk menu" }).click();
+  await waitForClientReady(page);
 
   const emailInput = page.locator('input[name="email"]');
   const passwordInput = page.locator('input[name="password"]');
@@ -51,6 +56,7 @@ test("a superadmin can open user management", async ({ page }) => {
 
 test("an invited admin can accept the invitation only once", async ({ page }) => {
   await page.goto("/da/invite/e2e-invite-token-2026");
+  await waitForClientReady(page);
   await page.locator('input[name="password"]').fill("Invited-account-password-2026");
   await page.getByRole("button", { name: "Opret konto" }).click();
   await expect(page).toHaveURL(/\/da\/admin$/);
