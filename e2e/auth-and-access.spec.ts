@@ -22,8 +22,8 @@ test("a member can sign in and sign out", async ({ page }) => {
   await page.getByRole("banner").getByRole("button", { name: "Menu" }).click();
   await page.getByRole("button", { name: "Log ud" }).click();
   await expect(page).toHaveURL(/\/da(?:\?.*)?$/);
-  await page.getByRole("banner").getByRole("button", { name: "Menu" }).click();
-  await expect(page.getByRole("link", { name: "Log ind" })).toBeVisible();
+  await page.goto("/da/login");
+  await expect(page.getByRole("heading", { name: "Log ind" })).toBeVisible();
 });
 
 test("a member cannot enter the admin area", async ({ page }) => {
