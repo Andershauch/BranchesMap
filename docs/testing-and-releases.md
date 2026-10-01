@@ -25,4 +25,6 @@ Local Git hooks can be bypassed or may not be enabled in another clone. GitHub A
 
 ## Test scope
 
-The fast, database-free unit suite covers request validation, StatBank request construction and freshness rules, Jobindsats period/table normalization and title classification, same-origin mutation checks, and API security headers. Database-backed user, invitation, and importer flows still need staging integration tests before go-live.
+The fast, database-free unit suite covers request validation, StatBank request construction and freshness rules, Jobindsats period/table normalization and title classification, same-origin mutation checks, password hashing, and API security headers. GitHub Actions also runs database-backed account and invitation integration tests against its disposable PostgreSQL service. They are gated by `RUN_DB_INTEGRATION_TESTS=1` and refuse to run unless the database is local and named `branches_map_ci`.
+
+Importer database integration tests and browser-based end-to-end tests are still needed before go-live. Staging is not used by the automated integration suite.

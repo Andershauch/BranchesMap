@@ -35,6 +35,7 @@ jobs:
       AUTH_SECRET: ci-only-auth-secret-not-used-for-deployments
       APP_BASE_URL: http://localhost:3000
       ENABLE_LIVE_JOB_ESTIMATES: "false"
+      RUN_DB_INTEGRATION_TESTS: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

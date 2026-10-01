@@ -21,12 +21,14 @@ export async function createUserInvitation({
   locale,
   role,
   invitedByUserId,
+  sendEmail = sendUserInvitationEmail,
 }: {
   email: string;
   name?: string;
   locale: string;
   role: "user" | "admin";
   invitedByUserId: string;
+  sendEmail?: typeof sendUserInvitationEmail;
 }) {
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -62,7 +64,7 @@ export async function createUserInvitation({
 
   const inviteUrl = new URL(`/${locale}/invite/${rawToken}`, getTrustedAppBaseUrl()).toString();
 
-  await sendUserInvitationEmail({
+  await sendEmail({
     to: email,
     inviteUrl,
     locale,
