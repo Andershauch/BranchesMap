@@ -19,10 +19,10 @@ async function signIn(page: import("@playwright/test").Page, email: string) {
 
 test("a member can sign in and sign out", async ({ page }) => {
   await signIn(page, "member@e2e.branchesmap.test");
-  await page.getByRole("button", { name: "Menu" }).last().click();
+  await page.getByRole("banner").getByRole("button", { name: "Menu" }).click();
   await page.getByRole("button", { name: "Log ud" }).click();
   await expect(page).toHaveURL(/\/da(?:\?.*)?$/);
-  await page.getByRole("button", { name: "Menu" }).last().click();
+  await page.getByRole("banner").getByRole("button", { name: "Menu" }).click();
   await expect(page.getByRole("link", { name: "Log ind" })).toBeVisible();
 });
 
