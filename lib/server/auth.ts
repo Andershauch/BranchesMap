@@ -73,10 +73,14 @@ export async function getCurrentAdminUser() {
 }
 
 export async function requireAdminUser(redirectTo?: string) {
-  const user = await requireCurrentUser(redirectTo);
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(redirectTo ?? "/da/login");
+  }
 
   if (!isAdminUser(user)) {
-    redirect(redirectTo ?? `/${user.locale}/login`);
+    redirect(`/${user.locale}/follows`);
   }
 
   return user;
@@ -92,10 +96,14 @@ export async function getCurrentSuperAdminUser() {
 }
 
 export async function requireSuperAdminUser(redirectTo?: string) {
-  const user = await requireCurrentUser(redirectTo);
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(redirectTo ?? "/da/login");
+  }
 
   if (!isSuperAdminUser(user)) {
-    redirect(redirectTo ?? `/${user.locale}/login`);
+    redirect(isAdminUser(user) ? `/${user.locale}/admin` : `/${user.locale}/follows`);
   }
 
   return user;

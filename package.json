@@ -10,6 +10,8 @@
     "build": "npm run prebuild && npm run jobindsats:translations:compile && npm run check:encoding && next build",
     "typecheck": "tsc --noEmit",
     "test": "node --conditions=react-server --import=tsx --test",
+    "test:e2e": "playwright test",
+    "test:e2e:seed": "node --conditions=react-server --import=tsx scripts/seed-e2e.ts",
     "verify:ci": "npm run db:validate && npm run typecheck && npm run lint && npm run test && npm run build",
     "start": "next start",
     "lint": "npm run prebuild && npm run jobindsats:translations:compile && npm run check:encoding && npx eslint .",
@@ -56,6 +58,7 @@
     "simplify-js": "^1.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/d3-geo": "^3.1.0",
     "@types/node": "^20",

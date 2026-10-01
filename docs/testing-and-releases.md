@@ -27,4 +27,14 @@ Local Git hooks can be bypassed or may not be enabled in another clone. GitHub A
 
 The fast, database-free unit suite covers request validation, StatBank request construction and freshness rules, Jobindsats period/table normalization and title classification, same-origin mutation checks, password hashing, and API security headers. GitHub Actions also runs database-backed account and invitation integration tests against its disposable PostgreSQL service. They are gated by `RUN_DB_INTEGRATION_TESTS=1` and refuse to run unless the database is local and named `branches_map_ci`.
 
-Importer database integration tests and browser-based end-to-end tests are still needed before go-live. Staging is not used by the automated integration suite.
+The browser suite covers login/logout, member/admin/superadmin access boundaries, invitation acceptance and single use, and the kiosk manifest and QR handoff. GitHub Actions runs it in Chromium against a separate disposable PostgreSQL database named `branches_map_e2e`; it never connects to Neon, staging, or production. Both the browser configuration and fixture seeder reject non-loopback hosts or another database name.
+
+To run it locally, start a disposable local PostgreSQL instance with a database named `branches_map_e2e`, then set `DATABASE_URL`, `RUN_E2E_TESTS=1`, and `AUTH_SECRET` in the shell. Install the browser once with `npx playwright install chromium`, then run:
+
+```sh
+npm run db:push
+npm run test:e2e:seed
+npm run test:e2e
+```
+
+E2E fixtures use `@e2e.branchesmap.test` accounts and a test-only password. Never configure these commands with a shared or hosted database. GitHub Actions runs the browser suite on every push and pull request; require both **Verify application** and **Browser end-to-end tests** as status checks before merging changes to `main`. Staging is not used by automated tests.
