@@ -1,6 +1,6 @@
 # JOBVEJ V1 Backup and Restore Note
 
-Date: 2026-04-18
+Date: 2026-10-02
 
 ## Purpose
 
@@ -103,7 +103,9 @@ After any restore, confirm:
 
 Read-only Neon inspection on 2026-10-02 found no configured snapshot schedules for the Production or staging branches. The Production branch reports six hours of history retention (`history_retention_seconds: 21600`) on plan `free_v3`.
 
-This does not prove that no provider-managed recovery capability exists, and it does not establish how an operator would restore Production. Operations must confirm the available recovery points, retention, restore target, and procedure, then complete a restore drill in a separate branch before pilot go-live. Production settings have not been changed.
+On 2026-10-02, a restore drill succeeded from staging snapshot `before-account-verification-schema` to isolated branch `staging-restore-drill-2026-10-02`. Read-only checks confirmed that the restored branch contained the expected 43 municipalities, 387 demo jobs, 43 import snapshots, 293 industry categories, and 2,009 top titles. The snapshot had one user while current staging has two, consistent with its earlier capture time. The drill branch expires automatically on 2026-10-03 at 09:40 UTC. No Production settings or data were changed.
+
+This staging drill verifies the mechanics but does not prove the Production restore procedure or suitable retention. Operations must confirm the available Production recovery points, retention, restore target, and procedure, and agree an acceptable recovery-point objective before pilot go-live. Production settings have not been changed.
 
 ## Related documents
 
