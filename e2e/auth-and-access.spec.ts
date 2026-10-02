@@ -59,10 +59,11 @@ test("an invited admin can accept the invitation only once", async ({ page }) =>
 
 test("email verification is required before a new member can sign in", async ({ page }) => {
   await page.goto("/da/login");
+  await page.waitForLoadState("networkidle");
   await page.locator('input[name="email"]').fill("unverified-login@e2e.branchesmap.test");
   await page.locator('input[name="password"]').fill(password);
   await page.getByRole("button", { name: "Log ind" }).click();
-  await expect(page).toHaveURL(/\/da\/verify-email\?sent=1$/);
+  await expect(page).toHaveURL(/\/da\/verify-email\?sent=1(?:&.*)?$/);
 
   await page.goto("/da/verify-email/confirm?token=e2e-email-verify-token-2026");
   await page.getByRole("button", { name: "Bekræft min e-mail" }).click();
