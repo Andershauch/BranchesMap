@@ -39,7 +39,7 @@ test("a member can reset a password once using a valid reset link", async ({ pag
   await page.locator('input[name="password"]').fill("Another-password-after-reset-2026");
   await page.getByRole("button", { name: "Gem adgangskode" }).click();
   await expect(page).toHaveURL(/\/da\/reset-password\?invalid=1$/);
-  await expect(page.getByRole("alert")).toContainText("Linket er ugyldigt eller udløbet");
+  await expect(page.locator("main p[role='alert']")).toContainText("Linket er ugyldigt eller udløbet");
 });
 
 test("a member can sign in and sign out", async ({ page }) => {
