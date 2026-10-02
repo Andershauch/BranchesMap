@@ -4,6 +4,8 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import pg from "pg";
 
+import { makePostgresSslModeExplicit } from "@/lib/server/postgres-connection";
+
 const globalForPrisma = globalThis as typeof globalThis & {
   prisma?: PrismaClient;
   prismaPool?: pg.Pool;
@@ -16,7 +18,9 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is required to initialize Prisma.");
   }
 
-  const pool = globalForPrisma.prismaPool ?? new pg.Pool({ connectionString });
+  const pool =
+    globalForPrisma.prismaPool ??
+    new pg.Pool({ connectionString: makePostgresSslModeExplicit(connectionString) });
   const adapter = new PrismaPg(pool);
   const client = new PrismaClient({
     adapter,
