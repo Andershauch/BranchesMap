@@ -1,31 +1,32 @@
 # Plan for produktionsmodning
 
-Dato: 2026-09-30
+Senest opdateret: 2026-10-02
 Udgangspunkt: [produktionsreviewet](production-readiness-review-2026-09-30.md)
 
 Planen er opdelt i faser, så vi kan levere og godkende én risikogruppe ad gangen. Estimaterne er arbejdsdage for én udvikler og forudsætter adgang til staging, database og deployment. Ingen fase går videre, før dens acceptkriterier er opfyldt.
 
-## Status efter fase 0
+## Samlet status
 
 - **Fase 0 er gennemført:** Brugeren er ansvarlig og har adgang til Vercel Preview (staging).
 - Det lokale Vercel-link peger på projektet `branches-map`.
 - Git-branchen `staging` er pushed. Seneste commit `13421f6` har en READY Vercel Preview-deployment på [staging-URL'en](https://branches-map-git-staging-andershauchs-projects.vercel.app). Anders har bekræftet, at login fungerer i Preview.
 - Vercel Preview er projektets stagingmiljø. Preview bruger nu sin egen krypterede `DATABASE_URL`, rettet mod Neon-branch `staging`; Production beholder sin eksisterende `DATABASE_URL`. Preview har også separate `AUTH_SECRET` og `FOLLOW_CHECK_SECRET`. `APP_BASE_URL` er fortsat fælles, men appen bruger Vercels branch-URL automatisk for Preview. De resterende fælles miljøvariabler skal vurderes før staging åbnes for flere brugere.
 - Vercel target-listen viser Production (`main`), Preview (alle ikke-main-branches) og Development. Custom environments er ikke tilgængelige på planen, men Preview fungerer som staging. Vercel CLI er autoriseret; Neon CLI er installeret og autentificeret.
-- Neon-branch `staging` er oprettet schema-only fra projektets production-branch; ingen produktionsrækker blev kopieret. Den indeholder nu referenceseed, testkonti og JOBINDSATS-import. Neon MCP-forbindelsen er fortsat unscoped; Neon CLI-adgangen virker.
-- Fase 2: 22 databasefri unit/API-kontrakttests, databaseintegrationstests for konto- og invitationsflows, CI-workflow og lokalt pre-push-hook er på plads. Hooket er aktiveret i denne lokale clone. GitHub Actions-run `36910078290` bestod med 23 tests og 0 spring over. Database- og rolleflows er også manuelt kontrolleret mod staging; browserbaserede E2E-tests mangler fortsat.
+- Neon-branch `staging` er oprettet schema-only fra projektets production-branch; ingen produktionsrækker blev kopieret. Den indeholder nu referenceseed, testkonti og JOBINDSATS-import. Neon-projekt-id er `silent-dust-44318314`, staging-branch-id er `br-cool-silence-amnxin33`; Neon-værktøjer kræver, at disse id'er angives eksplicit.
+- **Fase 2 er gennemført:** Unit-/API-kontrakttests, databaseintegrationstests, CI-workflow, lokalt pre-push-hook og seks Playwright E2E-tests for login/logout, roller, invitation og kioskflow er på plads. GitHub Actions-run `36917515499` bestod både **Verify application** og **Browser end-to-end tests**. `main` er beskyttet: PR er påkrævet, begge checks skal bestå, admin er omfattet, og force-push/sletning er slået fra.
 - GitHub-workflowen validerer Prisma, typer, lint, unit- og integrationstests samt production build mod en isoleret PostgreSQL-service. Den daglige import bruger repository-level secrets og er derfor nu begrænset til `main`; staging skal have særskilte GitHub Environment-secrets, før workflowet kan køres dér.
 - Jobindsats v3-importen er kørt to gange mod staging for alle 43 aktive kommuner for 2026M08. Begge runs (`cmuoh0i2f0000lg61dfc84cyx`, `cmuohkivr0000vg61qi72cgi9`) er `completed`; genkørsel efterlod fortsat 43 snapshots, 293 branchekategorier og 2.009 titler. Live API-svar og staging stemmer nu for alle tre mål i fem kommuner (Kalundborg, Køge, Næstved, Slagelse og Sorø). Referenceseed indeholder 43 kommuner, 129 branche-relationer og 387 demo-jobs.
 - Login-/rolleflowet er HTTP-testet med den byggede app koblet til staging: superadmin får adgang til brugeradministration; admin og almindelig bruger afvises dér; admin får adgang til almindelig admin; bruger afvises fra admin. Invitation acceptance oprettede en admin, og genbrug af token blev afvist. Anders har bekræftet Preview-login i browseren 2026-10-01. Resend-maillevering er ikke testet, fordi Preview ikke har `RESEND_API_KEY` eller en godkendt testmodtager.
-- Reviewmiljøets lokale Postgres-forbindelse blev oprindeligt afvist (`EACCES`); Neon CLI-adgangen er nu brugt til stagingkontrollerne.
-- `npm audit` viste fire high findings i Prisma-afhængighedsgrafen. Den automatiske løsning foreslog en major-versionstilbagegang og blev ikke anvendt.
+- Lokale buildprocesser kan ikke altid nå Neon eller StatBank fra dette køremiljø (`EACCES`). Neon CLI og Neon-værktøjet kan bruges til særskilte stagingkontroller; GitHub CI bruger fortsat isoleret Postgres og live-estimater slået fra.
+- `npm audit` viste 2026-10-02 ingen kendte advisories efter midlertidige npm-overrides af `deepmerge-ts` til `8.0.1` og `mysql2` til `3.23.1`; Prisma er fortsat `7.10.0`. Overrides skal genvurderes og fjernes, når Prisma selv bruger rettede versioner.
 
 ## Næste arbejdsskridt
 
-1. Observer den normale planlagte import i GitHub Actions, og bekræft fejlalarm og håndtering af forældede data.
-2. Bekræft invitation via en Preview-specifik Resend-konfiguration og en godkendt testmodtager.
-3. Tilføj browserbaserede E2E-tests for login, invitationer, admin og kioskflow.
-4. Gennemgå de resterende fælles Preview-miljøvariabler og luk åbne konto-/recovery-krav før flere brugere får adgang.
+1. **Fase 3 starter med en produktbeslutning:** Skal borgerkonti kunne oprettes offentligt, eller skal piloten være invitation-only? Beslutningen afgør e-mailverifikation og recovery-flow.
+2. Når kontopolitikken er valgt, gennemfør recovery/sletning og administratorbeskyttelse, og verificér invitation via Preview-specifik Resend-konfiguration og en godkendt testmodtager.
+3. **Fase 4:** Gennemgå de midlertidige dependency-overrides ved Prisma-opgraderinger, Preview-miljøvariabler, sikkerhedshændelser/alarmer, backup/restore og rollback.
+4. Observer den normale planlagte import i GitHub Actions, og bekræft fejlalarm og håndtering af forældede data.
+5. **Fase 5:** Mål mobil-/kioskperformance og p50/p95 for API og database på staging, før belastningstest og go/no-go.
 
 ## Fase 0 — Gør release-miljøet klar
 
@@ -104,11 +105,10 @@ Dette er den første kodefase. Testene skal bygges sammen med hver funktion, ikk
 ## Foreslået rækkefølge
 
 1. Fase 0: staging/database/adgang og ejerskab — gennemført.
-2. Fase 2 (trukket frem): test-suite og påkrævede GitHub-gates før næste push.
-3. Vercel Preview (staging) med den separate Neon staging-database; opret den vedvarende Git-branch efter CI-gates.
-4. Fase 1: deploy og verificér API-/importændringer på staging.
-5. Fase 3: vælg og implementér kontopolitik.
-6. Fase 4: sikkerhed og driftskontroller.
-7. Fase 5: performancebaseret pilot og go-live-beslutning.
+2. Fase 1: API-/importændringer verificeret på staging; normal planlagt drift og alarmhåndtering observeres fortsat.
+3. Fase 2: test-suite, pre-push-hook, E2E og beskyttet `main` med påkrævede CI-checks — gennemført.
+4. Fase 3: vælg og implementér kontopolitik samt account recovery.
+5. Fase 4: luk eller dokumentér sikkerheds- og driftsrisici; genvurder de midlertidige Prisma-overrides ved næste relevante opgradering.
+6. Fase 5: performancebaseret pilot og go-live-beslutning.
 
 En fase kan godt opdeles i små pull requests. Vi bør ikke aktivere brugerkonti bredt eller kalde løsningen produktionsklar, før faserne 1–4 er godkendt, og fase 5 har en dokumenteret go/no-go.

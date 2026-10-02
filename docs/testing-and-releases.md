@@ -19,7 +19,7 @@ This repository includes a Git pre-push hook. It is enabled in this local clone.
 git config core.hooksPath .githooks
 ```
 
-The hook runs the same `npm run verify:ci` gate before Git sends refs. GitHub Actions runs the gate on every push and pull request as a second check. Require the **Verify application** status check in GitHub branch protection before merging changes to `main`.
+The hook runs the same `npm run verify:ci` gate before Git sends refs. GitHub Actions runs the gate on every push and pull request as a second check. The `main` branch requires pull requests and both **Verify application** and **Browser end-to-end tests** checks before merge, including for administrators.
 
 Local Git hooks can be bypassed or may not be enabled in another clone. GitHub Actions therefore remains the shared verification record; branch protection is needed to require a passing result before merge.
 
