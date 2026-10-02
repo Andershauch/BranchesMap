@@ -26,10 +26,11 @@ after(async () => cleanup?.());
 
 test("database-backed account and invitation flows", { skip: !enabled }, async () => {
   assertSafeIntegrationDatabase();
-  const [{ prisma }, users, invitations] = await Promise.all([
+  const [{ prisma }, users, invitations, accountTokens] = await Promise.all([
     import("@/lib/server/prisma"),
     import("@/lib/server/users"),
     import("@/lib/server/user-invitations"),
+    import("@/lib/server/account-tokens"),
   ]);
   cleanup = async () => {
     await prisma.user.deleteMany({ where: { email: { in: fixtureEmails } } });
@@ -68,7 +69,47 @@ test("database-backed account and invitation flows", { skip: !enabled }, async (
   assert.equal(registration.user.email, memberEmail);
   assert.equal(registration.user.role, "user");
   assert.equal((await users.authenticateUser({ email: memberEmail, password: "wrong-password" })).ok, false);
+  assert.deepEqual(await users.authenticateUser({ email: memberEmail, password: "integration-member-password" }), {
+    ok: false,
+    reason: "email_not_verified",
+  });
+
+  let verificationUrl: string | undefined;
+  await accountTokens.createEmailVerificationRequest({
+    userId: registration.user.id,
+    email: registration.user.email,
+    locale: "da",
+    sendEmail: async ({ verificationUrl: url }) => { verificationUrl = url; },
+  });
+  assert.ok(verificationUrl);
+  const verificationToken = new URL(verificationUrl).searchParams.get("token");
+  assert.ok(verificationToken);
+  const storedVerification = await prisma.userActionToken.findFirst({ where: { userId: registration.user.id, purpose: "email_verification" } });
+  assert.ok(storedVerification);
+  assert.notEqual(storedVerification.tokenHash, verificationToken, "database stores only a hash of the verification token");
+  assert.equal((await accountTokens.verifyEmailAddress(verificationToken)).ok, true);
+  assert.equal((await accountTokens.verifyEmailAddress(verificationToken)).ok, false, "verification token is single-use");
   assert.equal((await users.authenticateUser({ email: ` ${memberEmail.toUpperCase()} `, password: "integration-member-password" })).ok, true);
+
+  let resetUrl: string | undefined;
+  await accountTokens.requestPasswordReset({
+    email: memberEmail,
+    locale: "da",
+    sendEmail: async ({ resetUrl: url }) => { resetUrl = url; },
+  });
+  assert.ok(resetUrl);
+  const resetToken = new URL(resetUrl).searchParams.get("token");
+  assert.ok(resetToken);
+  const beforeReset = await prisma.user.findUniqueOrThrow({ where: { id: registration.user.id }, select: { sessionVersion: true } });
+  const storedReset = await prisma.userActionToken.findFirst({ where: { userId: registration.user.id, purpose: "password_reset" } });
+  assert.ok(storedReset);
+  assert.notEqual(storedReset.tokenHash, resetToken, "database stores only a hash of the reset token");
+  assert.deepEqual(await accountTokens.resetPassword({ token: resetToken, password: "integration-member-password-reset" }), { ok: true });
+  assert.deepEqual(await accountTokens.resetPassword({ token: resetToken, password: "integration-member-password-reset" }), { ok: false, reason: "invalid_token" });
+  const afterReset = await prisma.user.findUniqueOrThrow({ where: { id: registration.user.id }, select: { sessionVersion: true } });
+  assert.equal(afterReset.sessionVersion, beforeReset.sessionVersion + 1);
+  assert.equal((await users.authenticateUser({ email: memberEmail, password: "integration-member-password" })).ok, false);
+  assert.equal((await users.authenticateUser({ email: memberEmail, password: "integration-member-password-reset" })).ok, true);
 
   let inviteUrl: string | undefined;
   const invitation = await invitations.createUserInvitation({

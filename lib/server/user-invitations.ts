@@ -127,6 +127,7 @@ export async function acceptUserInvitation({
       data: {
         email: invitation.email,
         passwordHash: hashPassword(password),
+        emailVerifiedAt: new Date(),
         name: invitation.name,
         locale: invitation.locale,
         role: invitation.role,

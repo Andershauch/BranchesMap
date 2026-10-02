@@ -26,6 +26,9 @@ const fixtures = [
 const fixturePassword = "E2E-only-password-2026";
 const invitationEmail = "invited-admin@e2e.branchesmap.test";
 const invitationToken = "e2e-invite-token-2026";
+const pendingEmail = "pending-verify@e2e.branchesmap.test";
+const blockedLoginEmail = "unverified-login@e2e.branchesmap.test";
+const verificationToken = "e2e-email-verify-token-2026";
 
 async function main() {
   const passwordHash = hashPassword(fixturePassword);
@@ -34,12 +37,33 @@ async function main() {
   for (const fixture of fixtures) {
     const user = await prisma.user.upsert({
       where: { email: fixture.email },
-      update: { name: fixture.name, passwordHash, locale: "da", role: fixture.role, isActive: true },
-      create: { ...fixture, passwordHash, locale: "da", isActive: true },
+      update: { name: fixture.name, passwordHash, locale: "da", role: fixture.role, isActive: true, emailVerifiedAt: new Date() },
+      create: { ...fixture, passwordHash, locale: "da", isActive: true, emailVerifiedAt: new Date() },
       select: { id: true },
     });
     users.set(fixture.role, user.id);
   }
+
+  const pendingUser = await prisma.user.upsert({
+    where: { email: pendingEmail },
+    update: { name: "E2E Pending Member", passwordHash, locale: "da", role: "user", isActive: true, emailVerifiedAt: null },
+    create: { email: pendingEmail, name: "E2E Pending Member", passwordHash, locale: "da", role: "user", isActive: true },
+    select: { id: true },
+  });
+  await prisma.user.upsert({
+    where: { email: blockedLoginEmail },
+    update: { name: "E2E Unverified Login", passwordHash, locale: "da", role: "user", isActive: true, emailVerifiedAt: null },
+    create: { email: blockedLoginEmail, name: "E2E Unverified Login", passwordHash, locale: "da", role: "user", isActive: true },
+  });
+  await prisma.userActionToken.deleteMany({ where: { userId: pendingUser.id, purpose: "email_verification" } });
+  await prisma.userActionToken.create({
+    data: {
+      userId: pendingUser.id,
+      purpose: "email_verification",
+      tokenHash: createHash("sha256").update(verificationToken).digest("hex"),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    },
+  });
 
   await prisma.user.deleteMany({ where: { email: invitationEmail } });
   await prisma.userInvitation.deleteMany({ where: { email: invitationEmail } });

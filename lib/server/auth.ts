@@ -19,6 +19,7 @@ export type AuthUser = {
   name: string | null;
   locale: string;
   role: "user" | "admin" | "superadmin";
+  sessionVersion: number;
 };
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
@@ -38,10 +39,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       locale: true,
       role: true,
       isActive: true,
+      sessionVersion: true,
     },
   });
 
-  if (!currentUser?.isActive) {
+  if (!currentUser?.isActive || currentUser.sessionVersion !== user.sessionVersion) {
     return null;
   }
 
@@ -51,6 +53,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     name: currentUser.name ?? null,
     locale: currentUser.locale,
     role: currentUser.role,
+    sessionVersion: currentUser.sessionVersion,
   };
 }
 

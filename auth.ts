@@ -60,6 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: result.user.name,
           locale: result.user.locale,
           role: result.user.role,
+          sessionVersion: result.user.sessionVersion,
         };
       },
     }),
@@ -71,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.name = user.name;
         token.locale = user.locale;
         token.role = user.role;
+        token.sessionVersion = user.sessionVersion;
       }
 
       return token;
@@ -86,6 +88,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.locale = typeof token.locale === "string" ? token.locale : "da";
       session.user.role =
         token.role === "superadmin" ? "superadmin" : token.role === "admin" ? "admin" : "user";
+      session.user.sessionVersion = typeof token.sessionVersion === "number" ? token.sessionVersion : 0;
 
       return session;
     },

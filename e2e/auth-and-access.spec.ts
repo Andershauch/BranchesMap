@@ -57,6 +57,19 @@ test("an invited admin can accept the invitation only once", async ({ page }) =>
   await expect(page.getByText(/Invitationen er ugyldig/)).toBeVisible();
 });
 
+test("email verification is required before a new member can sign in", async ({ page }) => {
+  await page.goto("/da/login");
+  await page.locator('input[name="email"]').fill("unverified-login@e2e.branchesmap.test");
+  await page.locator('input[name="password"]').fill(password);
+  await page.getByRole("button", { name: "Log ind" }).click();
+  await expect(page).toHaveURL(/\/da\/verify-email\?sent=1$/);
+
+  await page.goto("/da/verify-email/confirm?token=e2e-email-verify-token-2026");
+  await page.getByRole("button", { name: "Bekræft min e-mail" }).click();
+  await expect(page).toHaveURL(/\/da\/login\?verified=1/);
+  await signIn(page, "pending-verify@e2e.branchesmap.test");
+});
+
 test("kiosk mode exposes the kiosk manifest and QR handoff", async ({ page }) => {
   await page.goto("/da?kiosk=1");
   await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest-kiosk.webmanifest");

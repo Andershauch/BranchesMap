@@ -112,3 +112,13 @@ Dette er den første kodefase. Testene skal bygges sammen med hver funktion, ikk
 6. Fase 5: performancebaseret pilot og go-live-beslutning.
 
 En fase kan godt opdeles i små pull requests. Vi bør ikke aktivere brugerkonti bredt eller kalde løsningen produktionsklar, før faserne 1–4 er godkendt, og fase 5 har en dokumenteret go/no-go.
+
+## Phase 3 status (2026-10-02)
+
+- Account policy selected: public citizen registration with email verification; staff through invitations; administrator accounts require a second factor or organizational SSO.
+- Email verification and password reset are implemented with hashed single-use tokens, expiration, generic responses, database-backed rate limiting, and session invalidation after password reset, deactivation, and role changes.
+- The additive account-token schema is applied to the Preview database on Neon branch `staging`, after creating snapshot `before-account-verification-schema`. The existing staging superadmin was grandfathered using its account creation time; Production remains unchanged.
+- Preview still needs separate Resend configuration and an approved test recipient before live delivery can be accepted.
+- Before Production, decide whether existing accounts are grandfathered through a reviewed one-time backfill or must verify email again. No production schema or account data has been changed.
+- Administrator MFA/SSO, token retention cleanup, password-reset E2E coverage, and translation of the new pages into all supported languages remain open.
+- See [authentication-and-account-recovery.md](authentication-and-account-recovery.md) for implementation and rollout details.
