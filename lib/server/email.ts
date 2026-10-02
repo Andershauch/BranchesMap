@@ -13,7 +13,11 @@ function getResendClient() {
 }
 
 function getMailFromAddress() {
-  return process.env.APP_MAIL_FROM?.trim() || "JOBVEJ <onboarding@resend.dev>";
+  return (
+    process.env.MAIL_FROM?.trim() ||
+    process.env.APP_MAIL_FROM?.trim() ||
+    "JOBVEJ <onboarding@resend.dev>"
+  );
 }
 
 async function sendAccountLinkEmail({
@@ -36,6 +40,7 @@ async function sendAccountLinkEmail({
   const { error } = await resend.emails.send({
     from: getMailFromAddress(),
     to: [to],
+    replyTo: process.env.MAIL_REPLY_TO?.trim() || undefined,
     subject,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f172a">

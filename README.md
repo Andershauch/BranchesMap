@@ -51,7 +51,8 @@ Kritiske produktionsvariabler:
 - `AUTH_SECRET` til signerede sessioner
 - `SUPERADMIN_SETUP_SECRET` til engangs-setup af første superadmin
 - `RESEND_API_KEY` til invitationsmails
-- `APP_MAIL_FROM` som afsenderadresse for invitationsmails
+- `MAIL_FROM` som afsenderadresse for transaktionsmails
+- `MAIL_REPLY_TO` som valgfri svaradresse for transaktionsmails
 - `FOLLOW_CHECK_SECRET` til operationel adgang til follow-check endpointet
 - `JOBINDSATS_API_TOKEN` til import af Jobindsats-data
 

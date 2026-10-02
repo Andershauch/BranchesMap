@@ -18,7 +18,7 @@ The verification and reset requests use distributed database rate limits and gen
 
 ## Required configuration and deployment
 
-Preview must have its own `RESEND_API_KEY` and `APP_MAIL_FROM`. The sender domain must be verified in Resend. Use an approved test mailbox to verify registration, resend, invitation, and reset delivery. Do not use a production mailbox or production Resend key for Preview.
+Preview must have its own `RESEND_API_KEY` and `MAIL_FROM`; `MAIL_REPLY_TO` is optional. The sender domain must be verified in Resend. Use an approved test mailbox to verify registration, resend, invitation, and reset delivery. Do not use a production mailbox or production Resend key for Preview.
 
 The additive Prisma schema change is applied to the Preview database `neondb` on Neon branch `staging` (2026-10-02). A Neon snapshot named `before-account-verification-schema` was created first. The one pre-existing staging superadmin was marked verified using its account creation time so the staging owner can continue signing in. Production remains untouched until rollout decisions and Preview acceptance are complete. This repository currently uses `prisma db push`, not checked-in SQL migrations. Confirm the generated schema diff and take a Neon snapshot before each environment schema change.
 
