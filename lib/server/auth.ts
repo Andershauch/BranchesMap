@@ -19,6 +19,7 @@ export type AuthUser = {
   name: string | null;
   locale: string;
   role: "user" | "admin" | "superadmin";
+  sessionVersion: number;
 };
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
@@ -38,10 +39,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       locale: true,
       role: true,
       isActive: true,
+      sessionVersion: true,
     },
   });
 
-  if (!currentUser?.isActive) {
+  if (!currentUser?.isActive || currentUser.sessionVersion !== user.sessionVersion) {
     return null;
   }
 
@@ -51,6 +53,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     name: currentUser.name ?? null,
     locale: currentUser.locale,
     role: currentUser.role,
+    sessionVersion: currentUser.sessionVersion,
   };
 }
 
@@ -73,10 +76,14 @@ export async function getCurrentAdminUser() {
 }
 
 export async function requireAdminUser(redirectTo?: string) {
-  const user = await requireCurrentUser(redirectTo);
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(redirectTo ?? "/da/login");
+  }
 
   if (!isAdminUser(user)) {
-    redirect(redirectTo ?? `/${user.locale}/login`);
+    redirect(`/${user.locale}/follows`);
   }
 
   return user;
@@ -92,10 +99,14 @@ export async function getCurrentSuperAdminUser() {
 }
 
 export async function requireSuperAdminUser(redirectTo?: string) {
-  const user = await requireCurrentUser(redirectTo);
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(redirectTo ?? "/da/login");
+  }
 
   if (!isSuperAdminUser(user)) {
-    redirect(redirectTo ?? `/${user.locale}/login`);
+    redirect(isAdminUser(user) ? `/${user.locale}/admin` : `/${user.locale}/follows`);
   }
 
   return user;

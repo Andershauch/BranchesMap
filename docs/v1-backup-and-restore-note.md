@@ -1,6 +1,6 @@
 # JOBVEJ V1 Backup and Restore Note
 
-Date: 2026-04-18
+Date: 2026-10-02
 
 ## Purpose
 
@@ -101,9 +101,13 @@ After any restore, confirm:
 
 ## Current status
 
-This note defines the restore decision model, but it does not by itself prove that the DB provider backup configuration is present.
+Read-only Neon inspection on 2026-10-02 found no configured snapshot schedules for the Production or staging branches. The Production branch reports six hours of history retention (`history_retention_seconds: 21600`) on plan `free_v3`.
 
-That final confirmation must still be provided by operations for the actual Postgres environment in use.
+On 2026-10-02, a restore drill succeeded from staging snapshot `before-account-verification-schema` to isolated branch `staging-restore-drill-2026-10-02`. Read-only checks confirmed that the restored branch contained the expected 43 municipalities, 387 demo jobs, 43 import snapshots, 293 industry categories, and 2,009 top titles. The snapshot had one user while current staging has two, consistent with its earlier capture time. The drill branch expires automatically on 2026-10-03 at 09:40 UTC. No Production settings or data were changed.
+
+Neon rejected creation of another manual snapshot with `snapshots limit exceeded`; the existing staging snapshot was left untouched and no plan or billing change was made. As a separate Production check, an isolated branch `production-restore-drill-2026-10-02` was forked from Production at LSN `0/13C4FA10` (`2026-10-02T09:19:28Z`) and set to expire automatically on 2026-10-03 at 10:00 UTC. Read-only checks on the copy returned 43 municipalities, 387 demo jobs, 258 import snapshots, 1,750 categories, 12,046 top titles, and 8 users. This confirms that Neon can create a branch from current Production state; it does not test a saved Production snapshot or a restore to an older recovery point.
+
+The staging snapshot drill and Production branch-fork check verify useful recovery mechanics but do not prove that a saved Production snapshot can be restored or establish suitable retention. The owner states Production currently has no users other than themselves and accepts the existing configuration provisionally while that remains true. Before opening the site to other users, operations must confirm Production recovery points, retention, restore target and procedure, and agree an acceptable recovery-point objective. Production settings have not been changed.
 
 ## Related documents
 

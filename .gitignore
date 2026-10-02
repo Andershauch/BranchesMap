@@ -54,3 +54,4 @@ output/
 # Internal-only docs (not for a public repo)
 PROJECT_DASHBOARD.md
 docs/v1-public-launch-security-plan.md
+.neon

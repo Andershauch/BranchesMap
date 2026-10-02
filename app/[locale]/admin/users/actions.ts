@@ -37,7 +37,7 @@ export async function createUserInvitationAction(formData: FormData) {
   const email = parseNormalizedEmail(formData.get("email"));
   const name = parseOptionalString(formData.get("name"));
   const locale = parseOptionalString(formData.get("locale")) ?? "da";
-  const role = parseEnumValue(formData.get("role"), ["user", "admin"] as const, "user");
+  const role = parseEnumValue(formData.get("role"), ["user", "admin"] as const, "user") as "user" | "admin";
   const queryValue = formData.get("query");
   const pageValue = formData.get("page");
 

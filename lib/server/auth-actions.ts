@@ -20,6 +20,7 @@ import {
 } from "@/lib/server/input-validation";
 import { recordSecurityEvent } from "@/lib/server/security-events";
 import { authenticateUser, registerUser } from "@/lib/server/users";
+import { createEmailVerificationRequest, requestEmailVerification } from "@/lib/server/account-tokens";
 
 /**
  * Server actions for login, registration, and logout flows.
@@ -139,6 +140,15 @@ export async function loginAction(formData: FormData) {
 
   const user = await authenticateUser({ email, password });
   if (!user.ok) {
+    if (user.reason === "email_not_verified") {
+      try {
+        await requestEmailVerification({ email, locale, redirectTo, followMunicipality: followMunicipality ?? undefined });
+      } catch {
+        await recordSecurityEvent({ action: "auth_verification_email_failed", entityType: "User", metadata: { flow: "login" } });
+      }
+      redirect(withParams(`/${locale}/verify-email`, { sent: "1", redirectTo, followMunicipality }));
+    }
+
     await consumeAuthFailureLimit("auth-login-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
@@ -261,6 +271,15 @@ export async function registerAction(formData: FormData) {
   });
 
   if (!result.ok) {
+    if (result.reason === "email_taken") {
+      try {
+        await requestEmailVerification({ email, locale, redirectTo, followMunicipality: followMunicipality ?? undefined });
+      } catch {
+        await recordSecurityEvent({ action: "auth_verification_email_failed", entityType: "User", metadata: { flow: "duplicate_registration" } });
+      }
+      redirect(withParams(`/${locale}/verify-email`, { sent: "1", redirectTo, followMunicipality }));
+    }
+
     await consumeAuthFailureLimit("auth-register-failure", email, requestHeaders);
     await recordSecurityEvent({
       action: "auth_failure",
@@ -283,42 +302,29 @@ export async function registerAction(formData: FormData) {
 
   await recordAuditEvent({
     userId: result.user.id,
-    action: "auth.register",
+    action: "auth.registration_requested",
     entityType: "User",
     entityId: result.user.id,
     metadata: { locale },
   });
 
-  let finalRedirect = redirectTo;
-
-  if (followMunicipality) {
-    const followResult = await followMunicipalitySearch({
+  try {
+    await createEmailVerificationRequest({
       userId: result.user.id,
-      municipalitySlug: followMunicipality,
+      email: result.user.email,
       locale,
+      redirectTo,
+      followMunicipality: followMunicipality ?? undefined,
     });
-
-    if (followResult.ok) {
-      await recordAuditEvent({
-        userId: result.user.id,
-        action: followResult.created ? "search_follow.create" : followResult.reactivated ? "search_follow.reactivate" : "search_follow.duplicate",
-        entityType: "SearchFollow",
-        entityId: followResult.follow.id,
-        metadata: { municipalitySlug: followMunicipality, via: "register" },
-      });
-      finalRedirect = withParams(finalRedirect, {
-        followed: followResult.created || followResult.reactivated ? "created" : "exists",
-      });
-    } else {
-      finalRedirect = withParams(finalRedirect, { followed: "error" });
-    }
+  } catch {
+    await recordSecurityEvent({
+      action: "auth_verification_email_failed",
+      entityType: "User",
+      metadata: { userId: result.user.id, flow: "register" },
+    });
   }
 
-  await signIn("credentials", {
-    email,
-    password,
-    redirectTo: finalRedirect,
-  });
+  redirect(withParams(`/${locale}/verify-email`, { sent: "1", redirectTo, followMunicipality }));
 }
 
 export async function logoutAction(formData: FormData) {

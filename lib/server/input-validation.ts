@@ -59,5 +59,5 @@ export function parseEnumValue<const T extends readonly string[]>(
   allowed: T,
   fallback: T[number],
 ) {
-  return typeof value === "string" && allowed.includes(value) ? value : fallback;
+  return typeof value === "string" ? allowed.find((candidate) => candidate === value) ?? fallback : fallback;
 }

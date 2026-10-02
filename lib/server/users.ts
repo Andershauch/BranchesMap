@@ -52,6 +52,7 @@ export async function registerUser({
       name: name?.trim() || null,
       locale,
       role: "user",
+      emailVerifiedAt: null,
     },
   });
 
@@ -80,6 +81,13 @@ export async function authenticateUser({ email, password }: { email: string; pas
     return {
       ok: false as const,
       reason: "invalid_credentials" as const,
+    };
+  }
+
+  if (!user.emailVerifiedAt) {
+    return {
+      ok: false as const,
+      reason: "email_not_verified" as const,
     };
   }
 
@@ -123,6 +131,8 @@ export async function createInitialSuperAdmin({
       name: name?.trim() || null,
       locale,
       role: "superadmin",
+      // The one-time setup secret is issued by the deployment owner, who selects the initial administrator.
+      emailVerifiedAt: new Date(),
     },
   });
 
@@ -304,6 +314,7 @@ export async function updateUserAdminRole({
     where: { id: targetUserId },
     data: {
       role: nextRole,
+      sessionVersion: { increment: 1 },
     },
     select: {
       id: true,
@@ -365,6 +376,7 @@ export async function updateUserActiveState({
     where: { id: targetUserId },
     data: {
       isActive,
+      sessionVersion: { increment: 1 },
     },
     select: {
       id: true,

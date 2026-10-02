@@ -49,6 +49,15 @@ function normalizeLocalHost(host: string | null) {
 }
 
 function getConfiguredBaseUrl() {
+  if (process.env.VERCEL_ENV === "preview") {
+    const previewHost = process.env.VERCEL_BRANCH_URL?.trim() || process.env.VERCEL_URL?.trim();
+    const previewBaseUrl = normalizeConfiguredBaseUrl(previewHost ? `https://${previewHost}` : null);
+
+    if (previewBaseUrl) {
+      return previewBaseUrl;
+    }
+  }
+
   return (
     normalizeConfiguredBaseUrl(process.env.APP_BASE_URL) ??
     normalizeConfiguredBaseUrl(process.env.AUTH_URL) ??

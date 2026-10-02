@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { loginAction } from "@/lib/server/auth-actions";
 import { getCurrentUser } from "@/lib/server/auth";
+import { getAccountCopy } from "@/lib/i18n/account-copy";
 import { isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
 import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 
@@ -37,6 +38,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
 
   const activeLocale = locale as AppLocale;
   const isRtl = isRtlLocale(activeLocale);
+  const accountCopy = getAccountCopy(activeLocale).login;
   const [dictionary, user] = await Promise.all([getRuntimeDictionary(activeLocale), getCurrentUser()]);
   const copy = dictionary.loginPage;
   const search = await searchParams;
@@ -50,6 +52,8 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
   const errorKey = getStringParam(search.error) as keyof typeof copy.errors | null;
   const errorMessage = errorKey ? copy.errors[errorKey] : null;
   const registerHref = `/${locale}/register?redirectTo=${encodeURIComponent(redirectTo)}${followMunicipality ? `&followMunicipality=${encodeURIComponent(followMunicipality)}` : ""}`;
+  const resetHref = `/${locale}/forgot-password`;
+  const verifiedNotice = getStringParam(search.verified) || getStringParam(search.passwordReset);
 
   return (
     <main
@@ -68,6 +72,12 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-teal-700">{copy.eyebrow}</p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{copy.title}</h1>
           <p className="mt-3 text-sm leading-6 text-slate-600">{followMunicipality ? copy.followIntro : copy.intro}</p>
+
+          {verifiedNotice ? (
+            <p role="status" className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+              {accountCopy.accountReady}
+            </p>
+          ) : null}
 
           {followMunicipality ? (
             <div className="mt-4 inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800">
@@ -96,6 +106,10 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
                 className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-start text-base text-slate-900 outline-none transition focus:border-teal-500"
               />
             </label>
+
+            <Link href={resetHref} className="justify-self-start text-sm font-semibold text-slate-700 underline underline-offset-4">
+              {accountCopy.forgotPassword}
+            </Link>
 
             <label className="grid gap-2 text-sm font-medium text-slate-700">
               {copy.password}

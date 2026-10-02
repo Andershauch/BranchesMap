@@ -12,6 +12,11 @@ enum UserRole {
   superadmin
 }
 
+enum UserActionTokenPurpose {
+  email_verification
+  password_reset
+}
+
 model Municipality {
   id               String                     @id @default(cuid())
   code             String                     @unique
@@ -167,6 +172,8 @@ model User {
   id            String         @id @default(cuid())
   email         String         @unique
   passwordHash  String?
+  emailVerifiedAt DateTime?
+  sessionVersion Int           @default(0)
   name          String?
   locale        String         @default("da")
   role          UserRole       @default(user)
@@ -177,8 +184,23 @@ model User {
   searchFollows SearchFollow[]
   auditEvents   AuditEvent[]
   invitations   UserInvitation[]
+  actionTokens  UserActionToken[]
 
   @@index([createdAt])
+}
+
+model UserActionToken {
+  id         String                 @id @default(cuid())
+  userId     String
+  purpose    UserActionTokenPurpose
+  tokenHash  String                 @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime               @default(now())
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, consumedAt])
+  @@index([expiresAt])
 }
 
 model UserInvitation {

@@ -1,123 +1,55 @@
-# Jobindsats Integration Status
+# Jobindsats integration status
 
-## Formaal
+Checked: 2026-10-01. This note describes the v3 integration and staging import checks.
 
-Denne note beskriver discovery-integrationen mod Jobindsats API v2, den aktuelle tekniske status og de naeste anbefalede skridt.
+## Current API
 
-## Hvad der er implementeret
+The integration uses Jobindsats API v3 at `https://api.jobindsats.dk/v3`.
 
-- `JOBINDSATS_API_TOKEN` er dokumenteret i `.env.example`
-- server-only klient er oprettet i `lib/server/jobindsats.ts`
-- internt discovery-endpoint er oprettet i `app/api/jobindsats/discovery/route.ts`
-- endpointet understotter:
-  - `mode=subjects`
-  - `mode=tables`
-  - `mode=table`
-  - `mode=relevant`
-- lokalt PowerShell discovery-script er oprettet i `scripts/jobindsats-discovery.ps1`
+- Authentication is `Authorization: Bearer <JOBINDSATS_API_TOKEN>`.
+- Every request specifies `format=json`.
+- Discovery uses `/subjects`, `/tables`, and `/table/<table_id>`.
+- Data uses `/data/<table_id>` with period, hierarchy and measure-group parameters.
+- The daily import uses measurement `y25i07` and imports open positions, daily average positions, and newly posted positions by municipality and ESCO title.
+- Jobindsats values are snapshots, not individual job advertisements with addresses. The app's sample job cards remain demonstration content until a separate job feed is connected.
 
-## Dokumentationskonklusioner
+STAR closed API v2 on 2026-09-30. The v3 interface changes endpoint paths, parameter names and response shape, and requires Bearer authentication. New development must target v3. STAR says existing API keys can be reused with v3, so this migration does not by itself require a new token.
 
-Ud fra Jobindsats-dokumentationen gaelder:
+## Verification performed
 
-- base URL er `https://api.jobindsats.dk/v2/`
-- auth sendes som raa token i headeren `Authorization`
-- `Bearer` er ikke dokumenteret og skal ikke bruges
-- centrale discovery-kald er:
-  - `/v2/subjects`
-  - `/v2/tables`
-  - `/v2/tables/<tableId>`
-  - `/v2/data/<tableId>`
-- PowerShell `Invoke-RestMethod` er en eksplicit dokumenteret klientvej
+- 2026-09-30: `GET /v3/table/y25i07?format=json` returned HTTP 200 with period, dimension, and measure metadata.
+- 2026-09-30: the updated Node client returned HTTP 200 for v3 subjects, filtered table groups, Y25i07 metadata, and the full relevant-table discovery pass.
+- 2026-09-30: the same metadata endpoint returned HTTP 401 when called with the v2 raw-token header, confirming that the old client header is not compatible with v3.
+- 2026-09-30: a v3 data request for Næstved and the latest month returned HTTP 200 and the expected six columns: period, area, ESCO title, open positions, daily average, and newly posted positions.
+- 2026-10-01: live v3 requests for `Y25i07`, period `2026M08`, matched the staging snapshots for all three measures in five municipalities:
 
-## Aktuel observeret adfaerd
+  | Municipality | Open positions | Daily average | Newly posted |
+  | --- | ---: | ---: | ---: |
+  | Kalundborg | 352 | 183 | 185 |
+  | Køge | 718 | 388 | 341 |
+  | Næstved | 703 | 349 | 355 |
+  | Slagelse | 770 | 423 | 330 |
+  | Sorø | 246 | 127 | 148 |
 
-Status under lokal test:
+- 2026-09-30: the staging import completed twice for all 43 active municipalities for `2026M08`. The rerun remained idempotent: 43 snapshots, 293 category rows, and 2,009 top-title rows.
+- At the time of the 2026-09-30 check, v2 still returned HTTP 200 for the Y25i07 table catalogue with its legacy raw-token header. STAR closed v2 on that date; the earlier response did not establish continuing availability.
+- `scripts/jobindsats-discovery.ps1` and the scheduled import must use v3 and Bearer auth together; do not change one without the other.
+- 2026-10-01: scheduled GitHub run `36850611108` (run 175) failed because its `main` checkout called the closed v2 endpoint with the old raw-token header. The 2026-10-02 run `36994513673` also failed on `main`. This is consistent with the retired API contract and is not evidence that the key needs rotation.
+- The v3 full import is verified on staging. Merging the staging release to `main` updates the scheduled job to v3; then observe a scheduled run and check failure notification and stale-data handling.
 
-- appens Node/Next-discovery er stadig ustabil mod Jobindsats
-- direkte kald fra Node/Next runtime har fortsat i flere forsog givet `403 Forbidden`
-- den dokumenterede PowerShell-vej virker nu stabilt via et lokalt discovery-script
+## Import operations
 
-Det betyder, at vi nu kan gennemfoere discovery og tabelvalg, selvom live server-to-server integration i app-runtime endnu ikke er robust nok.
+The daily GitHub Actions workflow runs `npm run jobindsats:daily` on Windows, then persists the mapped municipality snapshots. For a controlled check, query metadata or request one municipality into a temporary output folder before running a full import. The import is idempotent by municipality, source, table, and period.
 
-## PowerShell fallback
+Do not replace the existing StatBank estimate path solely because Jobindsats has the more recent API. The Jobindsats snapshot is a separate signal; the app must show source and period clearly and must not present aggregate counts as specific live vacancies.
 
-Det lokale discovery-script:
+## Follow-up
 
-- laeser `JOBINDSATS_API_TOKEN` fra lokal `.env`
-- bruger Jobindsats' dokumenterede `Authorization`-header
-- fjerner BOM-stoej fra svarene
-- gemmer resultater som UTF-8 uden BOM i `_tmp_jobindsats`
-- understotter:
-  - `-Mode subjects`
-  - `-Mode tables`
-  - `-Mode table -TableId <id>`
-  - `-Mode data -TableId <id>`
+1. Observe the scheduled import in its normal CI environment and verify failure notification and stale-data handling.
+2. Refresh this note when STAR changes table metadata, especially the ESCO hierarchy or yearly title values.
 
-Eksempel:
+## Official references
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/jobindsats-discovery.ps1 -Mode tables
-```
-
-## Discovery-resultat
-
-Med PowerShell-fallbacken kan vi nu hente hele tabelkataloget:
-
-- `165` tabeller fundet i `tables`
-
-En konkret relevant tabel er identificeret:
-
-- `Y25i07`: `Antal ledige stillinger paa Jobnet`
-
-Foreloebig vurdering af `Y25i07`:
-
-- tabellen har `Area`, som inkluderer kommuner som `Naestved`, `Soroe` og `Slagelse`
-- tabellen har `Period`
-- tabellen har dimensionen `_esco_uri`, dvs. stillingsbetegnelse (ESCO/STAR)
-
-Det peger paa, at Jobindsats kan levere et foerste V1-dataspor, som ligger taettere paa faktiske stillinger end vores nuvaerende estimatlag.
-
-## Implementeret V1-importfundament
-
-Det er nu implementeret:
-
-- Prisma-tabeller til importkoersler og kommune-snapshots
-- lokalt importscript for `Y25i07`
-- PowerShell-wrapper, som kan hente metadata og data stabilt
-- laeselags-integration, saa appen foretraekker importeret `totalJobs`, naar et Jobindsats-snapshot findes
-
-Lokal verifikation:
-
-- schema er pushet til den lokale Neon-database
-- `Y25i07` er importeret for `43` kommuner
-- senest importerede periode under test var `2026M03`
-
-## Vurdering
-
-Dette ligner ikke laengere en almindelig lokal kodefejl. Det ligner fortsat en upstream adgangs-, policy- eller endpoint-konfigurationsfejl hos Jobindsats for Node/Next-runtime, men ikke noedvendigvis for PowerShell-klientsporet.
-
-Derfor boer vi ikke endnu:
-
-- bygge den endelige live datamapping direkte fra app-runtime
-- erstatte StatBank-sporet i produktion
-- binde UI direkte til Jobindsats-tabeller uden et stabilt importlag
-
-## Naeste anbefalede skridt
-
-1. Brug PowerShell discovery-sporet til at identificere de 2-5 vigtigste tabeller for kommuneniveau og jobsignal.
-2. Undersoeg data-kald paa `Y25i07` for at afklare, hvilke parametre der bedst giver kommune- og stillingsnivaeu.
-3. Afklar med Jobindsats support hvorfor Node/Next-runtime stadig giver `403`, naar PowerShell virker.
-4. Vaelg integrationsform:
-   - live server-side adapter, hvis Node-adgang aabnes
-   - eller batch/importjob, hvis PowerShell forbliver den stabile adgangsvej
-5. Foerst derefter implementeres adapteren til appens canonical model.
-
-## Produktmaessig anbefaling
-
-Jobindsats boer nu behandles som et reelt dataspor til V1, men stadig bag et adapter- eller importlag.
-
-Hvis Jobindsats ikke leverer konkrete jobopslag med adresse og placering, skal det ikke presses ind som endelig erstatning for et senere STAR-jobfeed. I saa fald boer:
-
-- Jobindsats bruges til stillings- og arbejdsmarkedssignaler
-- STAR eller anden konkret jobkilde bruges til faktiske jobkort og praecise lokationer
+- [Jobindsats API v3 guide](https://jobindsats.dk/api/kom-i-gang/brugervejledning-til-version-3/)
+- [Announcement of v3 and v2 retirement](https://jobindsats.dk/nyheder/nyhed/ny-version-af-jobindsats-api-er-nu-klar-til-brug/)
+- [Jobindsats API v2 guide](https://www.jobindsats.dk/api/kom-i-gang/brugervejledning-til-version-2/)

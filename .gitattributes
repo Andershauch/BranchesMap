@@ -19,3 +19,28 @@
 *.toml text working-tree-encoding=UTF-8
 *.sql text working-tree-encoding=UTF-8
 *.txt text working-tree-encoding=UTF-8
+
+# --- line-ending hygiene pass ---
+# Binary assets, declared explicitly rather than left to git's content
+# sniffing, because eol normalisation would silently corrupt them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.zip binary
+*.pdf binary
+*.wav binary
+*.mp3 binary
+*.mp4 binary
+*.opus binary
+*.db binary
+
+# Webfonts. eol normalisation would corrupt a font file, so never
+# let content sniffing decide.
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
