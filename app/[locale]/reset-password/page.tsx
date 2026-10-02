@@ -29,7 +29,7 @@ export default async function ResetPasswordPage({ params, searchParams }: Props)
             <p className="text-xs text-slate-500">{copy.hint}</p>
             <button className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white">{copy.submit}</button>
           </form>
-        ) : <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{copy.missing}</p>}
+        ) : search.invalid === "1" ? null : <p role="alert" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{copy.missing}</p>}
         <Link href={`/${locale}/forgot-password`} className="text-sm font-semibold underline">{copy.requestNew}</Link>
       </section>
     </main>
