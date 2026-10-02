@@ -101,9 +101,9 @@ After any restore, confirm:
 
 ## Current status
 
-This note defines the restore decision model, but it does not by itself prove that the DB provider backup configuration is present.
+Read-only Neon inspection on 2026-10-02 found no configured snapshot schedules for the Production or staging branches. The Production branch reports six hours of history retention (`history_retention_seconds: 21600`) on plan `free_v3`.
 
-That final confirmation must still be provided by operations for the actual Postgres environment in use.
+This does not prove that no provider-managed recovery capability exists, and it does not establish how an operator would restore Production. Operations must confirm the available recovery points, retention, restore target, and procedure, then complete a restore drill in a separate branch before pilot go-live. Production settings have not been changed.
 
 ## Related documents
 

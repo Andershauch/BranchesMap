@@ -23,8 +23,8 @@ Planen er opdelt i faser, så vi kan levere og godkende én risikogruppe ad gang
 ## Næste arbejdsskridt
 
 1. **Fase 3:** E-mailverifikation, password reset, tokenoprydning og kontosidernes understøttede oversættelser er implementeret/testdækket. Administrator-MFA/SSO er udskudt af ejeren og er fortsat en gate før bred adminadgang.
-2. Kør GitHub CI og browser-E2E for fase-3-ændringerne; gennemfør invitation- og password-reset-mailtest i staging med godkendt modtager, hvis ikke allerede verificeret.
-3. **Fase 4:** Gennemgå de midlertidige dependency-overrides ved Prisma-opgraderinger, Preview-miljøvariabler, sikkerhedshændelser/alarmer, backup/restore og rollback.
+2. **Fase 3-verifikation:** GitHub Actions-run `36988043808` bestod både `Verify application` og alle otte browser-E2E-tests. Invitationens og password-reset-mailens levering skal stadig bekræftes i staging.
+3. **Fase 4:** Få bekræftet Neon Production-backup/restore, vælg passende historik/backupplan og gennemfør restore-drill. Gennemgå også sikkerhedsalarmer, rollback og de midlertidige dependency-overrides ved Prisma-opgraderinger.
 4. Observer den normale planlagte import i GitHub Actions, og bekræft fejlalarm og håndtering af forældede data.
 5. **Fase 5:** Mål mobil-/kioskperformance og p50/p95 for API og database på staging, før belastningstest og go/no-go.
 
@@ -129,3 +129,10 @@ En fase kan godt opdeles i små pull requests. Vi bør ikke aktivere brugerkonti
 
 - The verification email was received and used successfully. Neon staging confirms the account is active and verified.
 - The initial registration attempt preceded the Preview API key update. A new Preview deployment loaded the key; the subsequent verification request completed successfully.
+- The full CI and browser E2E run `36988043808` passed on 2026-10-02. The reset test covers successful password change, login with the new password, and rejection of a reused token. It also caught and fixed duplicate error messaging for invalid links.
+
+## Phase 4 observations (2026-10-02)
+
+- Read-only Neon inspection found no configured snapshot schedules for the Production or staging branches. The Production branch reports `history_retention_seconds: 21600` (six hours) on plan `free_v3`. This does not establish the available restore procedure; backup capability and an actual restore drill remain unverified and are a go-live blocker.
+- Local and CI builds emit the `pg-connection-string` SSL-mode warning because the configured connection string uses an implicit SSL mode. Make the intended mode explicit in Vercel database URLs and verify Preview connectivity before applying the equivalent change to Production.
+- `npm audit` reported no known advisories on 2026-10-02. The `deepmerge-ts` and `mysql2` overrides remain temporary and need review alongside Prisma upgrades.
