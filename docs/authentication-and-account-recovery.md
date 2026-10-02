@@ -28,11 +28,11 @@ Existing rows receive `emailVerifiedAt = null` when the additive column is intro
 
 ## Operational follow-up
 
-- Add an expiry cleanup job for consumed and expired `UserActionToken` rows before sustained public registration.
-- Configure and test Preview mail delivery with an approved recipient.
-- Add a second factor or organizational SSO for administrators before production access is broadened. Current credentials authentication does not provide MFA.
-- Add browser coverage for password reset after the E2E environment can provide a seeded reset token; DB integration coverage exercises single-use behavior and session invalidation.
-- New account-recovery page copy currently has Danish and English text; other supported locales fall back to English pending translation.
+- A daily GitHub Actions cleanup workflow and `npm run auth:cleanup-tokens` remove action tokens after their 30-day retention window. The workflow is restricted to `main` and requires the production `DATABASE_URL` repository secret; it will run in Production only after this change is merged.
+- Preview mail delivery was confirmed on 2026-10-02 with an approved mailbox. The account received and used the verification link; staging records the account as active and verified. The first attempt happened before `RESEND_API_KEY` was added to Preview; a Preview redeployment was needed to load the key.
+- Administrator MFA or organizational SSO is deferred by the project owner. Credentials authentication does not provide MFA; do not broaden administrator access until a solution and rollout are approved.
+- Browser coverage exercises a seeded password-reset link, successful sign-in with the new password, and rejection of token reuse. Database integration coverage exercises single-use behavior and session invalidation.
+- Account verification and recovery copy is provided for all supported locales (`da`, `en`, `uk`, `ar`, `fa`, `ur`, `pl`, `de`), including right-to-left layout for Arabic, Persian and Urdu.
 
 ## Verification
 

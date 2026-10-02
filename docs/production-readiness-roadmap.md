@@ -16,14 +16,14 @@ Planen er opdelt i faser, så vi kan levere og godkende én risikogruppe ad gang
 - **Fase 2 er gennemført:** Unit-/API-kontrakttests, databaseintegrationstests, CI-workflow, lokalt pre-push-hook og seks Playwright E2E-tests for login/logout, roller, invitation og kioskflow er på plads. GitHub Actions-run `36917515499` bestod både **Verify application** og **Browser end-to-end tests**. `main` er beskyttet: PR er påkrævet, begge checks skal bestå, admin er omfattet, og force-push/sletning er slået fra.
 - GitHub-workflowen validerer Prisma, typer, lint, unit- og integrationstests samt production build mod en isoleret PostgreSQL-service. Den daglige import bruger repository-level secrets og er derfor nu begrænset til `main`; staging skal have særskilte GitHub Environment-secrets, før workflowet kan køres dér.
 - Jobindsats v3-importen er kørt to gange mod staging for alle 43 aktive kommuner for 2026M08. Begge runs (`cmuoh0i2f0000lg61dfc84cyx`, `cmuohkivr0000vg61qi72cgi9`) er `completed`; genkørsel efterlod fortsat 43 snapshots, 293 branchekategorier og 2.009 titler. Live API-svar og staging stemmer nu for alle tre mål i fem kommuner (Kalundborg, Køge, Næstved, Slagelse og Sorø). Referenceseed indeholder 43 kommuner, 129 branche-relationer og 387 demo-jobs.
-- Login-/rolleflowet er HTTP-testet med den byggede app koblet til staging: superadmin får adgang til brugeradministration; admin og almindelig bruger afvises dér; admin får adgang til almindelig admin; bruger afvises fra admin. Invitation acceptance oprettede en admin, og genbrug af token blev afvist. Anders har bekræftet Preview-login i browseren 2026-10-01. Resend-maillevering er endnu ikke testet. Anders har tilføjet Resend-variablerne i Vercel; det skal verificeres, at de gælder for Preview.
+- Login-/rolleflowet er HTTP-testet med den byggede app koblet til staging: superadmin får adgang til brugeradministration; admin og almindelig bruger afvises dér; admin får adgang til almindelig admin; bruger afvises fra admin. Invitation acceptance oprettede en admin, og genbrug af token blev afvist. Anders har bekræftet Preview-login i browseren 2026-10-01. Resend-verifikation blev modtaget og gennemført på staging 2026-10-02 efter Preview-deploy med den tilføjede `RESEND_API_KEY`.
 - Lokale buildprocesser kan ikke altid nå Neon eller StatBank fra dette køremiljø (`EACCES`). Neon CLI og Neon-værktøjet kan bruges til særskilte stagingkontroller; GitHub CI bruger fortsat isoleret Postgres og live-estimater slået fra.
 - `npm audit` viste 2026-10-02 ingen kendte advisories efter midlertidige npm-overrides af `deepmerge-ts` til `8.0.1` og `mysql2` til `3.23.1`; Prisma er fortsat `7.10.0`. Overrides skal genvurderes og fjernes, når Prisma selv bruger rettede versioner.
 
 ## Næste arbejdsskridt
 
-1. **Fase 3:** Kontopolitikken er valgt: offentlig borgerregistrering med e-mailverifikation og invitation for personale. Gennemfør administratorbeskyttelse, tokenoprydning og oversættelser.
-2. Verificér Resend-konfigurationens Preview-scope, og test e-mailverifikation, invitation og nulstilling med en godkendt testmodtager.
+1. **Fase 3:** E-mailverifikation, password reset, tokenoprydning og kontosidernes understøttede oversættelser er implementeret/testdækket. Administrator-MFA/SSO er udskudt af ejeren og er fortsat en gate før bred adminadgang.
+2. Kør GitHub CI og browser-E2E for fase-3-ændringerne; gennemfør invitation- og password-reset-mailtest i staging med godkendt modtager, hvis ikke allerede verificeret.
 3. **Fase 4:** Gennemgå de midlertidige dependency-overrides ved Prisma-opgraderinger, Preview-miljøvariabler, sikkerhedshændelser/alarmer, backup/restore og rollback.
 4. Observer den normale planlagte import i GitHub Actions, og bekræft fejlalarm og håndtering af forældede data.
 5. **Fase 5:** Mål mobil-/kioskperformance og p50/p95 for API og database på staging, før belastningstest og go/no-go.
@@ -115,11 +115,17 @@ En fase kan godt opdeles i små pull requests. Vi bør ikke aktivere brugerkonti
 
 ## Phase 3 status (2026-10-02)
 
-- Account policy selected: public citizen registration with email verification; staff through invitations; administrator accounts require a second factor or organizational SSO.
+- Account policy selected: public citizen registration with email verification; staff through invitations. Administrator MFA/SSO is deferred by the project owner and remains a gate before broader privileged access.
 - Email verification and password reset are implemented with hashed single-use tokens, expiration, generic responses, database-backed rate limiting, and session invalidation after password reset, deactivation, and role changes.
 - The additive account-token schema is applied to the Preview database on Neon branch `staging`, after creating snapshot `before-account-verification-schema`. The existing staging superadmin was grandfathered using its account creation time; Production remains unchanged.
 - Anders har tilføjet `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_REPLY_TO` og `MAIL_NOTIFICATION_RECIPIENTS` i Vercel. Commit `1e87638` kobler `MAIL_FROM` og `MAIL_REPLY_TO` til appens nuværende Resend-sender, bevarer `APP_MAIL_FROM` som fallback og opdaterer driftsdokumentationen. GitHub CI bestod, og Vercel Preview blev `READY`.
-- Preview-scope for variablerne og faktisk maillevering er stadig ikke verificeret. `MAIL_NOTIFICATION_RECIPIENTS` bruges ikke af appen endnu.
+- Preview-scope for `RESEND_API_KEY` er verificeret, og kontoen modtog og gennemførte e-mailverifikationen 2026-10-02. `MAIL_NOTIFICATION_RECIPIENTS` bruges ikke af appen endnu.
 - Before Production, decide whether existing accounts are grandfathered through a reviewed one-time backfill or must verify email again. No production schema or account data has been changed.
-- Administrator MFA/SSO, token retention cleanup, password-reset E2E coverage, and translation of the new pages into all supported languages remain open.
+- A 30-day token cleanup script/workflow, password-reset E2E coverage and translations for all supported locales are implemented in the staging branch. The scheduled cleanup becomes active only after merge to `main`.
+- Administrator MFA/SSO remains deferred by the project owner. No production schema, environment or account data has been changed.
 - See [authentication-and-account-recovery.md](authentication-and-account-recovery.md) for implementation and rollout details.
+
+## Phase 3 follow-up (2026-10-02)
+
+- The verification email was received and used successfully. Neon staging confirms the account is active and verified.
+- The initial registration attempt preceded the Preview API key update. A new Preview deployment loaded the key; the subsequent verification request completed successfully.

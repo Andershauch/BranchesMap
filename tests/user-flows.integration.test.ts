@@ -32,6 +32,7 @@ test("database-backed account and invitation flows", { skip: !enabled }, async (
     import("@/lib/server/user-invitations"),
     import("@/lib/server/account-tokens"),
   ]);
+  const { pruneExpiredUserActionTokens } = await import("@/lib/server/action-token-maintenance");
   cleanup = async () => {
     await prisma.user.deleteMany({ where: { email: { in: fixtureEmails } } });
     await prisma.$disconnect();
@@ -140,4 +141,18 @@ test("database-backed account and invitation flows", { skip: !enabled }, async (
     reason: "invalid_invitation",
   });
   assert.equal((await users.authenticateUser({ email: invitedEmail, password: "integration-invited-password" })).ok, true);
+
+  const retentionNow = new Date("2026-10-02T12:00:00.000Z");
+  const oldTokenHash = `old-${fixture}`;
+  const freshTokenHash = `fresh-${fixture}`;
+  await prisma.userActionToken.createMany({
+    data: [
+      { userId: setup.user.id, purpose: "email_verification", tokenHash: oldTokenHash, expiresAt: new Date("2026-08-01T00:00:00.000Z") },
+      { userId: setup.user.id, purpose: "email_verification", tokenHash: freshTokenHash, expiresAt: new Date("2026-10-03T00:00:00.000Z") },
+    ],
+  });
+  const cleanupResult = await pruneExpiredUserActionTokens({ now: retentionNow });
+  assert.equal(cleanupResult.deleted, 1);
+  assert.equal(await prisma.userActionToken.count({ where: { tokenHash: oldTokenHash } }), 0);
+  assert.equal(await prisma.userActionToken.count({ where: { tokenHash: freshTokenHash } }), 1);
 });

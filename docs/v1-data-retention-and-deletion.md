@@ -153,7 +153,8 @@ The V1 deletion script:
 The following are still true in V1:
 
 - there is no user self-service account deletion flow in the product UI
-- there is no automated retention pruning job yet
+- the account-token cleanup workflow is implemented on the staging branch and deletes `UserActionToken` rows 30 days after expiry; it will operate on Production only after merge to `main` and requires the `DATABASE_URL` repository secret
+- audit-event and rate-limit-bucket pruning remain manual operations
 - there is no formal legal workflow embedded in the product itself
 
 ## Required operational follow-up

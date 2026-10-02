@@ -29,6 +29,8 @@ const invitationToken = "e2e-invite-token-2026";
 const pendingEmail = "pending-verify@e2e.branchesmap.test";
 const blockedLoginEmail = "unverified-login@e2e.branchesmap.test";
 const verificationToken = "e2e-email-verify-token-2026";
+const resetEmail = "password-reset@e2e.branchesmap.test";
+const resetToken = "e2e-password-reset-token-2026";
 
 async function main() {
   const passwordHash = hashPassword(fixturePassword);
@@ -55,6 +57,12 @@ async function main() {
     update: { name: "E2E Unverified Login", passwordHash, locale: "da", role: "user", isActive: true, emailVerifiedAt: null },
     create: { email: blockedLoginEmail, name: "E2E Unverified Login", passwordHash, locale: "da", role: "user", isActive: true },
   });
+  const resetUser = await prisma.user.upsert({
+    where: { email: resetEmail },
+    update: { name: "E2E Password Reset", passwordHash, locale: "da", role: "user", isActive: true, emailVerifiedAt: new Date() },
+    create: { email: resetEmail, name: "E2E Password Reset", passwordHash, locale: "da", role: "user", isActive: true, emailVerifiedAt: new Date() },
+    select: { id: true },
+  });
   await prisma.userActionToken.deleteMany({ where: { userId: pendingUser.id, purpose: "email_verification" } });
   await prisma.userActionToken.create({
     data: {
@@ -64,7 +72,15 @@ async function main() {
       expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     },
   });
-
+  await prisma.userActionToken.deleteMany({ where: { userId: resetUser.id, purpose: "password_reset" } });
+  await prisma.userActionToken.create({
+    data: {
+      userId: resetUser.id,
+      purpose: "password_reset",
+      tokenHash: createHash("sha256").update(resetToken).digest("hex"),
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+    },
+  });
   await prisma.user.deleteMany({ where: { email: invitationEmail } });
   await prisma.userInvitation.deleteMany({ where: { email: invitationEmail } });
   await prisma.userInvitation.create({

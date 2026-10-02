@@ -17,6 +17,27 @@ async function signIn(page: import("@playwright/test").Page, email: string) {
   await expect(page).toHaveURL(/\/da\/follows$/);
 }
 
+test("a member can reset a password once using a valid reset link", async ({ page }) => {
+  const resetToken = "e2e-password-reset-token-2026";
+  await page.goto(`/da/reset-password?token=${resetToken}`);
+  await page.locator('input[name="password"]').fill("Password-after-reset-2026");
+  await page.getByRole("button", { name: "Gem adgangskode" }).click();
+  await expect(page).toHaveURL(/\/da\/login\?passwordReset=1$/);
+
+  await page.goto("/da/login");
+  await page.waitForLoadState("networkidle");
+  await page.locator('input[name="email"]').fill("password-reset@e2e.branchesmap.test");
+  await page.locator('input[name="password"]').fill("Password-after-reset-2026");
+  await page.getByRole("button", { name: "Log ind" }).click();
+  await expect(page).toHaveURL(/\/da\/follows$/);
+
+  await page.goto(`/da/reset-password?token=${resetToken}`);
+  await page.locator('input[name="password"]').fill("Another-password-after-reset-2026");
+  await page.getByRole("button", { name: "Gem adgangskode" }).click();
+  await expect(page).toHaveURL(/\/da\/reset-password\?invalid=1$/);
+  await expect(page.getByRole("alert")).toContainText("Linket er ugyldigt eller udløbet");
+});
+
 test("a member can sign in and sign out", async ({ page }) => {
   await signIn(page, "member@e2e.branchesmap.test");
   await page.getByRole("banner").getByRole("button", { name: "Menu" }).click();

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { loginAction } from "@/lib/server/auth-actions";
 import { getCurrentUser } from "@/lib/server/auth";
+import { getAccountCopy } from "@/lib/i18n/account-copy";
 import { isRtlLocale, isValidLocale, type AppLocale } from "@/lib/i18n/config";
 import { getRuntimeDictionary } from "@/lib/i18n/runtime-dictionaries";
 
@@ -37,6 +38,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
 
   const activeLocale = locale as AppLocale;
   const isRtl = isRtlLocale(activeLocale);
+  const accountCopy = getAccountCopy(activeLocale).login;
   const [dictionary, user] = await Promise.all([getRuntimeDictionary(activeLocale), getCurrentUser()]);
   const copy = dictionary.loginPage;
   const search = await searchParams;
@@ -73,7 +75,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
 
           {verifiedNotice ? (
             <p role="status" className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              {locale === "da" ? "Din konto er klar. Log ind med din e-mail og adgangskode." : "Your account is ready. Sign in with your email and password."}
+              {accountCopy.accountReady}
             </p>
           ) : null}
 
@@ -106,7 +108,7 @@ export default async function LoginPage({ params, searchParams }: LoginPageProps
             </label>
 
             <Link href={resetHref} className="justify-self-start text-sm font-semibold text-slate-700 underline underline-offset-4">
-              {locale === "da" ? "Glemt adgangskode?" : "Forgot password?"}
+              {accountCopy.forgotPassword}
             </Link>
 
             <label className="grid gap-2 text-sm font-medium text-slate-700">

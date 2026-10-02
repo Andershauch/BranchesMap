@@ -22,6 +22,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "security:report": "tsx ./scripts/report-security-events.ts",
+    "auth:cleanup-tokens": "node --conditions=react-server --import=tsx ./scripts/cleanup-user-action-tokens.ts",
     "user:delete": "tsx ./scripts/delete-user-account.ts",
     "jobindsats:daily": "tsx ./scripts/run-jobindsats-daily.ts",
     "jobindsats:import:y25i07": "tsx ./scripts/import-jobindsats-y25i07.ts",

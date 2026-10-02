@@ -25,9 +25,11 @@ Local Git hooks can be bypassed or may not be enabled in another clone. GitHub A
 
 ## Test scope
 
-The fast, database-free unit suite covers request validation, StatBank request construction and freshness rules, Jobindsats period/table normalization and title classification, same-origin mutation checks, password hashing, and API security headers. GitHub Actions also runs database-backed account and invitation integration tests against its disposable PostgreSQL service. They are gated by `RUN_DB_INTEGRATION_TESTS=1` and refuse to run unless the database is local and named `branches_map_ci`.
+The fast, database-free unit suite covers request validation, StatBank request construction and freshness rules, Jobindsats period/table normalization and title classification, same-origin mutation checks, password hashing, API security headers, and account-copy coverage for all supported locales. GitHub Actions also runs database-backed account, invitation, and expired-token cleanup integration tests against its disposable PostgreSQL service. They are gated by `RUN_DB_INTEGRATION_TESTS=1` and refuse to run unless the database is local and named `branches_map_ci`.
 
-The browser suite covers login/logout, member/admin/superadmin access boundaries, invitation acceptance and single use, and the kiosk manifest and QR handoff. GitHub Actions builds and runs the app in production mode in Chromium against a separate disposable PostgreSQL database named `branches_map_e2e`; it never connects to Neon, staging, or production. Both the browser configuration and fixture seeder reject non-loopback hosts or another database name.
+The browser suite covers login/logout, member/admin/superadmin access boundaries, invitation acceptance and single use, password reset and reset-token reuse, and the kiosk manifest and QR handoff. GitHub Actions builds and runs the app in production mode in Chromium against a separate disposable PostgreSQL database named `branches_map_e2e`; it never connects to Neon, staging, or production. Both the browser configuration and fixture seeder reject non-loopback hosts or another database name.
+
+The account-token cleanup workflow runs daily on `main` and can also be started manually there. It requires the production `DATABASE_URL` repository secret and removes only `UserActionToken` rows whose expiry is older than 30 days. It is added on the staging branch and does not run against Production until merged to `main`.
 
 To run it locally, start a disposable local PostgreSQL instance with a database named `branches_map_e2e`, then set `DATABASE_URL`, `RUN_E2E_TESTS=1`, and `AUTH_SECRET` in the shell. Install the browser once with `npx playwright install chromium`, then run:
 
