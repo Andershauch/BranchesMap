@@ -1,55 +1,55 @@
 import "server-only";
 
-const JOBINDSATS_API_BASE_URL = "https://api.jobindsats.dk/v2";
+const JOBINDSATS_API_BASE_URL = "https://api.jobindsats.dk/v3";
 const REQUEST_TIMEOUT_MS = 15000;
 
-export type JobindsatsSubject = {
-  SubjectID: string | number;
-  SubjectName: string;
-};
+export type JobindsatsSubject = { subject_id: string | number; subject_name: string };
+export type JobindsatsSubjectGroup = { subject_group_id: string | number; subject_group_name: string; subjects: JobindsatsSubject[] };
 
-export type JobindsatsMeasurement = {
-  ID: string;
-  Name: string;
-};
+export type JobindsatsMeasurement = { mgroup_id: string; mgroup_name: string; measures?: Array<{ measure_id: string; measure_name: string }> };
 
-export type JobindsatsDimensionSummary = {
-  ID: string;
-  Name: string;
+export type JobindsatsDimensionSummary = { dimension_id: string; dimension_name: string; hierarchies?: Array<{ hierarchy_id: string; hierarchy_name: string }> };
+type JobindsatsPeriodSummary = {
+  periodtype_id: string;
+  periodtype_name?: string;
+  values?: Array<{ period_id: string; period_name?: string }>;
+  period_first?: string;
+  period_last?: string;
 };
 
 export type JobindsatsTableSummary = {
-  TableID: string;
-  TableName: string;
-  SubjectID: string | number;
-  SubjectName: string;
-  UpdateFrequency?: string;
-  LatestUpdate?: string;
-  NextUpdate?: string;
-  Measurements?: JobindsatsMeasurement[];
-  PeriodCategory?: string[];
-  AreaHierarchy?: string[];
-  FirstPeriod?: string;
-  LatestPeriod?: string;
-  Dimensions?: JobindsatsDimensionSummary[];
+  table_id: string;
+  table_name: string;
+  subject_id?: string | number;
+  subject_name?: string;
+  update_frequency?: string;
+  latest_update?: string;
+  next_update?: string;
+  mgroups?: JobindsatsMeasurement[];
+  periods?: JobindsatsPeriodSummary[] | { period_first_date?: string; period_last_date?: string; periodtypes?: JobindsatsPeriodSummary[] };
+  dimensions?: JobindsatsDimensionSummary[];
+};
+
+type JobindsatsTableGroup = {
+  subject_id: string | number;
+  subject_name: string;
+  table_groups: Array<{ table_group_id: string | number; table_group_name: string; tables: JobindsatsTableSummary[] }>;
 };
 
 export type JobindsatsTableDimension = {
-  DimensionID: string;
-  DimensionName: string;
-  DefaultValue?: string;
-  Values?: string[];
+  dimension_id: string;
+  dimension_name: string;
+  hierarchies?: Array<{ hierarchy_id: string; hierarchy_name: string; levels?: Array<{ level_id: string; level_name: string; values?: Array<{ value_id: string; value_name: string }> }> }>;
 };
 
 export type JobindsatsTableDetail = {
-  TableID: string;
-  TableName: string;
-  SubjectID: string | number;
-  SubjectName: string;
-  Area?: string[];
-  Period?: string[];
-  Measurements?: JobindsatsMeasurement[];
-  Dimensions?: JobindsatsTableDimension[];
+  table_id: string;
+  table_name: string;
+  subject_id?: string | number;
+  subject_name?: string;
+  periods?: JobindsatsTableSummary["periods"];
+  mgroups?: JobindsatsMeasurement[];
+  dimensions?: JobindsatsTableDimension[];
 };
 
 export type JobindsatsRelevantTable = {
@@ -89,7 +89,7 @@ async function fetchJobindsats<T>(path: string, searchParams?: URLSearchParams) 
   try {
     const response = await fetch(url, {
       headers: {
-        Authorization: token,
+        Authorization: `Bearer ${token}`,
         accept: "application/json",
       },
       cache: "no-store",
@@ -97,9 +97,8 @@ async function fetchJobindsats<T>(path: string, searchParams?: URLSearchParams) 
     });
 
     if (!response.ok) {
-      const details = await response.text().catch(() => "");
       throw new Error(
-        `Jobindsats request failed (${response.status} ${response.statusText})${details ? `: ${details}` : ""}`,
+        `Jobindsats request failed (${response.status} ${response.statusText}).`,
       );
     }
 
@@ -116,34 +115,38 @@ async function fetchJobindsats<T>(path: string, searchParams?: URLSearchParams) 
 }
 
 export function normalizeJobindsatsTableId(tableId: string) {
-  return tableId.trim().toUpperCase();
+  const normalized = tableId.trim().toLowerCase();
+  if (!/^[a-z0-9_-]{1,40}$/.test(normalized)) {
+    throw new Error("Invalid Jobindsats table id.");
+  }
+  return normalized;
 }
 
 export async function getJobindsatsSubjects() {
-  return fetchJobindsats<JobindsatsSubject[]>("/subjects/");
+  return fetchJobindsats<JobindsatsSubjectGroup[]>("/subjects", new URLSearchParams({ format: "json" }));
 }
 
 export async function getJobindsatsTables(subjectIds?: string[]) {
   const params = new URLSearchParams();
 
   if (subjectIds && subjectIds.length > 0) {
-    params.set("subjectid", subjectIds.join(","));
+    params.set("subject_id", subjectIds.join(","));
   }
+  params.set("format", "json");
 
-  return fetchJobindsats<JobindsatsTableSummary[]>("/tables/", params);
+  return fetchJobindsats<JobindsatsTableGroup[]>("/tables", params);
 }
 
 export async function getJobindsatsTable(tableId: string) {
-  return fetchJobindsats<JobindsatsTableDetail>(`/tables/${normalizeJobindsatsTableId(tableId)}/`);
+  return fetchJobindsats<JobindsatsTableDetail>(`/table/${normalizeJobindsatsTableId(tableId)}`, new URLSearchParams({ format: "json" }));
 }
 
 function scoreTable(table: JobindsatsTableSummary) {
   const haystacks = [
-    table.TableName,
-    table.SubjectName,
-    ...(table.Measurements ?? []).map((measurement) => measurement.Name),
-    ...(table.Dimensions ?? []).map((dimension) => dimension.Name),
-    ...(table.AreaHierarchy ?? []),
+    table.table_name,
+    table.subject_name ?? "",
+    ...(table.mgroups ?? []).flatMap((measurement) => [measurement.mgroup_name, ...(measurement.measures ?? []).map((item) => item.measure_name)]),
+    ...(table.dimensions ?? []).flatMap((dimension) => [dimension.dimension_name, ...(dimension.hierarchies ?? []).map((item) => item.hierarchy_name)]),
   ].map((value) => value.toLowerCase());
 
   const reasons: string[] = [];
@@ -168,30 +171,39 @@ function scoreTable(table: JobindsatsTableSummary) {
     }
   }
 
-  if ((table.AreaHierarchy ?? []).some((item) => item.toLowerCase().includes("kommune"))) {
+  const hierarchies = (table.dimensions ?? []).flatMap((dimension) => dimension.hierarchies ?? []);
+  if (hierarchies.some((item) => item.hierarchy_name.toLowerCase().includes("kommune"))) {
     score += 3;
     reasons.push("supports kommune area hierarchy");
   }
 
-  if ((table.Dimensions ?? []).some((item) => item.Name.toLowerCase().includes("branche"))) {
+  if ((table.dimensions ?? []).some((item) => item.dimension_name.toLowerCase().includes("branche"))) {
     score += 3;
     reasons.push("has branche dimension");
   }
 
+  const periodTypes = Array.isArray(table.periods) ? table.periods : table.periods?.periodtypes ?? [];
+
   return {
-    tableId: table.TableID,
-    tableName: table.TableName,
-    subjectName: table.SubjectName,
+    tableId: table.table_id,
+    tableName: table.table_name,
+    subjectName: table.subject_name ?? "",
     score,
     reasons,
-    dimensions: (table.Dimensions ?? []).map((dimension) => `${dimension.ID}:${dimension.Name}`),
-    areaHierarchy: table.AreaHierarchy ?? [],
-    latestPeriod: table.LatestPeriod,
+    dimensions: (table.dimensions ?? []).flatMap((dimension) => (dimension.hierarchies ?? []).map((hierarchy) => `${hierarchy.hierarchy_id}:${hierarchy.hierarchy_name}`)),
+    areaHierarchy: (table.dimensions ?? []).flatMap((dimension) => dimension.hierarchies ?? []).map((hierarchy) => hierarchy.hierarchy_name),
+    latestPeriod: periodTypes.find((period) => period.periodtype_id === "M")?.period_last
+      ?? periodTypes.find((period) => period.periodtype_id === "M")?.values?.[0]?.period_id,
   } satisfies JobindsatsRelevantTable;
 }
 
 export async function findRelevantJobindsatsTables({ limit = 25 }: { limit?: number } = {}) {
-  const tables = await getJobindsatsTables();
+  const groups = await getJobindsatsTables();
+  const tables = groups.flatMap((group) =>
+    (group.table_groups ?? []).flatMap((tableGroup) =>
+      (tableGroup.tables ?? []).map((table) => ({ ...table, subject_name: table.subject_name ?? group.subject_name })),
+    ),
+  );
 
   return tables
     .map(scoreTable)
@@ -203,5 +215,5 @@ export async function findRelevantJobindsatsTables({ limit = 25 }: { limit?: num
 
       return left.tableName.localeCompare(right.tableName, "da");
     })
-    .slice(0, limit);
+    .slice(0, Math.min(100, Math.max(1, limit)));
 }

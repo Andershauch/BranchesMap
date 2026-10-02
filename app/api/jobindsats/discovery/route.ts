@@ -41,7 +41,8 @@ async function isAuthorized(request: NextRequest) {
 
 function getSubjectIds(request: NextRequest) {
   return request.nextUrl.searchParams
-    .getAll("subjectid")
+    .getAll("subject_id")
+    .concat(request.nextUrl.searchParams.getAll("subjectid"))
     .flatMap((value) => value.split(","))
     .map((value) => value.trim())
     .filter(Boolean);
@@ -54,7 +55,7 @@ function getMode(request: NextRequest) {
     return mode;
   }
 
-  return "relevant";
+  return null;
 }
 
 export async function GET(request: NextRequest) {
@@ -120,6 +121,10 @@ export async function GET(request: NextRequest) {
   try {
     const mode = getMode(request);
 
+    if (!mode) {
+      return jsonSecurityResponse({ ok: false, error: "Unsupported Jobindsats discovery mode." }, { status: 400 });
+    }
+
     if (mode === "subjects") {
       return jsonSecurityResponse({
         ok: true,
@@ -158,7 +163,7 @@ export async function GET(request: NextRequest) {
 
     const rawLimit = request.nextUrl.searchParams.get("limit");
     const parsedLimit = rawLimit ? Number.parseInt(rawLimit, 10) : 25;
-    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : 25;
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 100) : 25;
 
     return jsonSecurityResponse({
       ok: true,

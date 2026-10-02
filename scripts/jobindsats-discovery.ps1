@@ -86,7 +86,7 @@ function Invoke-JobindsatsRequest {
   )
 
   Write-Host "GET $Uri"
-  $response = Invoke-WebRequest -UseBasicParsing -Uri $Uri -Headers @{ Authorization = $Token }
+  $response = Invoke-WebRequest -UseBasicParsing -Uri $Uri -Headers @{ Authorization = "Bearer $Token"; Accept = "application/json" }
   return Parse-JobindsatsJson -Raw $response.Content
 }
 
@@ -118,7 +118,7 @@ function Resolve-OutputPath {
 }
 
 $token = Get-EnvValue -Name "JOBINDSATS_API_TOKEN"
-$baseUrl = "https://api.jobindsats.dk/v2"
+$baseUrl = "https://api.jobindsats.dk/v3"
 $resolvedOutputDir = if ([System.IO.Path]::IsPathRooted($OutputDir)) {
   $OutputDir
 } else {
@@ -132,21 +132,35 @@ Ensure-OutputDir -Path $resolvedOutputDir
 
 switch ($Mode) {
   "subjects" {
-    $result = Invoke-JobindsatsRequest -Uri "$baseUrl/subjects/json" -Token $token
+    $result = Invoke-JobindsatsRequest -Uri "$baseUrl/subjects?format=json" -Token $token
     $outputPath = Resolve-OutputPath -DefaultName "subjects"
     Convert-ToUtf8Json -InputObject $result -Path $outputPath
     Write-Host "Saved subjects to $outputPath"
   }
 
   "tables" {
-    $result = Invoke-JobindsatsRequest -Uri "$baseUrl/tables" -Token $token
+    $result = Invoke-JobindsatsRequest -Uri "$baseUrl/tables?format=json" -Token $token
 
     if ($Query) {
       $needle = $Query.ToLowerInvariant()
-      $result = $result | Where-Object {
-        ($_.TableName -and $_.TableName.ToLowerInvariant().Contains($needle)) -or
-        ($_.SubjectName -and $_.SubjectName.ToLowerInvariant().Contains($needle))
+      $tables = foreach ($subject in @($result)) {
+        foreach ($tableGroup in @($subject.table_groups)) {
+          foreach ($table in @($tableGroup.tables)) {
+            [PSCustomObject]@{
+              table_id = $table.table_id
+              table_name = $table.table_name
+              table_group_name = $tableGroup.table_group_name
+              subject_name = $subject.subject_name
+            }
+          }
+        }
       }
+      $result = @($tables | Where-Object {
+        ($_.table_id -and $_.table_id.ToLowerInvariant().Contains($needle)) -or
+        ($_.table_name -and $_.table_name.ToLowerInvariant().Contains($needle)) -or
+        ($_.table_group_name -and $_.table_group_name.ToLowerInvariant().Contains($needle)) -or
+        ($_.subject_name -and $_.subject_name.ToLowerInvariant().Contains($needle))
+      })
     }
 
     $outputPath = Resolve-OutputPath -DefaultName "tables"
@@ -159,7 +173,8 @@ switch ($Mode) {
       throw "TableId is required when Mode=table."
     }
 
-    $result = Invoke-JobindsatsRequest -Uri "$baseUrl/tables/$TableId/json" -Token $token
+    $safeTableId = [System.Uri]::EscapeDataString($TableId.Trim().ToLowerInvariant())
+    $result = Invoke-JobindsatsRequest -Uri "$baseUrl/table/$safeTableId`?format=json" -Token $token
     $outputPath = Resolve-OutputPath -DefaultName "table-$TableId"
     Convert-ToUtf8Json -InputObject $result -Path $outputPath
     Write-Host "Saved table detail to $outputPath"
@@ -170,7 +185,32 @@ switch ($Mode) {
       throw "TableId is required when Mode=data."
     }
 
-    $uri = "$baseUrl/data/$TableId/json/?period=$encodedPeriod&area=$encodedArea&_esco_uri=$encodedEsco"
+    $safeTableId = [System.Uri]::EscapeDataString($TableId.Trim().ToLowerInvariant())
+    $metadataCachePath = Join-Path $resolvedOutputDir ".metadata-$safeTableId-v3.json"
+    if ((Test-Path $metadataCachePath) -and ((Get-Item $metadataCachePath).LastWriteTimeUtc -gt [DateTime]::UtcNow.AddHours(-24))) {
+      $metadata = Get-Content -Raw -Encoding UTF8 $metadataCachePath | ConvertFrom-Json
+    } else {
+      $metadata = Invoke-JobindsatsRequest -Uri "$baseUrl/table/$safeTableId`?format=json" -Token $token
+      Convert-ToUtf8Json -InputObject $metadata -Path $metadataCachePath
+    }
+    $areaDimension = $metadata.dimensions | Where-Object { $_.dimension_id -eq "_omrade" } | Select-Object -First 1
+    $municipalityHierarchy = $areaDimension.hierarchies | Where-Object { $_.hierarchy_id -eq "_nykom" } | Select-Object -First 1
+    $areaValues = $municipalityHierarchy.levels | ForEach-Object { $_.values } | Where-Object { $_.value_name -eq $Area }
+    if (-not $areaValues) {
+      throw "Municipality '$Area' was not found in Jobindsats v3 metadata."
+    }
+    if ($Esco -eq "*") {
+      $escoValue = "*"
+    } else {
+      $escoDimension = $metadata.dimensions | Where-Object { $_.dimension_id -eq "_esco_uri" } | Select-Object -First 1
+      $escoValues = $escoDimension.hierarchies | ForEach-Object { $_.levels } | ForEach-Object { $_.values }
+      $escoValue = ($escoValues | Where-Object { $_.value_name -eq $Esco } | Select-Object -First 1).value_id
+      if (-not $escoValue) { throw "Stillingsbetegnelse '$Esco' was not found in Jobindsats v3 metadata." }
+    }
+    $areaValue = [System.Uri]::EscapeDataString($areaValues[0].value_id)
+    $escoValue = [System.Uri]::EscapeDataString($escoValue)
+    $periodValue = [System.Uri]::EscapeDataString($Period)
+    $uri = "$baseUrl/data/$safeTableId`?mgroup.*=*&period.M=$periodValue&hierarchy._nykom=$areaValue&hierarchy._esco_uri=$escoValue&format=json"
     $result = Invoke-JobindsatsRequest -Uri $uri -Token $token
     $outputPath = Resolve-OutputPath -DefaultName "data-$TableId"
     Convert-ToUtf8Json -InputObject $result -Path $outputPath

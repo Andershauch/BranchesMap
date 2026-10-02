@@ -7,6 +7,8 @@ on:
 
 jobs:
   import-jobindsats:
+    # This workflow uses repository-level secrets; only run it from the production branch.
+    if: github.ref == 'refs/heads/main'
     runs-on: windows-latest
     timeout-minutes: 45
     env:

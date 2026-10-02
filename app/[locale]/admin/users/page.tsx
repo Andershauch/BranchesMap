@@ -48,7 +48,7 @@ function getCopy(locale: AppLocale) {
       summary: "Viser {count} af {total} brugere",
       empty: "Ingen brugere matcher soegningen.",
       saved: "Brugerrolle opdateret.",
-      created: "Invitation sendt.",
+      invitationSent: "Invitation sendt.",
       createTitle: "Inviter ny bruger",
       createIntro:
         "Send en invitation via e-mail, saa brugeren selv opretter sin adgangskode. Brug dette i stedet for manuel password-oprettelse.",
@@ -60,7 +60,7 @@ function getCopy(locale: AppLocale) {
       inactive: "Deaktiveret",
       role: "Rolle",
       locale: "Sprog",
-      created: "Oprettet",
+      createdDate: "Oprettet",
       updated: "Opdateret",
       savedSearches: "Gemte soegninger",
       follows: "Follows",
@@ -90,7 +90,7 @@ function getCopy(locale: AppLocale) {
     summary: "Showing {count} of {total} users",
     empty: "No users match the current search.",
     saved: "User role updated.",
-    created: "Invitation sent.",
+    invitationSent: "Invitation sent.",
     createTitle: "Invite user",
     createIntro:
       "Send an email invitation so the user can create their own password. Use this instead of manual password creation.",
@@ -102,7 +102,7 @@ function getCopy(locale: AppLocale) {
     inactive: "Inactive",
     role: "Role",
     locale: "Locale",
-    created: "Created",
+    createdDate: "Created",
     updated: "Updated",
     savedSearches: "Saved searches",
     follows: "Follows",
@@ -278,7 +278,7 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
       <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
         <p>{text.summary.replace("{count}", String(result.rows.length)).replace("{total}", String(result.total))}</p>
         <div className="flex flex-wrap items-center gap-3">
-          {created ? <p className="font-medium text-teal-700">{text.created}</p> : null}
+          {created ? <p className="font-medium text-teal-700">{text.invitationSent}</p> : null}
           {saved ? <p className="font-medium text-teal-700">{text.saved}</p> : null}
         </div>
       </div>
@@ -326,7 +326,7 @@ export default async function AdminUsersPage({ params, searchParams }: PageProps
 
               <div className="grid gap-2 text-sm text-slate-600">
                 <p>
-                  <span className="font-semibold text-slate-900">{text.created}:</span> {formatDate(user.createdAt, pageLocale)}
+                  <span className="font-semibold text-slate-900">{text.createdDate}:</span> {formatDate(user.createdAt, pageLocale)}
                 </p>
                 <p>
                   <span className="font-semibold text-slate-900">{text.updated}:</span> {formatDate(user.updatedAt, pageLocale)}
