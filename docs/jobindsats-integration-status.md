@@ -13,7 +13,7 @@ The integration uses Jobindsats API v3 at `https://api.jobindsats.dk/v3`.
 - The daily import uses measurement `y25i07` and imports open positions, daily average positions, and newly posted positions by municipality and ESCO title.
 - Jobindsats values are snapshots, not individual job advertisements with addresses. The app's sample job cards remain demonstration content until a separate job feed is connected.
 
-The official v3 guide says v2 is available only through 30 September 2026. The v3 interface changes endpoint paths, parameter names and response shape, and requires Bearer authentication. New development must target v3.
+STAR closed API v2 on 2026-09-30. The v3 interface changes endpoint paths, parameter names and response shape, and requires Bearer authentication. New development must target v3. STAR says existing API keys can be reused with v3, so this migration does not by itself require a new token.
 
 ## Verification performed
 
@@ -32,9 +32,10 @@ The official v3 guide says v2 is available only through 30 September 2026. The v
   | Sorø | 246 | 127 | 148 |
 
 - 2026-09-30: the staging import completed twice for all 43 active municipalities for `2026M08`. The rerun remained idempotent: 43 snapshots, 293 category rows, and 2,009 top-title rows.
-- 2026-09-30: v2 still returned HTTP 200 for the Y25i07 table catalogue when called with its legacy raw-token header. STAR states that v2 will be retired after 30 September, so this response is not a reason to keep the app on v2.
+- At the time of the 2026-09-30 check, v2 still returned HTTP 200 for the Y25i07 table catalogue with its legacy raw-token header. STAR closed v2 on that date; the earlier response did not establish continuing availability.
 - `scripts/jobindsats-discovery.ps1` and the scheduled import must use v3 and Bearer auth together; do not change one without the other.
-- The full import is verified on staging. The scheduled workflow itself still needs an observed run with failure notification checked.
+- 2026-10-01: scheduled GitHub run `36850611108` (run 175) failed because its `main` checkout called the closed v2 endpoint with the old raw-token header. The 2026-10-02 run `36994513673` also failed on `main`. This is consistent with the retired API contract and is not evidence that the key needs rotation.
+- The v3 full import is verified on staging. Merging the staging release to `main` updates the scheduled job to v3; then observe a scheduled run and check failure notification and stale-data handling.
 
 ## Import operations
 

@@ -41,7 +41,8 @@ async function isAuthorized(request: NextRequest) {
 
 function getSubjectIds(request: NextRequest) {
   return request.nextUrl.searchParams
-    .getAll("subjectid")
+    .getAll("subject_id")
+    .concat(request.nextUrl.searchParams.getAll("subjectid"))
     .flatMap((value) => value.split(","))
     .map((value) => value.trim())
     .filter(Boolean);
