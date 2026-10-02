@@ -20,6 +20,10 @@ async function signIn(page: import("@playwright/test").Page, email: string) {
 test("a member can reset a password once using a valid reset link", async ({ page }) => {
   const resetToken = "e2e-password-reset-token-2026";
   await page.goto(`/da/reset-password?token=${resetToken}`);
+  // The reset page is the first form in this suite that submits immediately
+  // after navigation. Wait for Next.js to hydrate its server action before
+  // interacting with it, as we do for the other account flows below.
+  await page.waitForLoadState("networkidle");
   await page.locator('input[name="password"]').fill("Password-after-reset-2026");
   await page.getByRole("button", { name: "Gem adgangskode" }).click();
   await expect(page).toHaveURL(/\/da\/login\?passwordReset=1$/);
